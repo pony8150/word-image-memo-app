@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Word Image Memo App</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow glow-left"></div>
+    <div class="page-glow glow-right"></div>
+    <div class="page-grid"></div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-badge">W</div>
+          <div>
+            <p class="eyebrow">Word Image Memo</p>
+            <h1>看图记单词</h1>
+          </div>
+        </div>
+
+        <nav class="nav-pills" aria-label="Primary">
+          <button class="nav-pill active" data-target="welcome">欢迎页</button>
+          <button class="nav-pill" data-target="learn">学习卡片</button>
+          <button class="nav-pill" data-target="review">复习模式</button>
+          <button class="nav-pill" data-target="image">图片联想</button>
+          <button class="nav-pill" data-target="stats">学习统计</button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="view active" id="welcome">
+          <div class="hero">
+            <div class="hero-copy card soft-card">
+              <p class="eyebrow">面向初高中生的视觉化单词学习</p>
+              <h2>先看到画面，再记住单词。</h2>
+              <p class="hero-text">
+                把图片、场景、中文、例句和记忆提示串在一起，让单词不只是拼写，而是能被想起来的画面。
+              </p>
+
+              <div class="hero-actions">
+                <button class="primary-btn" data-target="learn">开始学习今日词卡</button>
+                <button class="secondary-btn" data-target="image">先玩看图猜词</button>
+              </div>
+
+              <div class="mini-metrics">
+                <div>
+                  <strong id="hero-word-count">10</strong>
+                  <span>今日词卡</span>
+                </div>
+                <div>
+                  <strong>3 段</strong>
+                  <span>完整学习流程</span>
+                </div>
+                <div>
+                  <strong>0 依赖</strong>
+                  <span>双击即可打开</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-panel card accent-card">
+              <div class="panel-top">
+                <span class="panel-tag">今日亮点</span>
+                <span class="panel-note">MVP Prototype</span>
+              </div>
+              <div class="feature-list">
+                <article>
+                  <h3>图像先行</h3>
+                  <p>用视觉线索降低记忆门槛，让抽象单词也有联想入口。</p>
+                </article>
+                <article>
+                  <h3>三档复习</h3>
+                  <p>用“认识 / 模糊 / 不认识”收集更真实的掌握程度。</p>
+                </article>
+                <article>
+                  <h3>轻量统计</h3>
+                  <p>快速回看今日学习进度和看图猜词表现。</p>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="welcome-bottom">
+            <section class="card preview-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Today Deck</p>
+                  <h3>今日词卡预览</h3>
+                </div>
+                <button class="text-link" data-target="learn">进入学习卡片</button>
+              </div>
+              <div class="chip-grid" id="deck-preview"></div>
+            </section>
+
+            <section class="card story-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Why It Works</p>
+                  <h3>一条适合学生的记忆路径</h3>
+                </div>
+              </div>
+
+              <div class="path-steps">
+                <div class="path-step">
+                  <span>01</span>
+                  <p>看图建立第一印象</p>
+                </div>
+                <div class="path-step">
+                  <span>02</span>
+                  <p>结合中文和例句理解词义</p>
+                </div>
+                <div class="path-step">
+                  <span>03</span>
+                  <p>用复习与猜词再次强化</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="learn">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Learn Mode</p>
+              <h2>单词学习卡片</h2>
+            </div>
+            <div class="progress-pill" id="learn-progress"></div>
+          </div>
+
+          <div class="learn-layout">
+            <article class="card learn-card">
+              <div class="learn-media">
+                <img id="learn-image" src="" alt="" />
+              </div>
+
+              <div class="learn-content">
+                <div class="word-main">
+                  <span class="word-label" id="learn-level"></span>
+                  <h3 id="learn-word"></h3>
+                  <p id="learn-translation"></p>
+                </div>
+
+                <div class="detail-box">
+                  <h4>例句</h4>
+                  <p id="learn-example"></p>
+                </div>
+
+                <div class="detail-box highlight-box">
+                  <h4>记忆提示</h4>
+                  <p id="learn-tip"></p>
+                </div>
+
+                <div class="detail-box">
+                  <h4>联想场景</h4>
+                  <p id="learn-scene"></p>
+                </div>
+
+                <div class="learn-actions">
+                  <button class="secondary-btn" id="learn-prev">上一张</button>
+                  <button class="primary-btn" id="learn-next">下一张</button>
+                </div>
+              </div>
+            </article>
+
+            <aside class="card learn-sidebar">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Word Deck</p>
+                  <h3>单词列表</h3>
+                </div>
+              </div>
+              <div class="word-list" id="word-list"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="review">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Review Mode</p>
+              <h2>三档复习</h2>
+            </div>
+            <div class="progress-pill" id="review-progress"></div>
+          </div>
+
+          <div class="review-layout">
+            <article class="card review-card" id="review-card">
+              <div class="review-top">
+                <span class="panel-tag">先想一想，再看答案</span>
+              </div>
+
+              <div class="review-visual">
+                <img id="review-image" src="" alt="" />
+              </div>
+
+              <div class="review-prompt">
+                <p class="eyebrow">请先回忆中文意思</p>
+                <h3 id="review-word"></h3>
+                <p id="review-example"></p>
+              </div>
+
+              <div class="answer-panel" id="review-answer">
+                <p class="answer-title">答案</p>
+                <p class="answer-main" id="review-translation"></p>
+                <p class="answer-tip" id="review-tip"></p>
+              </div>
+
+              <div class="review-actions">
+                <button class="secondary-btn" id="review-reveal">显示答案</button>
+                <div class="review-rating">
+                  <button class="rate-btn rate-good" data-rating="know">认识</button>
+                  <button class="rate-btn rate-mid" data-rating="fuzzy">模糊</button>
+                  <button class="rate-btn rate-bad" data-rating="unknown">不认识</button>
+                </div>
+              </div>
+            </article>
+
+            <aside class="card review-side">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Session Snapshot</p>
+                  <h3>当前复习反馈</h3>
+                </div>
+              </div>
+
+              <div class="review-stats">
+                <div class="small-stat">
+                  <span>认识</span>
+                  <strong id="count-know">0</strong>
+                </div>
+                <div class="small-stat">
+                  <span>模糊</span>
+                  <strong id="count-fuzzy">0</strong>
+                </div>
+                <div class="small-stat">
+                  <span>不认识</span>
+                  <strong id="count-unknown">0</strong>
+                </div>
+              </div>
+
+              <div class="tip-card">
+                <p class="eyebrow">复习建议</p>
+                <p id="review-suggestion">先完成一轮复习，系统会在这里给出学习建议。</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="image">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Image Association</p>
+              <h2>看图猜词</h2>
+            </div>
+            <div class="progress-pill" id="image-progress"></div>
+          </div>
+
+          <article class="card image-card">
+            <div class="image-stage">
+              <div class="image-stage-visual">
+                <img id="image-guess-visual" src="" alt="" />
+              </div>
+
+              <div class="image-stage-copy">
+                <span class="panel-tag">先看图，再选词</span>
+                <h3>这张图更像哪个单词？</h3>
+                <p id="image-prompt-text">请选择你认为最贴切的单词。</p>
+
+                <div class="option-grid" id="image-options"></div>
+
+                <div class="result-panel" id="image-result"></div>
+
+                <div class="image-actions">
+                  <button class="secondary-btn" id="image-reset">重新开始</button>
+                  <button class="primary-btn" id="image-next">下一题</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" id="stats">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h2>学习统计概览</h2>
+            </div>
+            <div class="progress-pill">实时刷新</div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="card stat-card warm">
+              <p>词卡总量</p>
+              <strong id="stat-total">0</strong>
+              <span>今日学习包</span>
+            </article>
+
+            <article class="card stat-card cool">
+              <p>已浏览词卡</p>
+              <strong id="stat-learned">0</strong>
+              <span>学习卡片进度</span>
+            </article>
+
+            <article class="card stat-card mint">
+              <p>复习完成</p>
+              <strong id="stat-reviewed">0</strong>
+              <span>已打分词数</span>
+            </article>
+
+            <article class="card stat-card coral">
+              <p>看图命中率</p>
+              <strong id="stat-image-accuracy">0%</strong>
+              <span>图片联想表现</span>
+            </article>
+          </div>
+
+          <div class="stats-detail">
+            <section class="card bars-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Review Breakdown</p>
+                  <h3>复习反馈分布</h3>
+                </div>
+              </div>
+              <div class="bars" id="review-bars"></div>
+            </section>
+
+            <section class="card summary-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Word Status</p>
+                  <h3>词卡掌握快照</h3>
+                </div>
+              </div>
+              <div class="summary-list" id="word-status-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
