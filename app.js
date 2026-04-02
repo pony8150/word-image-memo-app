@@ -3,117 +3,249 @@ const words = [
     id: "apple",
     english: "apple",
     chinese: "苹果",
-    image: "assets/images/apple.svg",
+    image: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Maksym Kaharlytskyi",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/3903200/pexels-photo-3903200.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "红苹果主体非常明确，颜色醒目，学生一眼就能把 apple 和真实水果连起来。",
     level: "初中高频",
     theme: "食物",
     example: "I put an apple in my school bag for lunch.",
-    tip: "把 apple 想成一颗红苹果，背完一组单词就奖励自己一口。",
-    scene: "午餐盒里放着一颗红苹果，打开书包时一眼就能看到。"
+    tip: "把 apple 想成午餐盒里那颗最显眼的红苹果，画面很容易定住。",
+    scene: "午餐盒打开的瞬间，一颗新鲜红苹果最先跳进视线。"
   },
   {
     id: "bicycle",
     english: "bicycle",
     chinese: "自行车",
-    image: "assets/images/bicycle.svg",
+    image: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Murillo de Paula",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/17574898/pexels-photo-17574898.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "真实街道上的自行车比图标更有生活感，两个车轮和骑行姿态能快速触发记忆。",
     level: "初中高频",
     theme: "日常出行",
     example: "He rides his bicycle to school on sunny days.",
-    tip: "bi- 可以联想到 two，两只轮子就是 bicycle 最直观的线索。",
-    scene: "放学路上骑车回家，车轮一转，单词也跟着转起来。"
+    tip: "看到两个轮子和车把，就能立刻抓住 bicycle 的核心形象。",
+    scene: "放学路上骑车回家，车轮转起来的画面很容易和单词绑定。"
   },
   {
     id: "library",
     english: "library",
     chinese: "图书馆",
-    image: "assets/images/library.svg",
+    image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Robert Bye",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/3747593/pexels-photo-3747593.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "书架、桌椅和安静光线一起出现时，library 不再是抽象名词，而是一个能进入的真实空间。",
     level: "初中高频",
     theme: "校园",
     example: "We borrow story books from the library after class.",
-    tip: "把 library 和一排排书架连起来，看到书本就想起这个词。",
-    scene: "安静的图书馆里摆满故事书，适合和 reading room 一起记。"
+    tip: "把 library 和记忆里安静、满是书架的地方连起来，比背中文释义更牢。",
+    scene: "午后阳光洒进图书馆，学生坐在书架旁安静看书。"
   },
   {
     id: "bridge",
     english: "bridge",
     chinese: "桥",
-    image: "assets/images/bridge.svg",
+    image: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Andreas Gucklhorn",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/214053/pexels-photo-214053.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "桥横跨两端的结构很直观，雾气和纵深感让画面更有记忆点。",
     level: "初中高频",
     theme: "自然与建筑",
     example: "A small bridge crosses the river behind the village.",
-    tip: "bridge 就像把两边连接起来，也像把新单词和旧经验连接起来。",
-    scene: "村口小河上有一座拱桥，走过去就到了另一边。"
+    tip: "bridge 的重点是连接两边，看到跨过去的结构就不容易忘。",
+    scene: "薄雾里，一座长桥从一端延伸到另一端，像把两侧世界连起来。"
   },
   {
     id: "forest",
     english: "forest",
     chinese: "森林",
-    image: "assets/images/forest.svg",
+    image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Geran de Klerk",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/240040/pexels-photo-240040.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "树木密集、光线穿透树林的场景，比单棵树更能体现 forest 的整体感。",
     level: "初中高频",
     theme: "自然",
     example: "The forest becomes quiet after sunset.",
-    tip: "想象一片密密的树，单词里每个字母都像竖起来的树干。",
-    scene: "夕阳落下，森林安静下来，只剩风吹过树梢。"
+    tip: "forest 不是一棵树，而是一大片树组成的空间感。",
+    scene: "阳光从高高的树间落下来，整片森林安静又深。"
   },
   {
     id: "courage",
     english: "courage",
     chinese: "勇气",
-    image: "assets/images/courage.svg",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Dane Deaner",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/461593/pexels-photo-461593.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "站在高处望向远方的人物场景，比抽象符号更能传达明明紧张但还是向前的 courage。",
     level: "高中常用",
     theme: "情绪与品质",
     example: "It takes courage to speak English in front of the class.",
-    tip: "把 courage 想成心里亮起的一面小旗子，提醒自己敢开口。",
-    scene: "站在山顶举起旗子，虽然紧张，但还是向前迈了一步。"
+    tip: "勇气不是不怕，而是害怕时也愿意往前一步。",
+    scene: "一个人站在高处迎着风，虽然不轻松，但没有退后。"
   },
   {
     id: "whisper",
     english: "whisper",
     chinese: "低声说",
-    image: "assets/images/whisper.svg",
+    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Matheus Ferrero",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://commons.wikimedia.org/wiki/Special:FilePath/Let%20me%20tell%20you%20a%20secret.jpg?width=1400",
+        source: "Wikimedia Commons"
+      }
+    ],
+    imageReason: "靠近耳边说话的真实动作是 whisper 最强的视觉线索，比任何图标都更像轻声说。",
     level: "高中常用",
     theme: "动作",
     example: "Please whisper in the reading room.",
-    tip: "whisper 的声音像一阵很轻的气流，靠近耳边才听得见。",
-    scene: "自习室里大家都很安静，只能贴近耳边小声提醒。"
+    tip: "记住 whisper 的关键不是嘴巴，而是靠近耳边、声音很轻的动作。",
+    scene: "安静环境里，两个人靠近耳边小声交流，几乎只有对方听得见。"
   },
   {
     id: "puzzle",
     english: "puzzle",
     chinese: "谜题；拼图",
-    image: "assets/images/puzzle.svg",
+    image: "https://images.unsplash.com/photo-1516110833967-0b5716ca1387?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Mel Poole",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1516110833967-0b5716ca1387?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/9227508/pexels-photo-9227508.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "散开的拼图块和正在完成的图案，能直接让学生联想到 puzzle 的拼起来过程。",
     level: "初中高频",
     theme: "学习活动",
     example: "This puzzle helps us remember new shapes.",
-    tip: "把 puzzle 当成把零散信息拼起来的过程，就像记单词要拼出完整画面。",
-    scene: "桌面上散着几块拼图，找到正确位置后画面才完整。"
+    tip: "puzzle 的感觉就是把零散碎片拼成完整画面。",
+    scene: "桌面上散着拼图块，找到正确位置后，图像慢慢完整起来。"
   },
   {
     id: "journey",
     english: "journey",
     chinese: "旅程",
-    image: "assets/images/journey.svg",
+    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Luke Stackpoole",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/1029639/pexels-photo-1029639.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "向远方延伸的道路特别适合表现 journey 的过程感，比交通工具特写更有出发记忆。",
     level: "高中常用",
     theme: "旅行",
     example: "Our train journey to Beijing started early in the morning.",
-    tip: "journey 想成一条一直向前的路，单词本身也有移动感。",
-    scene: "清晨出发，阳光照在前方的路上，旅程正式开始。"
+    tip: "journey 重点不是目的地，而是一路向前的过程。",
+    scene: "一条路向远方伸展，清晨出发时最能感觉到旅程开始了。"
   },
   {
     id: "harvest",
     english: "harvest",
-    chinese: "收获；收成",
-    image: "assets/images/harvest.svg",
+    chinese: "收获；收割",
+    image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80",
+    imageSource: "Unsplash",
+    imageCredit: "Jan Kopriva",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80",
+        source: "Unsplash"
+      },
+      {
+        url: "https://images.pexels.com/photos/18900463/pexels-photo-18900463.jpeg?auto=compress&cs=tinysrgb&w=1400&h=900&fit=crop",
+        source: "Pexels"
+      }
+    ],
+    imageReason: "金黄色田野和收成氛围能把 harvest 的季节感、成果感一起带出来。",
     level: "高中常用",
     theme: "季节与农业",
     example: "Farmers celebrate the rice harvest in autumn.",
-    tip: "harvest 不只是农作物收成，也可以联想到学习后的成果。",
-    scene: "秋天金黄的麦穗被收进篮子里，像把努力装满带走。"
+    tip: "harvest 不只是收，更是努力之后真正把成果带回来的感觉。",
+    scene: "秋天的田野一片金黄，成熟作物被收进篮子里。"
   }
 ];
 
 const state = {
-  currentView: "welcome",
+  currentView: "learn",
   learnIndex: 0,
+  learnImageIndex: 0,
+  learnListOpen: false,
   learnedSet: new Set([0]),
   reviewOrder: words.map((_, index) => index),
   reviewIndex: 0,
@@ -126,7 +258,8 @@ const state = {
   imageScore: 0,
   imageAttempts: 0,
   imageChoices: [],
-  imageLastCorrect: false
+  imageLastCorrect: false,
+  imageSelectedIndex: null
 };
 
 const elements = {};
@@ -140,32 +273,39 @@ document.addEventListener("DOMContentLoaded", () => {
   renderReview();
   renderImage();
   renderStats();
-  switchView("welcome");
+  switchView("learn");
 });
 
 function cacheElements() {
   elements.views = [...document.querySelectorAll(".view")];
-  elements.navButtons = [...document.querySelectorAll("[data-target]")];
+  elements.targetButtons = [...document.querySelectorAll("[data-target]")];
+  elements.navPills = [...document.querySelectorAll(".nav-pill")];
+
+  elements.heroWordCount = document.getElementById("hero-word-count");
+  elements.deckPreview = document.getElementById("deck-preview");
+
   elements.learnProgress = document.getElementById("learn-progress");
+  elements.learnListToggle = document.getElementById("learn-list-toggle");
+  elements.learnDrawer = document.getElementById("learn-drawer");
+  elements.learnDrawerBackdrop = document.getElementById("learn-drawer-backdrop");
+  elements.learnListClose = document.getElementById("learn-list-close");
+  elements.learnWordPanel = document.getElementById("learn-word-panel");
   elements.learnImage = document.getElementById("learn-image");
-  elements.learnLevel = document.getElementById("learn-level");
+  elements.learnImageSwitch = document.getElementById("learn-image-switch");
   elements.learnWord = document.getElementById("learn-word");
+  elements.learnWordAudio = document.getElementById("learn-word-audio");
   elements.learnTranslation = document.getElementById("learn-translation");
   elements.learnExample = document.getElementById("learn-example");
-  elements.learnTip = document.getElementById("learn-tip");
-  elements.learnScene = document.getElementById("learn-scene");
+  elements.learnExampleAudio = document.getElementById("learn-example-audio");
   elements.wordList = document.getElementById("word-list");
   elements.learnPrev = document.getElementById("learn-prev");
   elements.learnNext = document.getElementById("learn-next");
-  elements.deckPreview = document.getElementById("deck-preview");
-  elements.heroWordCount = document.getElementById("hero-word-count");
 
   elements.reviewProgress = document.getElementById("review-progress");
   elements.reviewImage = document.getElementById("review-image");
   elements.reviewWord = document.getElementById("review-word");
-  elements.reviewExample = document.getElementById("review-example");
+  elements.reviewPromptText = document.getElementById("review-prompt-text");
   elements.reviewTranslation = document.getElementById("review-translation");
-  elements.reviewTip = document.getElementById("review-tip");
   elements.reviewAnswer = document.getElementById("review-answer");
   elements.reviewReveal = document.getElementById("review-reveal");
   elements.reviewSuggestion = document.getElementById("review-suggestion");
@@ -180,6 +320,7 @@ function cacheElements() {
   elements.imageVisual = document.getElementById("image-guess-visual");
   elements.imagePromptText = document.getElementById("image-prompt-text");
   elements.imageOptions = document.getElementById("image-options");
+  elements.imageReason = document.getElementById("image-mode-reason");
   elements.imageResult = document.getElementById("image-result");
   elements.imageNext = document.getElementById("image-next");
   elements.imageReset = document.getElementById("image-reset");
@@ -195,15 +336,57 @@ function cacheElements() {
 }
 
 function bindEvents() {
-  elements.navButtons.forEach((button) => {
+  elements.targetButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const target = button.dataset.target;
-      if (!target) {
-        return;
+      if (target) {
+        switchView(target);
       }
-
-      switchView(target);
     });
+  });
+
+  elements.deckPreview.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-word-index]");
+    if (!button) {
+      return;
+    }
+
+    jumpToWord(Number(button.dataset.wordIndex));
+  });
+
+  elements.learnListToggle.addEventListener("click", () => {
+    setLearnDrawer(!state.learnListOpen);
+  });
+
+  elements.learnDrawerBackdrop.addEventListener("click", () => {
+    setLearnDrawer(false);
+  });
+
+  elements.learnListClose.addEventListener("click", () => {
+    setLearnDrawer(false);
+  });
+
+  elements.learnWordAudio.addEventListener("click", () => {
+    speakEnglish(words[state.learnIndex].english);
+  });
+
+  elements.learnExampleAudio.addEventListener("click", () => {
+    speakEnglish(words[state.learnIndex].example);
+  });
+
+  elements.learnImageSwitch.addEventListener("click", () => {
+    const images = getWordImages(words[state.learnIndex]);
+    state.learnImageIndex = (state.learnImageIndex + 1) % images.length;
+    renderLearn();
+  });
+
+  elements.wordList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-word-index]");
+    if (!button) {
+      return;
+    }
+
+    jumpToWord(Number(button.dataset.wordIndex));
   });
 
   elements.learnPrev.addEventListener("click", () => {
@@ -212,18 +395,15 @@ function bindEvents() {
     }
 
     state.learnIndex -= 1;
+    state.learnImageIndex = 0;
     state.learnedSet.add(state.learnIndex);
     renderLearn();
     renderStats();
   });
 
   elements.learnNext.addEventListener("click", () => {
-    if (state.learnIndex < words.length - 1) {
-      state.learnIndex += 1;
-    } else {
-      state.learnIndex = 0;
-    }
-
+    state.learnIndex = state.learnIndex < words.length - 1 ? state.learnIndex + 1 : 0;
+    state.learnImageIndex = 0;
     state.learnedSet.add(state.learnIndex);
     renderLearn();
     renderStats();
@@ -259,37 +439,60 @@ function bindEvents() {
       return;
     }
 
-    const selectedIndex = Number(button.dataset.index);
-    handleImageAnswer(selectedIndex);
+    handleImageAnswer(Number(button.dataset.index));
   });
 
   elements.imageNext.addEventListener("click", () => {
     if (state.imageIndex < state.imageOrder.length - 1) {
       state.imageIndex += 1;
       state.imageAnswered = false;
+      state.imageSelectedIndex = null;
       prepareImageQuestion();
-    } else {
-      state.imageIndex = state.imageOrder.length;
-      state.imageAnswered = true;
+      renderImage();
+      return;
     }
 
+    state.imageIndex = state.imageOrder.length;
+    state.imageAnswered = true;
     renderImage();
     renderStats();
   });
 
   elements.imageReset.addEventListener("click", resetImageMode);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.learnListOpen) {
+      setLearnDrawer(false);
+    }
+  });
 }
 
 function switchView(viewId) {
   state.currentView = viewId;
 
+  if (viewId !== "learn" && state.learnListOpen) {
+    setLearnDrawer(false);
+  }
+
   elements.views.forEach((view) => {
     view.classList.toggle("active", view.id === viewId);
   });
 
-  document.querySelectorAll(".nav-pill").forEach((button) => {
+  elements.navPills.forEach((button) => {
     button.classList.toggle("active", button.dataset.target === viewId);
   });
+
+  if (viewId === "learn") {
+    renderLearn();
+  }
+
+  if (viewId === "review") {
+    renderReview();
+  }
+
+  if (viewId === "image") {
+    renderImage();
+  }
 
   if (viewId === "stats") {
     renderStats();
@@ -299,34 +502,33 @@ function switchView(viewId) {
 function renderWelcome() {
   elements.heroWordCount.textContent = String(words.length);
   elements.deckPreview.innerHTML = words
+    .slice(0, 4)
     .map(
       (word, index) => `
-        <button class="word-chip ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
-          <span>
+        <button class="deck-card ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
+          <img src="${getWordImages(word)[0].url}" alt="${word.english}" />
+          <div>
             <strong>${word.english}</strong>
             <small>${word.chinese}</small>
-          </span>
-          <small>${word.theme}</small>
+          </div>
         </button>
       `
     )
     .join("");
-
-  attachWordJumpHandlers(elements.deckPreview);
 }
 
 function renderLearn() {
   const word = words[state.learnIndex];
+  const images = getWordImages(word);
+  const activeImage = images[Math.min(state.learnImageIndex, images.length - 1)];
 
-  elements.learnProgress.textContent = `第 ${state.learnIndex + 1} / ${words.length} 张`;
-  elements.learnImage.src = word.image;
-  elements.learnImage.alt = `${word.english} illustration`;
-  elements.learnLevel.textContent = `${word.level} · ${word.theme}`;
+  elements.learnProgress.textContent = `学习进度 ${state.learnIndex + 1} / ${words.length}`;
+  elements.learnImage.src = activeImage.url;
+  elements.learnImage.alt = `${word.english} 的真实图片`;
+  elements.learnImageSwitch.hidden = images.length < 2;
   elements.learnWord.textContent = word.english;
   elements.learnTranslation.textContent = word.chinese;
   elements.learnExample.textContent = word.example;
-  elements.learnTip.textContent = word.tip;
-  elements.learnScene.textContent = word.scene;
 
   elements.learnPrev.disabled = state.learnIndex === 0;
   elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "回到第一张" : "下一张";
@@ -345,8 +547,22 @@ function renderLearn() {
     )
     .join("");
 
-  attachWordJumpHandlers(elements.wordList);
+  syncLearnListVisibility();
   renderWelcome();
+}
+
+function syncLearnListVisibility() {
+  const isOpen = state.learnListOpen;
+  elements.learnDrawer.classList.toggle("is-open", isOpen);
+  elements.learnDrawer.setAttribute("aria-hidden", String(!isOpen));
+  elements.learnListToggle.textContent = isOpen ? "收起单词列表" : "显示单词列表";
+  elements.learnListToggle.setAttribute("aria-expanded", String(isOpen));
+  document.body.classList.toggle("drawer-open", isOpen);
+}
+
+function setLearnDrawer(isOpen) {
+  state.learnListOpen = isOpen;
+  syncLearnListVisibility();
 }
 
 function renderReview() {
@@ -356,37 +572,37 @@ function renderReview() {
   elements.reviewCounts.know.textContent = String(counts.know);
   elements.reviewCounts.fuzzy.textContent = String(counts.fuzzy);
   elements.reviewCounts.unknown.textContent = String(counts.unknown);
-  elements.reviewProgress.textContent = `已完成 ${Math.min(state.reviewIndex, total)} / ${total}`;
+  elements.reviewProgress.textContent = `复习进度 ${Math.min(state.reviewIndex + 1, total)} / ${total}`;
+  elements.reviewSuggestion.textContent = buildReviewSuggestion(counts);
 
   if (state.reviewIndex >= total) {
-    const finalWord = words[state.reviewOrder[total - 1]];
-    elements.reviewImage.src = finalWord.image;
-    elements.reviewImage.alt = "review completed";
-    elements.reviewWord.textContent = "本轮复习完成";
-    elements.reviewExample.textContent = "可以切换到学习统计查看整体情况，或者重新开始图片联想模式。";
-    elements.reviewTranslation.textContent = "今日复习已结束";
-    elements.reviewTip.textContent = "继续把“模糊”和“不认识”的词拉回来，效果会更稳。";
+    const lastWord = words[state.reviewOrder[total - 1]];
+    elements.reviewImage.src = getWordImages(lastWord)[0].url;
+    elements.reviewImage.alt = "复习完成";
+    elements.reviewWord.textContent = "这一轮复习完成";
+    elements.reviewPromptText.textContent = "可以切到统计页查看薄弱词，或继续去玩一轮看图猜词。";
+    elements.reviewTranslation.textContent = "今天这一组词已经复习完了。";
     elements.reviewAnswer.classList.add("revealed");
     elements.reviewReveal.disabled = true;
     elements.rateButtons.forEach((button) => {
       button.disabled = true;
     });
-    elements.reviewSuggestion.textContent = buildReviewSuggestion(counts);
     return;
   }
 
   const wordIndex = state.reviewOrder[state.reviewIndex];
   const word = words[wordIndex];
+  const reviewImage = getRoundImage(word, state.reviewIndex);
 
-  elements.reviewImage.src = word.image;
-  elements.reviewImage.alt = `${word.english} review illustration`;
+  elements.reviewImage.src = reviewImage.url;
+  elements.reviewImage.alt = `${word.english} 的复习图片`;
   elements.reviewWord.textContent = word.english;
-  elements.reviewExample.textContent = word.example;
+  elements.reviewPromptText.textContent = state.reviewRevealed
+    ? "已经显示答案，看看自己刚才想得对不对。"
+    : "先看图，试着自己想起这个词对应的中文意思。";
   elements.reviewTranslation.textContent = word.chinese;
-  elements.reviewTip.textContent = word.tip;
   elements.reviewAnswer.classList.toggle("revealed", state.reviewRevealed);
   elements.reviewReveal.disabled = state.reviewRevealed;
-  elements.reviewSuggestion.textContent = buildReviewSuggestion(counts);
 
   elements.rateButtons.forEach((button) => {
     button.disabled = !state.reviewRevealed;
@@ -395,61 +611,81 @@ function renderReview() {
 
 function renderImage() {
   const total = state.imageOrder.length;
-  const currentRound = Math.min(state.imageIndex + 1, total);
   const accuracy = state.imageAttempts === 0 ? 0 : Math.round((state.imageScore / state.imageAttempts) * 100);
 
   if (state.imageIndex >= total) {
-    const finalWord = words[state.imageOrder[total - 1]];
     elements.imageProgress.textContent = `完成 ${total} / ${total}`;
-    elements.imageVisual.src = finalWord.image;
-    elements.imageVisual.alt = "image mode completed";
-    elements.imagePromptText.textContent = "本轮看图猜词结束，可以重新开始再练一轮。";
+    elements.imagePromptText.textContent = "这一轮看图猜词结束了，可以重新开始再来一轮。";
+    elements.imageReason.textContent = "完成后继续回看学习卡片，图片记忆会更牢。";
     elements.imageOptions.innerHTML = "";
     elements.imageResult.innerHTML = `
       <strong>最终成绩：${state.imageScore} / ${state.imageAttempts}</strong>
-      <p>命中率 ${accuracy}% 。建议回到学习卡片再看一遍抽象词。</p>
+      <p>命中率 ${accuracy}%。建议把猜错的词再回到学习页看一遍。</p>
     `;
     elements.imageNext.disabled = true;
     return;
   }
 
-  const word = words[state.imageOrder[state.imageIndex]];
-  elements.imageProgress.textContent = `第 ${currentRound} / ${total} 题`;
-  elements.imageVisual.src = word.image;
-  elements.imageVisual.alt = `${word.english} image prompt`;
-  elements.imagePromptText.textContent = "先根据画面做判断，再看反馈和记忆提示。";
+  const wordIndex = state.imageOrder[state.imageIndex];
+  const word = words[wordIndex];
+  const promptImage = getRoundImage(word, state.imageIndex);
+
+  elements.imageProgress.textContent = `看图猜词 ${state.imageIndex + 1} / ${total}`;
+  elements.imageVisual.src = promptImage.url;
+  elements.imageVisual.alt = `${word.english} 的猜词图片`;
+  elements.imagePromptText.textContent = state.imageAnswered
+    ? `答案：${word.english} · ${word.chinese}`
+    : "先看图，不看中文，直接选你觉得最像的英文词。";
+  elements.imageReason.textContent = state.imageAnswered
+    ? word.imageReason
+    : "先观察图片里的主体、动作和环境，再做选择。";
+
   elements.imageOptions.innerHTML = state.imageChoices
     .map((choiceIndex) => {
-      const item = words[choiceIndex];
-      return `<button class="option-btn" data-index="${choiceIndex}">${item.english}</button>`;
+      const choice = words[choiceIndex];
+      const classNames = ["option-btn"];
+
+      if (state.imageAnswered && choiceIndex === wordIndex) {
+        classNames.push("correct");
+      }
+
+      if (state.imageAnswered && choiceIndex === state.imageSelectedIndex && choiceIndex !== wordIndex) {
+        classNames.push("incorrect");
+      }
+
+      return `
+        <button class="${classNames.join(" ")}" data-index="${choiceIndex}" ${state.imageAnswered ? "disabled" : ""}>
+          <strong>${choice.english}</strong>
+          <small>${choice.theme}</small>
+        </button>
+      `;
     })
     .join("");
 
-  if (!state.imageAnswered) {
-    elements.imageResult.innerHTML = `<p>当前正确 ${state.imageScore} / ${state.imageAttempts}。试着用图像而不是翻译来回想单词。</p>`;
-  } else {
-    elements.imageResult.innerHTML = `
-      <strong>${state.imageLastCorrect ? "答对了" : "这次没猜中"}</strong>
-      <p>${word.english} · ${word.chinese}</p>
-      <p>${word.tip}</p>
-    `;
-  }
+  elements.imageResult.innerHTML = state.imageAnswered
+    ? `
+        <strong>${state.imageLastCorrect ? "答对了" : "这次没猜中"}</strong>
+        <p>${word.tip}</p>
+      `
+    : `
+        <strong>当前正确 ${state.imageScore} / ${state.imageAttempts}</strong>
+        <p>先靠画面判断，不要先想中文。</p>
+      `;
 
   elements.imageNext.disabled = !state.imageAnswered;
-  paintImageOptions();
 }
 
 function renderStats() {
   const counts = getReviewCounts();
   const reviewed = state.reviewAnswers.length;
   const accuracy = state.imageAttempts === 0 ? 0 : Math.round((state.imageScore / state.imageAttempts) * 100);
+  const barTotal = Math.max(reviewed, 1);
 
   elements.stats.total.textContent = String(words.length);
   elements.stats.learned.textContent = String(state.learnedSet.size);
   elements.stats.reviewed.textContent = String(reviewed);
   elements.stats.imageAccuracy.textContent = `${accuracy}%`;
 
-  const totalForBars = Math.max(reviewed, 1);
   elements.stats.reviewBars.innerHTML = [
     { key: "know", label: "认识", className: "good" },
     { key: "fuzzy", label: "模糊", className: "mid" },
@@ -457,7 +693,7 @@ function renderStats() {
   ]
     .map(({ key, label, className }) => {
       const value = counts[key];
-      const percentage = Math.round((value / totalForBars) * 100);
+      const percentage = Math.round((value / barTotal) * 100);
       return `
         <div class="bar-item">
           <div class="bar-head">
@@ -473,31 +709,45 @@ function renderStats() {
     .join("");
 
   elements.stats.wordStatusList.innerHTML = words
-    .map((word, index) => {
-      const rating = state.reviewRatingsByWord[index] || "new";
-      return `
-        <div class="summary-item">
-          <div>
-            <p><strong>${word.english}</strong> · ${word.chinese}</p>
-            <small>${word.theme} · ${word.level}</small>
-          </div>
-          <span class="status-pill ${rating}">${ratingLabel(rating)}</span>
+    .map((word, index) => `
+      <div class="summary-item">
+        <div>
+          <p><strong>${word.english}</strong> · ${word.chinese}</p>
         </div>
-      `;
-    })
+        <span class="status-pill ${state.reviewRatingsByWord[index] || "new"}">${ratingLabel(state.reviewRatingsByWord[index] || "new")}</span>
+      </div>
+    `)
     .join("");
 }
 
-function attachWordJumpHandlers(container) {
-  container.querySelectorAll("[data-word-index]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.learnIndex = Number(button.dataset.wordIndex);
-      state.learnedSet.add(state.learnIndex);
-      switchView("learn");
-      renderLearn();
-      renderStats();
-    });
-  });
+function jumpToWord(index) {
+  state.learnIndex = index;
+  state.learnImageIndex = 0;
+  state.learnedSet.add(index);
+  setLearnDrawer(false);
+  switchView("learn");
+  renderLearn();
+  renderStats();
+}
+
+function buildReviewSuggestion(counts) {
+  if (state.reviewAnswers.length === 0) {
+    return "先完成一轮复习，系统会根据你的打分给出建议。";
+  }
+
+  if (counts.unknown >= 3) {
+    return "不认识的词偏多，建议先回到学习卡片再看一遍图片和记忆提示。";
+  }
+
+  if (counts.fuzzy >= 3) {
+    return "模糊的词比较多，适合立刻去做一轮看图猜词加深联想。";
+  }
+
+  if (counts.know >= 5) {
+    return "整体状态不错，可以继续靠图片回忆，把速度再提起来。";
+  }
+
+  return "继续完成这一轮复习，重点观察哪些词总会停在模糊。";
 }
 
 function getReviewCounts() {
@@ -510,24 +760,26 @@ function getReviewCounts() {
   );
 }
 
-function buildReviewSuggestion(counts) {
-  if (state.reviewAnswers.length === 0) {
-    return "先完成一轮复习，系统会在这里给出学习建议。";
-  }
+function getWordImages(word) {
+  const fallback = word.image
+    ? [
+        {
+          url: word.image,
+          source: word.imageSource || "Unknown"
+        }
+      ]
+    : [];
 
-  if (counts.unknown >= 3) {
-    return "“不认识”的词偏多，建议先回到学习卡片，把图片和例句再过一遍。";
-  }
+  const images = Array.isArray(word.images) && word.images.length > 0 ? word.images : fallback;
 
-  if (counts.fuzzy >= 3) {
-    return "“模糊”的词较多，适合马上进入看图猜词模式做第二次唤醒。";
-  }
+  return images.filter(
+    (image, index, collection) => collection.findIndex((candidate) => candidate.source === image.source) === index
+  );
+}
 
-  if (counts.know >= 5) {
-    return "整体状态不错，可以把重心转向图片联想和例句复述。";
-  }
-
-  return "继续完成本轮复习，重点观察哪些词总是停留在“模糊”。";
+function getRoundImage(word, roundIndex) {
+  const images = getWordImages(word);
+  return images[roundIndex % images.length];
 }
 
 function prepareImageQuestion() {
@@ -536,11 +788,7 @@ function prepareImageQuestion() {
   }
 
   const correctIndex = state.imageOrder[state.imageIndex];
-  const distractors = shuffle(
-    words
-      .map((_, index) => index)
-      .filter((index) => index !== correctIndex)
-  ).slice(0, 3);
+  const distractors = shuffle(words.map((_, index) => index).filter((index) => index !== correctIndex)).slice(0, 3);
 
   state.imageChoices = shuffle([correctIndex, ...distractors]);
 }
@@ -549,6 +797,7 @@ function handleImageAnswer(selectedIndex) {
   const correctIndex = state.imageOrder[state.imageIndex];
   state.imageAnswered = true;
   state.imageAttempts += 1;
+  state.imageSelectedIndex = selectedIndex;
   state.imageLastCorrect = selectedIndex === correctIndex;
 
   if (state.imageLastCorrect) {
@@ -567,44 +816,24 @@ function resetImageMode() {
   state.imageAttempts = 0;
   state.imageChoices = [];
   state.imageLastCorrect = false;
+  state.imageSelectedIndex = null;
+  elements.imageNext.disabled = false;
   prepareImageQuestion();
   renderImage();
   renderStats();
 }
 
-function paintImageOptions() {
-  if (state.imageIndex >= state.imageOrder.length) {
+function speakEnglish(text) {
+  if (!text || !("speechSynthesis" in window)) {
     return;
   }
 
-  const correctIndex = state.imageOrder[state.imageIndex];
-
-  document.querySelectorAll(".option-btn").forEach((button) => {
-    const optionIndex = Number(button.dataset.index);
-    button.disabled = state.imageAnswered;
-    button.classList.remove("correct", "incorrect");
-
-    if (!state.imageAnswered) {
-      return;
-    }
-
-    if (optionIndex === correctIndex) {
-      button.classList.add("correct");
-    } else if (!state.imageLastCorrect && optionIndex === Number(getSelectedOption())) {
-      button.classList.add("incorrect");
-    }
-  });
-}
-
-function getSelectedOption() {
-  const resultText = elements.imageResult.textContent;
-  const currentWord = words[state.imageOrder[state.imageIndex]];
-  if (resultText.includes(currentWord.english)) {
-    const selected = [...document.querySelectorAll(".option-btn")].find((button) => button.classList.contains("incorrect"));
-    return selected ? selected.dataset.index : currentWord.id;
-  }
-
-  return currentWord.id;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 0.92;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
 }
 
 function ratingLabel(rating) {
