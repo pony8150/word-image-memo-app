@@ -37,7 +37,7 @@
               <p class="eyebrow">面向初高中生的视觉化单词学习</p>
               <h2>先看到真实画面，再记住单词。</h2>
               <p class="hero-text">
-                用真实照片做记忆入口，把中文、记忆提示和联想场景压在图片之后，让画面先把单词勾出来。
+                用真实照片做记忆入口，把中文、例句和联想场景压在图片之后，让画面先把单词勾出来。
               </p>
 
               <div class="hero-actions">
@@ -110,7 +110,7 @@
                 </div>
                 <div class="path-step">
                   <span>02</span>
-                  <p>再结合中文和记忆提示锁定词义</p>
+                  <p>再结合中文和例句锁定词义</p>
                 </div>
                 <div class="path-step">
                   <span>03</span>
@@ -142,26 +142,27 @@
 
           <div class="learn-stack">
             <article class="card learn-card">
-              <div class="learn-media">
+              <div class="learn-media" id="learn-media">
                 <img id="learn-image" src="" alt="" />
-                <button class="image-switch-btn" id="learn-image-switch" type="button" aria-label="切换图片">换图</button>
               </div>
 
               <div class="learn-content">
                 <div class="word-main">
-                  <div class="word-title-row">
-                    <h3 id="learn-word"></h3>
-                    <button class="speak-btn" id="learn-word-audio" type="button" aria-label="朗读单词">&#128264;</button>
+                  <div class="word-copy">
+                    <div class="word-title-row">
+                      <h3 id="learn-word"></h3>
+                    </div>
+                    <p id="learn-translation"></p>
                   </div>
-                  <p id="learn-translation"></p>
+                  <button class="speak-btn word-audio-btn" id="learn-word-audio" type="button" aria-label="朗读单词">&#128264;</button>
                 </div>
 
                 <div class="detail-box example-box">
-                  <div class="detail-head">
-                    <h4>例句</h4>
-                    <button class="speak-btn" id="learn-example-audio" type="button" aria-label="朗读例句">&#128264;</button>
+                  <div class="example-copy">
+                    <p id="learn-example"></p>
+                    <p class="example-translation" id="learn-example-translation"></p>
                   </div>
-                  <p id="learn-example"></p>
+                  <button class="speak-btn example-audio-btn" id="learn-example-audio" type="button" aria-label="朗读例句">&#128264;</button>
                 </div>
 
                 <div class="learn-actions">

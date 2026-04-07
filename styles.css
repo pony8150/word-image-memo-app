@@ -548,23 +548,12 @@ main {
   object-fit: cover;
 }
 
-.image-switch-btn {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  min-width: 72px;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(18, 34, 48, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: white;
-  backdrop-filter: blur(10px);
+.learn-media.is-switchable {
+  cursor: pointer;
 }
 
-.image-switch-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(18, 34, 48, 0.2);
+.learn-media.is-switchable:hover img {
+  filter: brightness(0.97);
 }
 
 .media-meta {
@@ -594,15 +583,30 @@ main {
 }
 
 .learn-content {
-  display: grid;
-  grid-template-rows: minmax(104px, auto) minmax(112px, auto) auto;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
 }
 
 .image-stage-copy {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.word-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 88px;
+  padding-right: 72px;
+}
+
+.word-copy {
+  display: grid;
+  gap: 8px;
+  width: 100%;
 }
 
 .word-main h3 {
@@ -618,9 +622,25 @@ main {
 }
 
 .word-main p {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 1.2rem;
   color: var(--muted);
+}
+
+.word-audio-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.speak-btn.word-audio-btn:hover {
+  transform: translateY(-50%);
+  box-shadow: none;
 }
 
 .speak-btn {
@@ -646,6 +666,40 @@ main {
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(46, 155, 207, 0.12);
+}
+
+.example-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: 72px;
+}
+
+.example-copy {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.example-translation {
+  color: var(--primary-deep);
+  font-size: 0.98rem;
+}
+
+.example-audio-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.speak-btn.example-audio-btn:hover {
+  transform: translateY(-50%);
+  box-shadow: none;
 }
 
 .detail-box h4 {
@@ -1126,6 +1180,6 @@ main {
   }
 
   .learn-content {
-    grid-template-rows: minmax(88px, auto) minmax(112px, auto) auto;
+    gap: 16px;
   }
 }

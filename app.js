@@ -20,7 +20,7 @@ const words = [
     level: "初中高频",
     theme: "食物",
     example: "I put an apple in my school bag for lunch.",
-    tip: "把 apple 想成午餐盒里那颗最显眼的红苹果，画面很容易定住。",
+    exampleChinese: "我把一个苹果放进书包里当午餐。",
     scene: "午餐盒打开的瞬间，一颗新鲜红苹果最先跳进视线。"
   },
   {
@@ -44,7 +44,7 @@ const words = [
     level: "初中高频",
     theme: "日常出行",
     example: "He rides his bicycle to school on sunny days.",
-    tip: "看到两个轮子和车把，就能立刻抓住 bicycle 的核心形象。",
+    exampleChinese: "天气晴朗的时候，他骑自行车去上学。",
     scene: "放学路上骑车回家，车轮转起来的画面很容易和单词绑定。"
   },
   {
@@ -68,7 +68,7 @@ const words = [
     level: "初中高频",
     theme: "校园",
     example: "We borrow story books from the library after class.",
-    tip: "把 library 和记忆里安静、满是书架的地方连起来，比背中文释义更牢。",
+    exampleChinese: "我们下课后从图书馆借故事书。",
     scene: "午后阳光洒进图书馆，学生坐在书架旁安静看书。"
   },
   {
@@ -92,7 +92,7 @@ const words = [
     level: "初中高频",
     theme: "自然与建筑",
     example: "A small bridge crosses the river behind the village.",
-    tip: "bridge 的重点是连接两边，看到跨过去的结构就不容易忘。",
+    exampleChinese: "村子后面有一座小桥横跨河流。",
     scene: "薄雾里，一座长桥从一端延伸到另一端，像把两侧世界连起来。"
   },
   {
@@ -116,7 +116,7 @@ const words = [
     level: "初中高频",
     theme: "自然",
     example: "The forest becomes quiet after sunset.",
-    tip: "forest 不是一棵树，而是一大片树组成的空间感。",
+    exampleChinese: "日落以后，森林变得安静下来。",
     scene: "阳光从高高的树间落下来，整片森林安静又深。"
   },
   {
@@ -140,7 +140,7 @@ const words = [
     level: "高中常用",
     theme: "情绪与品质",
     example: "It takes courage to speak English in front of the class.",
-    tip: "勇气不是不怕，而是害怕时也愿意往前一步。",
+    exampleChinese: "在全班同学面前说英语需要勇气。",
     scene: "一个人站在高处迎着风，虽然不轻松，但没有退后。"
   },
   {
@@ -164,7 +164,7 @@ const words = [
     level: "高中常用",
     theme: "动作",
     example: "Please whisper in the reading room.",
-    tip: "记住 whisper 的关键不是嘴巴，而是靠近耳边、声音很轻的动作。",
+    exampleChinese: "在阅览室里请低声说话。",
     scene: "安静环境里，两个人靠近耳边小声交流，几乎只有对方听得见。"
   },
   {
@@ -188,7 +188,7 @@ const words = [
     level: "初中高频",
     theme: "学习活动",
     example: "This puzzle helps us remember new shapes.",
-    tip: "puzzle 的感觉就是把零散碎片拼成完整画面。",
+    exampleChinese: "这个拼图帮助我们记住新的图形。",
     scene: "桌面上散着拼图块，找到正确位置后，图像慢慢完整起来。"
   },
   {
@@ -212,7 +212,7 @@ const words = [
     level: "高中常用",
     theme: "旅行",
     example: "Our train journey to Beijing started early in the morning.",
-    tip: "journey 重点不是目的地，而是一路向前的过程。",
+    exampleChinese: "我们去北京的火车旅程一大早就开始了。",
     scene: "一条路向远方伸展，清晨出发时最能感觉到旅程开始了。"
   },
   {
@@ -236,7 +236,7 @@ const words = [
     level: "高中常用",
     theme: "季节与农业",
     example: "Farmers celebrate the rice harvest in autumn.",
-    tip: "harvest 不只是收，更是努力之后真正把成果带回来的感觉。",
+    exampleChinese: "农民们在秋天庆祝稻谷丰收。",
     scene: "秋天的田野一片金黄，成熟作物被收进篮子里。"
   }
 ];
@@ -290,12 +290,13 @@ function cacheElements() {
   elements.learnDrawerBackdrop = document.getElementById("learn-drawer-backdrop");
   elements.learnListClose = document.getElementById("learn-list-close");
   elements.learnWordPanel = document.getElementById("learn-word-panel");
+  elements.learnMedia = document.getElementById("learn-media");
   elements.learnImage = document.getElementById("learn-image");
-  elements.learnImageSwitch = document.getElementById("learn-image-switch");
   elements.learnWord = document.getElementById("learn-word");
   elements.learnWordAudio = document.getElementById("learn-word-audio");
   elements.learnTranslation = document.getElementById("learn-translation");
   elements.learnExample = document.getElementById("learn-example");
+  elements.learnExampleTranslation = document.getElementById("learn-example-translation");
   elements.learnExampleAudio = document.getElementById("learn-example-audio");
   elements.wordList = document.getElementById("word-list");
   elements.learnPrev = document.getElementById("learn-prev");
@@ -374,8 +375,13 @@ function bindEvents() {
     speakEnglish(words[state.learnIndex].example);
   });
 
-  elements.learnImageSwitch.addEventListener("click", () => {
+  elements.learnMedia.addEventListener("click", () => {
     const images = getWordImages(words[state.learnIndex]);
+
+    if (images.length < 2) {
+      return;
+    }
+
     state.learnImageIndex = (state.learnImageIndex + 1) % images.length;
     renderLearn();
   });
@@ -525,10 +531,11 @@ function renderLearn() {
   elements.learnProgress.textContent = `学习进度 ${state.learnIndex + 1} / ${words.length}`;
   elements.learnImage.src = activeImage.url;
   elements.learnImage.alt = `${word.english} 的真实图片`;
-  elements.learnImageSwitch.hidden = images.length < 2;
+  elements.learnMedia.classList.toggle("is-switchable", images.length > 1);
   elements.learnWord.textContent = word.english;
   elements.learnTranslation.textContent = word.chinese;
   elements.learnExample.textContent = word.example;
+  elements.learnExampleTranslation.textContent = word.exampleChinese || "";
 
   elements.learnPrev.disabled = state.learnIndex === 0;
   elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "回到第一张" : "下一张";
@@ -665,7 +672,7 @@ function renderImage() {
   elements.imageResult.innerHTML = state.imageAnswered
     ? `
         <strong>${state.imageLastCorrect ? "答对了" : "这次没猜中"}</strong>
-        <p>${word.tip}</p>
+        <p>${state.imageLastCorrect ? "继续下一题。" : "回到学习页再看一遍图片和例句。"}</p>
       `
     : `
         <strong>当前正确 ${state.imageScore} / ${state.imageAttempts}</strong>
@@ -736,7 +743,7 @@ function buildReviewSuggestion(counts) {
   }
 
   if (counts.unknown >= 3) {
-    return "不认识的词偏多，建议先回到学习卡片再看一遍图片和记忆提示。";
+    return "不认识的词偏多，建议先回到学习卡片再看一遍图片和例句。";
   }
 
   if (counts.fuzzy >= 3) {
