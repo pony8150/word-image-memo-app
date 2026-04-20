@@ -1,4 +1,4 @@
-const words = [
+const defaultWords = [
   {
     id: "apple",
     english: "apple",
@@ -241,12 +241,23 @@ const words = [
   }
 ];
 
+const API_BASE_URL = (window.WORD_IMAGE_MEMO_API_BASE || "http://localhost:3000/api").replace(/\/$/, "");
+const IMAGE_REMOVALS_STORAGE_KEY = "word-image-memo.removed-images.v1";
+const LEARN_LONG_PRESS_MS = 650;
+
+let words = cloneWords(defaultWords).map(normalizeWord);
+
 const state = {
+  dataSource: "local",
   currentView: "learn",
   learnIndex: 0,
   learnImageIndex: 0,
   learnListOpen: false,
+  learnDeleteMenuOpen: false,
+  learnLongPressTriggered: false,
+  learnLongPressTimer: null,
   learnedSet: new Set([0]),
+  removedImagesByWord: loadRemovedImagesByWord(),
   reviewOrder: words.map((_, index) => index),
   reviewIndex: 0,
   reviewRevealed: false,
@@ -264,17 +275,68 @@ const state = {
 
 const elements = {};
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   bindEvents();
+  await refreshDeckFromServer({ silent: true });
+  renderAllViews();
+  switchView("learn");
+});
+
+function renderAllViews() {
   prepareImageQuestion();
   renderWelcome();
   renderLearn();
   renderReview();
   renderImage();
   renderStats();
-  switchView("learn");
-});
+}
+
+async function refreshDeckFromServer({ preserveWordId = null, silent = false } = {}) {
+  try {
+    const remoteWords = await fetchLearningDeck();
+
+    if (Array.isArray(remoteWords) && remoteWords.length > 0) {
+      applyDeckWords(remoteWords, "api", preserveWordId);
+      return true;
+    }
+  } catch (error) {
+    if (!silent) {
+      console.error(error);
+    }
+  }
+
+  applyDeckWords(defaultWords, "local", preserveWordId);
+  return false;
+}
+
+function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
+  const normalizedWords = cloneWords(nextWords).map(normalizeWord);
+  const nextIndex = normalizedWords.findIndex((word) => word.id === preserveWordId);
+
+  clearLearnMediaLongPress();
+  words = normalizedWords;
+  state.dataSource = dataSource;
+  state.learnIndex = nextIndex >= 0 ? nextIndex : 0;
+  state.learnImageIndex = 0;
+  state.learnDeleteMenuOpen = false;
+  state.learnLongPressTriggered = false;
+  state.learnLongPressTimer = null;
+  state.learnedSet = words.length > 0 ? new Set([state.learnIndex]) : new Set();
+  state.reviewOrder = words.map((_, index) => index);
+  state.reviewIndex = 0;
+  state.reviewRevealed = false;
+  state.reviewAnswers = [];
+  state.reviewRatingsByWord = {};
+  state.imageOrder = shuffle(words.map((_, index) => index));
+  state.imageIndex = 0;
+  state.imageAnswered = false;
+  state.imageScore = 0;
+  state.imageAttempts = 0;
+  state.imageChoices = [];
+  state.imageLastCorrect = false;
+  state.imageSelectedIndex = null;
+}
 
 function cacheElements() {
   elements.views = [...document.querySelectorAll(".view")];
@@ -292,6 +354,9 @@ function cacheElements() {
   elements.learnWordPanel = document.getElementById("learn-word-panel");
   elements.learnMedia = document.getElementById("learn-media");
   elements.learnImage = document.getElementById("learn-image");
+  elements.learnImageMenu = document.getElementById("learn-image-menu");
+  elements.learnImageDelete = document.getElementById("learn-image-delete");
+  elements.learnImageCancel = document.getElementById("learn-image-cancel");
   elements.learnWord = document.getElementById("learn-word");
   elements.learnWordAudio = document.getElementById("learn-word-audio");
   elements.learnTranslation = document.getElementById("learn-translation");
@@ -375,7 +440,23 @@ function bindEvents() {
     speakEnglish(words[state.learnIndex].example);
   });
 
+  elements.learnMedia.addEventListener("pointerdown", handleLearnMediaPointerDown);
+  elements.learnMedia.addEventListener("pointerup", clearLearnMediaLongPress);
+  elements.learnMedia.addEventListener("pointerleave", clearLearnMediaLongPress);
+  elements.learnMedia.addEventListener("pointercancel", clearLearnMediaLongPress);
+  elements.learnMedia.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
   elements.learnMedia.addEventListener("click", () => {
+    if (state.learnLongPressTriggered) {
+      state.learnLongPressTriggered = false;
+      return;
+    }
+
+    if (state.learnDeleteMenuOpen) {
+      return;
+    }
+
     const images = getWordImages(words[state.learnIndex]);
 
     if (images.length < 2) {
@@ -384,6 +465,16 @@ function bindEvents() {
 
     state.learnImageIndex = (state.learnImageIndex + 1) % images.length;
     renderLearn();
+  });
+
+  elements.learnImageDelete.addEventListener("click", deleteCurrentLearnImage);
+  elements.learnImageCancel.addEventListener("click", () => {
+    setLearnDeleteMenu(false);
+  });
+  elements.learnImageMenu.addEventListener("click", (event) => {
+    if (event.target === elements.learnImageMenu) {
+      setLearnDeleteMenu(false);
+    }
   });
 
   elements.wordList.addEventListener("click", (event) => {
@@ -400,6 +491,7 @@ function bindEvents() {
       return;
     }
 
+    setLearnDeleteMenu(false);
     state.learnIndex -= 1;
     state.learnImageIndex = 0;
     state.learnedSet.add(state.learnIndex);
@@ -408,6 +500,7 @@ function bindEvents() {
   });
 
   elements.learnNext.addEventListener("click", () => {
+    setLearnDeleteMenu(false);
     state.learnIndex = state.learnIndex < words.length - 1 ? state.learnIndex + 1 : 0;
     state.learnImageIndex = 0;
     state.learnedSet.add(state.learnIndex);
@@ -467,41 +560,36 @@ function bindEvents() {
   elements.imageReset.addEventListener("click", resetImageMode);
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.learnListOpen) {
-      setLearnDrawer(false);
+    if (event.key === "Escape") {
+      if (state.learnDeleteMenuOpen) {
+        setLearnDeleteMenu(false);
+      }
+
+      if (state.learnListOpen) {
+        setLearnDrawer(false);
+      }
     }
   });
 }
 
 function switchView(viewId) {
-  state.currentView = viewId;
+  const nextView = viewId === "learn" ? "learn" : "learn";
+  state.currentView = nextView;
 
-  if (viewId !== "learn" && state.learnListOpen) {
+  if (nextView !== "learn" && state.learnListOpen) {
     setLearnDrawer(false);
   }
 
   elements.views.forEach((view) => {
-    view.classList.toggle("active", view.id === viewId);
+    view.classList.toggle("active", view.id === nextView);
   });
 
   elements.navPills.forEach((button) => {
-    button.classList.toggle("active", button.dataset.target === viewId);
+    button.classList.toggle("active", button.dataset.target === nextView);
   });
 
-  if (viewId === "learn") {
+  if (nextView === "learn") {
     renderLearn();
-  }
-
-  if (viewId === "review") {
-    renderReview();
-  }
-
-  if (viewId === "image") {
-    renderImage();
-  }
-
-  if (viewId === "stats") {
-    renderStats();
   }
 }
 
@@ -531,7 +619,8 @@ function renderLearn() {
   elements.learnProgress.textContent = `学习进度 ${state.learnIndex + 1} / ${words.length}`;
   elements.learnImage.src = activeImage.url;
   elements.learnImage.alt = `${word.english} 的真实图片`;
-  elements.learnMedia.classList.toggle("is-switchable", images.length > 1);
+  elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !state.learnDeleteMenuOpen);
+  elements.learnMedia.classList.toggle("is-manage-open", state.learnDeleteMenuOpen);
   elements.learnWord.textContent = word.english;
   elements.learnTranslation.textContent = word.chinese;
   elements.learnExample.textContent = word.example;
@@ -570,6 +659,21 @@ function syncLearnListVisibility() {
 function setLearnDrawer(isOpen) {
   state.learnListOpen = isOpen;
   syncLearnListVisibility();
+}
+
+function setLearnDeleteMenu(isOpen) {
+  state.learnDeleteMenuOpen = isOpen;
+  clearLearnMediaLongPress();
+
+  const images = getWordImages(words[state.learnIndex]);
+  const canDelete = images.length > 1;
+
+  elements.learnImageMenu.hidden = !isOpen;
+  elements.learnImageMenu.setAttribute("aria-hidden", String(!isOpen));
+  elements.learnMedia.classList.toggle("is-manage-open", isOpen);
+  elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !isOpen);
+  elements.learnImageDelete.disabled = !canDelete;
+  elements.learnImageDelete.textContent = canDelete ? "删除当前图片" : "至少保留 1 张图";
 }
 
 function renderReview() {
@@ -728,6 +832,7 @@ function renderStats() {
 }
 
 function jumpToWord(index) {
+  setLearnDeleteMenu(false);
   state.learnIndex = index;
   state.learnImageIndex = 0;
   state.learnedSet.add(index);
@@ -778,10 +883,13 @@ function getWordImages(word) {
     : [];
 
   const images = Array.isArray(word.images) && word.images.length > 0 ? word.images : fallback;
-
-  return images.filter(
-    (image, index, collection) => collection.findIndex((candidate) => candidate.source === image.source) === index
+  const uniqueImages = images.filter(
+    (image, index, collection) => collection.findIndex((candidate) => candidate.url === image.url) === index
   );
+  const removedUrls = state.dataSource === "local" ? new Set(state.removedImagesByWord[word.id] || []) : new Set();
+  const visibleImages = uniqueImages.filter((image) => !removedUrls.has(image.url));
+
+  return visibleImages.length > 0 ? visibleImages : uniqueImages.slice(0, 1);
 }
 
 function getRoundImage(word, roundIndex) {
@@ -830,6 +938,79 @@ function resetImageMode() {
   renderStats();
 }
 
+function handleLearnMediaPointerDown(event) {
+  if (state.learnDeleteMenuOpen) {
+    return;
+  }
+
+  if (event.pointerType === "mouse" && event.button !== 0) {
+    return;
+  }
+
+  clearLearnMediaLongPress();
+  state.learnLongPressTriggered = false;
+  state.learnLongPressTimer = window.setTimeout(() => {
+    state.learnLongPressTriggered = true;
+    setLearnDeleteMenu(true);
+  }, LEARN_LONG_PRESS_MS);
+}
+
+function clearLearnMediaLongPress() {
+  if (!state.learnLongPressTimer) {
+    return;
+  }
+
+  window.clearTimeout(state.learnLongPressTimer);
+  state.learnLongPressTimer = null;
+}
+
+async function deleteCurrentLearnImage() {
+  const word = words[state.learnIndex];
+  const images = getWordImages(word);
+
+  if (images.length <= 1) {
+    setLearnDeleteMenu(false);
+    return;
+  }
+
+  const activeIndex = Math.min(state.learnImageIndex, images.length - 1);
+  const activeImage = images[activeIndex];
+
+  if (state.dataSource === "api" && typeof activeImage.id === "number") {
+    elements.learnImageDelete.disabled = true;
+    elements.learnImageDelete.textContent = "删除中...";
+
+    try {
+      const payload = await deleteWordImageApi(activeImage.id);
+      updateWordInDeck(payload.word);
+      state.learnImageIndex = Math.min(activeIndex, getWordImages(words[state.learnIndex]).length - 1);
+    } catch (error) {
+      console.error(error);
+      window.alert("删除失败，请确认后端已启动，并且数据库已初始化。");
+    } finally {
+      setLearnDeleteMenu(false);
+      renderLearn();
+      renderReview();
+      renderImage();
+    }
+
+    return;
+  }
+
+  const removedUrls = state.removedImagesByWord[word.id] || [];
+
+  if (!removedUrls.includes(activeImage.url)) {
+    state.removedImagesByWord[word.id] = [...removedUrls, activeImage.url];
+    persistRemovedImagesByWord();
+  }
+
+  state.learnImageIndex = Math.min(activeIndex, images.length - 2);
+  setLearnDeleteMenu(false);
+  renderLearn();
+  renderReview();
+  renderImage();
+}
+
 function speakEnglish(text) {
   if (!text || !("speechSynthesis" in window)) {
     return;
@@ -863,4 +1044,99 @@ function shuffle(items) {
   }
 
   return copy;
+}
+
+function loadRemovedImagesByWord() {
+  try {
+    const rawValue = window.localStorage.getItem(IMAGE_REMOVALS_STORAGE_KEY);
+
+    if (!rawValue) {
+      return {};
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    return parsedValue && typeof parsedValue === "object" ? parsedValue : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function persistRemovedImagesByWord() {
+  try {
+    window.localStorage.setItem(IMAGE_REMOVALS_STORAGE_KEY, JSON.stringify(state.removedImagesByWord));
+  } catch (error) {
+    return;
+  }
+}
+
+function cloneWords(sourceWords) {
+  return sourceWords.map((word) => ({
+    ...word,
+    images: Array.isArray(word.images) ? word.images.map((image) => ({ ...image })) : []
+  }));
+}
+
+function normalizeWord(word) {
+  const normalizedImages = (Array.isArray(word.images) ? word.images : []).map((image, index) => ({
+    id: typeof image.id === "number" ? image.id : image.id || `${word.id}-${index + 1}`,
+    url: image.url || image.publicUrl || "",
+    source: image.source || image.sourceLabel || word.imageSource || "Image",
+    credit: image.credit ?? image.sourceCredit ?? word.imageCredit ?? null,
+    storageType: image.storageType || "external",
+    storageKey: image.storageKey || null,
+    sortOrder: image.sortOrder ?? index
+  }));
+
+  return {
+    ...word,
+    image: word.image || normalizedImages[0]?.url || "",
+    imageSource: word.imageSource || normalizedImages[0]?.source || null,
+    imageCredit: word.imageCredit || normalizedImages[0]?.credit || null,
+    images: normalizedImages
+  };
+}
+
+async function fetchLearningDeck() {
+  const response = await fetch(`${API_BASE_URL}/learning-deck`, {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load learning deck: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  return payload.words || [];
+}
+
+async function deleteWordImageApi(imageId) {
+  const response = await fetch(`${API_BASE_URL}/word-images/${imageId}/delete`, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete image: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function updateWordInDeck(nextWord) {
+  if (!nextWord) {
+    return;
+  }
+
+  const normalizedWord = normalizeWord(nextWord);
+  const wordIndex = words.findIndex((word) => word.id === normalizedWord.id);
+
+  if (wordIndex === -1) {
+    return;
+  }
+
+  words[wordIndex] = normalizedWord;
 }

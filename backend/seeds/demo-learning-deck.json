@@ -1,0 +1,282 @@
+[
+  {
+    "sortOrder": 1,
+    "id": "apple",
+    "english": "apple",
+    "chinese": "苹果",
+    "level": "初中高频",
+    "theme": "食物",
+    "example": "I put an apple in my school bag for lunch.",
+    "exampleChinese": "我把一个苹果放进书包里当午餐。",
+    "imageReason": "红苹果主体非常明确，颜色醒目，学生一眼就能把 apple 和真实水果连起来。",
+    "scene": "午餐盒打开的瞬间，一颗新鲜红苹果最先跳进视线。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/apple/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Maksym Kaharlytskyi"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/apple/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 2,
+    "id": "bicycle",
+    "english": "bicycle",
+    "chinese": "自行车",
+    "level": "初中高频",
+    "theme": "日常出行",
+    "example": "He rides his bicycle to school on sunny days.",
+    "exampleChinese": "天气晴朗的时候，他骑自行车去上学。",
+    "imageReason": "真实街道上的自行车比图标更有生活感，两个车轮和骑行姿态能快速触发记忆。",
+    "scene": "放学路上骑车回家，车轮转起来的画面很容易和单词绑定。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/bicycle/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Murillo de Paula"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/bicycle/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 3,
+    "id": "library",
+    "english": "library",
+    "chinese": "图书馆",
+    "level": "初中高频",
+    "theme": "校园",
+    "example": "We borrow story books from the library after class.",
+    "exampleChinese": "我们下课后从图书馆借故事书。",
+    "imageReason": "书架、桌椅和安静光线一起出现时，library 不再是抽象名词，而是一个能进入的真实空间。",
+    "scene": "午后阳光洒进图书馆，学生坐在书架旁安静看书。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/library/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Robert Bye"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/library/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 4,
+    "id": "bridge",
+    "english": "bridge",
+    "chinese": "桥",
+    "level": "初中高频",
+    "theme": "自然与建筑",
+    "example": "A small bridge crosses the river behind the village.",
+    "exampleChinese": "村子后面有一座小桥横跨河流。",
+    "imageReason": "桥横跨两端的结构很直观，雾气和纵深感让画面更有记忆点。",
+    "scene": "薄雾里，一座长桥从一端延伸到另一端，像把两侧世界连起来。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/bridge/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Andreas Gucklhorn"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/bridge/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 5,
+    "id": "forest",
+    "english": "forest",
+    "chinese": "森林",
+    "level": "初中高频",
+    "theme": "自然",
+    "example": "The forest becomes quiet after sunset.",
+    "exampleChinese": "日落以后，森林变得安静下来。",
+    "imageReason": "树木密集、光线穿透树林的场景，比单棵树更能体现 forest 的整体感。",
+    "scene": "阳光从高高的树间落下来，整片森林安静又深。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/forest/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Geran de Klerk"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/forest/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 6,
+    "id": "courage",
+    "english": "courage",
+    "chinese": "勇气",
+    "level": "高中常用",
+    "theme": "情绪与品质",
+    "example": "It takes courage to speak English in front of the class.",
+    "exampleChinese": "在全班同学面前说英语需要勇气。",
+    "imageReason": "站在高处望向远方的人物场景，比抽象符号更能传达明明紧张但还是向前的 courage。",
+    "scene": "一个人站在高处迎着风，虽然不轻松，但没有退后。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/courage/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Dane Deaner"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/courage/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 7,
+    "id": "whisper",
+    "english": "whisper",
+    "chinese": "低声说",
+    "level": "高中常用",
+    "theme": "动作",
+    "example": "Please whisper in the reading room.",
+    "exampleChinese": "在阅览室里请低声说话。",
+    "imageReason": "靠近耳边说话的真实动作是 whisper 最强的视觉线索，比任何图标都更像轻声说。",
+    "scene": "安静环境里，两个人靠近耳边小声交流，几乎只有对方听得见。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/whisper/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Matheus Ferrero"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/whisper/02.jpg",
+        "sourceLabel": "Wikimedia Commons",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 8,
+    "id": "puzzle",
+    "english": "puzzle",
+    "chinese": "谜题；拼图",
+    "level": "初中高频",
+    "theme": "学习活动",
+    "example": "This puzzle helps us remember new shapes.",
+    "exampleChinese": "这个拼图帮助我们记住新的图形。",
+    "imageReason": "散开的拼图块和正在完成的图案，能直接让学生联想到 puzzle 的拼起来过程。",
+    "scene": "桌面上散着拼图块，找到正确位置后，图像慢慢完整起来。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/puzzle/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Mel Poole"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/puzzle/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 9,
+    "id": "journey",
+    "english": "journey",
+    "chinese": "旅程",
+    "level": "高中常用",
+    "theme": "旅行",
+    "example": "Our train journey to Beijing started early in the morning.",
+    "exampleChinese": "我们去北京的火车旅程一大早就开始了。",
+    "imageReason": "向远方延伸的道路特别适合表现 journey 的过程感，比交通工具特写更有出发记忆。",
+    "scene": "一条路向远方伸展，清晨出发时最能感觉到旅程开始了。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/journey/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Luke Stackpoole"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/journey/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  },
+  {
+    "sortOrder": 10,
+    "id": "harvest",
+    "english": "harvest",
+    "chinese": "收获；收割",
+    "level": "高中常用",
+    "theme": "季节与农业",
+    "example": "Farmers celebrate the rice harvest in autumn.",
+    "exampleChinese": "农民们在秋天庆祝稻谷丰收。",
+    "imageReason": "金黄色田野和收成氛围能把 harvest 的季节感、成果感一起带出来。",
+    "scene": "秋天的田野一片金黄，成熟作物被收进篮子里。",
+    "images": [
+      {
+        "sortOrder": 1,
+        "storageType": "local",
+        "storageKey": "demo-images/harvest/01.jpg",
+        "sourceLabel": "Unsplash",
+        "sourceCredit": "Jan Kopriva"
+      },
+      {
+        "sortOrder": 2,
+        "storageType": "local",
+        "storageKey": "demo-images/harvest/02.jpg",
+        "sourceLabel": "Pexels",
+        "sourceCredit": null
+      }
+    ]
+  }
+]
