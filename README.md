@@ -99,6 +99,50 @@ python -m http.server 8000
 
 然后访问 `http://localhost:8000`。
 
+## 批量获取初高中词表
+
+仓库里新增了一个独立脚本：
+
+```powershell
+node scripts/fetch-school-words.mjs
+```
+
+默认做的事情：
+
+- 下载公开的初中、高中英语词表文本
+- 自动清洗、转小写、去重
+- 默认过滤掉多词短语，只保留单词
+- 把原始下载文件和清洗后的结果一起保存到本地
+
+输出文件：
+
+```text
+data/
+├─ raw/
+│  ├─ junior-high.txt
+│  └─ senior-high.txt
+└─ wordlists/
+   ├─ school-common-words.json
+   ├─ school-common-words.txt
+   ├─ junior-high-common-words.txt
+   └─ senior-high-common-words.txt
+```
+
+常用参数：
+
+```powershell
+# 改输出目录
+node scripts/fetch-school-words.mjs --out-dir ./data/custom-wordlists
+
+# 保留词组，例如 be good at
+node scripts/fetch-school-words.mjs --include-phrases
+
+# 不保存原始下载文本
+node scripts/fetch-school-words.mjs --skip-raw
+```
+
+脚本当前默认用的是方便程序化抓取的公开词表源。如果你后面要切到更严格的官方口径，直接改 `scripts/fetch-school-words.mjs` 里的 `SOURCES`，替换成你确认过的课标导出文件或你自己的词表地址即可。
+
 ## 当前说明
 
 - 页面为低门槛静态原型，重点验证产品结构和交互流程
