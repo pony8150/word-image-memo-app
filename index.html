@@ -147,9 +147,9 @@
                 <img id="learn-image" src="" alt="" />
                 <div class="learn-image-menu" id="learn-image-menu" aria-hidden="true" hidden>
                   <div class="learn-image-menu-card">
-                    <p class="learn-image-menu-title">图片操作</p>
-                    <button class="danger-btn" id="learn-image-delete" type="button">删除当前图片</button>
-                    <button class="secondary-btn" id="learn-image-cancel" type="button">取消</button>
+                    <button class="secondary-btn" id="learn-image-search" type="button">上网搜索</button>
+                    <button class="secondary-btn" id="learn-image-upload" type="button">上传</button>
+                    <button class="danger-btn" id="learn-image-delete" type="button">删除</button>
                   </div>
                 </div>
               </div>
@@ -196,6 +196,22 @@
             </aside>
           </div>
         </section>
+
+        <div class="learn-upload-modal" id="learn-upload-modal" aria-hidden="true" hidden>
+          <div class="learn-upload-card" role="dialog" aria-modal="true" aria-labelledby="learn-upload-title">
+            <button class="learn-upload-dropzone" id="learn-upload-dropzone" type="button">
+              <span class="learn-upload-plus" aria-hidden="true">+</span>
+              <strong class="learn-upload-title" id="learn-upload-title">上传图片</strong>
+              <span class="learn-upload-copy">拖图片到这里，或点一下选择文件</span>
+            </button>
+
+            <div class="learn-upload-footer">
+              <p class="learn-upload-status" id="learn-upload-status">支持 jpg、png、webp、gif，单张不超过 10MB</p>
+            </div>
+
+            <input id="learn-upload-input" type="file" accept="image/*" hidden />
+          </div>
+        </div>
 
         <section class="view" id="review" hidden>
           <div class="section-header">
@@ -262,6 +278,7 @@
               </div>
             </aside>
           </div>
+
         </section>
 
         <section class="view" id="image" hidden>

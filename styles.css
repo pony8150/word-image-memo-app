@@ -597,11 +597,96 @@ main {
   box-shadow: 0 20px 40px rgba(17, 41, 61, 0.22);
 }
 
-.learn-image-menu-title {
-  margin: 0;
+.learn-upload-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(14, 31, 45, 0.34);
+  backdrop-filter: blur(10px);
+}
+
+.learn-upload-modal[hidden] {
+  display: none;
+}
+
+.learn-upload-card {
+  width: min(540px, 100%);
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 252, 255, 0.94));
+  box-shadow: 0 24px 60px rgba(17, 41, 61, 0.24);
+}
+
+.learn-upload-dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 280px;
+  padding: 28px 24px;
+  border-radius: 26px;
+  border: 2px dashed rgba(46, 155, 207, 0.22);
+  background: linear-gradient(180deg, rgba(236, 248, 255, 0.9), rgba(255, 255, 255, 0.96));
+  color: var(--text);
+  text-align: center;
+}
+
+.learn-upload-dropzone:hover,
+.learn-upload-dropzone.is-dragging {
+  border-color: rgba(46, 155, 207, 0.46);
+  background: linear-gradient(180deg, rgba(225, 244, 255, 0.98), rgba(255, 255, 255, 0.98));
+  transform: translateY(-1px);
+}
+
+.learn-upload-dropzone:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.learn-upload-plus {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(46, 155, 207, 0.14), rgba(103, 216, 177, 0.18));
+  color: var(--primary-deep);
   font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 3.6rem;
+  line-height: 1;
+}
+
+.learn-upload-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.learn-upload-copy {
+  max-width: 20ch;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.learn-upload-footer {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+
+.learn-upload-status {
+  margin: 0;
+  min-height: 1.6em;
+  color: var(--muted);
+  line-height: 1.6;
+  text-align: center;
 }
 
 .learn-content {
@@ -1197,5 +1282,21 @@ main {
 
   .learn-content {
     gap: 16px;
+  }
+
+  .learn-upload-card {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .learn-upload-dropzone {
+    min-height: 240px;
+    padding: 22px 18px;
+  }
+
+  .learn-upload-plus {
+    width: 76px;
+    height: 76px;
+    font-size: 3rem;
   }
 }

@@ -243,6 +243,9 @@ const defaultWords = [
 
 const API_BASE_URL = (window.WORD_IMAGE_MEMO_API_BASE || "http://localhost:3000/api").replace(/\/$/, "");
 const IMAGE_REMOVALS_STORAGE_KEY = "word-image-memo.removed-images.v1";
+const API_DECK_CACHE_STORAGE_KEY = "word-image-memo.api-deck.v1";
+const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
 const LEARN_LONG_PRESS_MS = 650;
 
 let words = cloneWords(defaultWords).map(normalizeWord);
@@ -254,6 +257,10 @@ const state = {
   learnImageIndex: 0,
   learnListOpen: false,
   learnDeleteMenuOpen: false,
+  learnUploadOpen: false,
+  learnUploadDragging: false,
+  learnUploadPending: false,
+  learnUploadStatus: LEARN_UPLOAD_DEFAULT_STATUS,
   learnLongPressTriggered: false,
   learnLongPressTimer: null,
   learnedSet: new Set([0]),
@@ -297,6 +304,7 @@ async function refreshDeckFromServer({ preserveWordId = null, silent = false } =
     const remoteWords = await fetchLearningDeck();
 
     if (Array.isArray(remoteWords) && remoteWords.length > 0) {
+      persistApiDeckCache(remoteWords);
       applyDeckWords(remoteWords, "api", preserveWordId);
       return true;
     }
@@ -304,6 +312,13 @@ async function refreshDeckFromServer({ preserveWordId = null, silent = false } =
     if (!silent) {
       console.error(error);
     }
+  }
+
+  const cachedApiWords = loadCachedApiDeck();
+
+  if (Array.isArray(cachedApiWords) && cachedApiWords.length > 0) {
+    applyDeckWords(cachedApiWords, "api-cache", preserveWordId);
+    return false;
   }
 
   applyDeckWords(defaultWords, "local", preserveWordId);
@@ -320,6 +335,10 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
   state.learnIndex = nextIndex >= 0 ? nextIndex : 0;
   state.learnImageIndex = 0;
   state.learnDeleteMenuOpen = false;
+  state.learnUploadOpen = false;
+  state.learnUploadDragging = false;
+  state.learnUploadPending = false;
+  state.learnUploadStatus = LEARN_UPLOAD_DEFAULT_STATUS;
   state.learnLongPressTriggered = false;
   state.learnLongPressTimer = null;
   state.learnedSet = words.length > 0 ? new Set([state.learnIndex]) : new Set();
@@ -336,6 +355,8 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
   state.imageChoices = [];
   state.imageLastCorrect = false;
   state.imageSelectedIndex = null;
+  resetLearnUploadInput();
+  syncLearnUploadModal();
 }
 
 function cacheElements() {
@@ -355,8 +376,13 @@ function cacheElements() {
   elements.learnMedia = document.getElementById("learn-media");
   elements.learnImage = document.getElementById("learn-image");
   elements.learnImageMenu = document.getElementById("learn-image-menu");
+  elements.learnImageSearch = document.getElementById("learn-image-search");
+  elements.learnImageUpload = document.getElementById("learn-image-upload");
   elements.learnImageDelete = document.getElementById("learn-image-delete");
-  elements.learnImageCancel = document.getElementById("learn-image-cancel");
+  elements.learnUploadModal = document.getElementById("learn-upload-modal");
+  elements.learnUploadDropzone = document.getElementById("learn-upload-dropzone");
+  elements.learnUploadInput = document.getElementById("learn-upload-input");
+  elements.learnUploadStatus = document.getElementById("learn-upload-status");
   elements.learnWord = document.getElementById("learn-word");
   elements.learnWordAudio = document.getElementById("learn-word-audio");
   elements.learnTranslation = document.getElementById("learn-translation");
@@ -467,15 +493,54 @@ function bindEvents() {
     renderLearn();
   });
 
-  elements.learnImageDelete.addEventListener("click", deleteCurrentLearnImage);
-  elements.learnImageCancel.addEventListener("click", () => {
-    setLearnDeleteMenu(false);
-  });
-  elements.learnImageMenu.addEventListener("click", (event) => {
-    if (event.target === elements.learnImageMenu) {
-      setLearnDeleteMenu(false);
-    }
-  });
+  // Prototype actions should not break core learning navigation if the menu markup is stale.
+  if (elements.learnImageSearch) {
+    elements.learnImageSearch.addEventListener("click", () => {
+      handlePendingLearnImageAction("search");
+    });
+  }
+
+  if (elements.learnImageUpload) {
+    elements.learnImageUpload.addEventListener("click", () => {
+      openLearnUploadModal();
+    });
+  }
+
+  if (elements.learnImageDelete) {
+    elements.learnImageDelete.addEventListener("click", deleteCurrentLearnImage);
+  }
+
+  if (elements.learnImageMenu) {
+    elements.learnImageMenu.addEventListener("click", (event) => {
+      if (event.target === elements.learnImageMenu) {
+        setLearnDeleteMenu(false);
+      }
+    });
+  }
+
+  if (elements.learnUploadModal) {
+    elements.learnUploadModal.addEventListener("click", (event) => {
+      if (event.target === elements.learnUploadModal) {
+        closeLearnUploadModal();
+      }
+    });
+  }
+
+  if (elements.learnUploadDropzone) {
+    elements.learnUploadDropzone.addEventListener("click", () => {
+      triggerLearnUploadPicker();
+    });
+    elements.learnUploadDropzone.addEventListener("dragenter", handleLearnUploadDragEnter);
+    elements.learnUploadDropzone.addEventListener("dragover", handleLearnUploadDragOver);
+    elements.learnUploadDropzone.addEventListener("dragleave", handleLearnUploadDragLeave);
+    elements.learnUploadDropzone.addEventListener("drop", handleLearnUploadDrop);
+  }
+
+  if (elements.learnUploadInput) {
+    elements.learnUploadInput.addEventListener("change", (event) => {
+      handleLearnUploadFiles(event.target.files);
+    });
+  }
 
   elements.wordList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-word-index]");
@@ -561,6 +626,10 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (state.learnUploadOpen) {
+        closeLearnUploadModal();
+      }
+
       if (state.learnDeleteMenuOpen) {
         setLearnDeleteMenu(false);
       }
@@ -662,6 +731,10 @@ function setLearnDrawer(isOpen) {
 }
 
 function setLearnDeleteMenu(isOpen) {
+  if (!elements.learnImageMenu || !elements.learnImageDelete) {
+    return;
+  }
+
   state.learnDeleteMenuOpen = isOpen;
   clearLearnMediaLongPress();
 
@@ -673,7 +746,7 @@ function setLearnDeleteMenu(isOpen) {
   elements.learnMedia.classList.toggle("is-manage-open", isOpen);
   elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !isOpen);
   elements.learnImageDelete.disabled = !canDelete;
-  elements.learnImageDelete.textContent = canDelete ? "删除当前图片" : "至少保留 1 张图";
+  elements.learnImageDelete.textContent = "删除";
 }
 
 function renderReview() {
@@ -964,6 +1037,170 @@ function clearLearnMediaLongPress() {
   state.learnLongPressTimer = null;
 }
 
+function handlePendingLearnImageAction(action) {
+  setLearnDeleteMenu(false);
+  console.info(`Learn image action is not implemented yet: ${action}`);
+}
+
+function openLearnUploadModal() {
+  setLearnDeleteMenu(false);
+  state.learnUploadOpen = true;
+  state.learnUploadDragging = false;
+  state.learnUploadStatus = LEARN_UPLOAD_DEFAULT_STATUS;
+  syncLearnUploadModal();
+}
+
+function closeLearnUploadModal() {
+  if (state.learnUploadPending) {
+    return;
+  }
+
+  state.learnUploadOpen = false;
+  state.learnUploadDragging = false;
+  state.learnUploadStatus = LEARN_UPLOAD_DEFAULT_STATUS;
+  resetLearnUploadInput();
+  syncLearnUploadModal();
+}
+
+function syncLearnUploadModal() {
+  if (!elements.learnUploadModal || !elements.learnUploadDropzone || !elements.learnUploadStatus) {
+    return;
+  }
+
+  elements.learnUploadModal.hidden = !state.learnUploadOpen;
+  elements.learnUploadModal.setAttribute("aria-hidden", String(!state.learnUploadOpen));
+  elements.learnUploadDropzone.classList.toggle("is-dragging", state.learnUploadDragging);
+  elements.learnUploadDropzone.disabled = state.learnUploadPending;
+  elements.learnUploadStatus.textContent = state.learnUploadStatus;
+}
+
+function triggerLearnUploadPicker() {
+  if (state.learnUploadPending || !elements.learnUploadInput) {
+    return;
+  }
+
+  elements.learnUploadInput.click();
+}
+
+function handleLearnUploadDragEnter(event) {
+  event.preventDefault();
+
+  if (state.learnUploadPending) {
+    return;
+  }
+
+  state.learnUploadDragging = true;
+  state.learnUploadStatus = "松开即可上传";
+  syncLearnUploadModal();
+}
+
+function handleLearnUploadDragOver(event) {
+  event.preventDefault();
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  if (state.learnUploadPending) {
+    return;
+  }
+
+  state.learnUploadDragging = true;
+  state.learnUploadStatus = "松开即可上传";
+  syncLearnUploadModal();
+}
+
+function handleLearnUploadDragLeave(event) {
+  event.preventDefault();
+
+  if (state.learnUploadPending) {
+    return;
+  }
+
+  if (event.currentTarget !== event.target) {
+    return;
+  }
+
+  state.learnUploadDragging = false;
+  state.learnUploadStatus = LEARN_UPLOAD_DEFAULT_STATUS;
+  syncLearnUploadModal();
+}
+
+function handleLearnUploadDrop(event) {
+  event.preventDefault();
+
+  if (state.learnUploadPending) {
+    return;
+  }
+
+  state.learnUploadDragging = false;
+  const files = event.dataTransfer?.files || null;
+  handleLearnUploadFiles(files);
+}
+
+async function handleLearnUploadFiles(fileList) {
+  const file = fileList?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    state.learnUploadStatus = "只能上传图片文件";
+    resetLearnUploadInput();
+    syncLearnUploadModal();
+    return;
+  }
+
+  if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+    state.learnUploadStatus = "图片太大了，请控制在 10MB 以内";
+    resetLearnUploadInput();
+    syncLearnUploadModal();
+    return;
+  }
+
+  const currentWord = words[state.learnIndex];
+  state.learnUploadPending = true;
+  state.learnUploadDragging = false;
+  state.learnUploadStatus = "上传中...";
+  syncLearnUploadModal();
+
+  try {
+    const payload = await uploadWordImageApi(currentWord.id, file);
+    state.dataSource = "api";
+    updateWordInDeck(payload.word);
+    state.learnImageIndex = Math.max(getWordImages(words[state.learnIndex]).length - 1, 0);
+    resetLearnUploadInput();
+    state.learnUploadPending = false;
+    closeLearnUploadModal();
+    renderLearn();
+    renderReview();
+    renderImage();
+  } catch (error) {
+    console.error(error);
+    state.learnUploadPending = false;
+    state.learnUploadStatus = getLearnUploadErrorMessage(error);
+    resetLearnUploadInput();
+    syncLearnUploadModal();
+  }
+}
+
+function resetLearnUploadInput() {
+  if (!elements.learnUploadInput) {
+    return;
+  }
+
+  elements.learnUploadInput.value = "";
+}
+
+function getLearnUploadErrorMessage(error) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "上传失败，请确认后端已经启动";
+}
+
 async function deleteCurrentLearnImage() {
   const word = words[state.learnIndex];
   const images = getWordImages(word);
@@ -976,7 +1213,7 @@ async function deleteCurrentLearnImage() {
   const activeIndex = Math.min(state.learnImageIndex, images.length - 1);
   const activeImage = images[activeIndex];
 
-  if (state.dataSource === "api" && typeof activeImage.id === "number") {
+  if (typeof activeImage.id === "number") {
     elements.learnImageDelete.disabled = true;
     elements.learnImageDelete.textContent = "删除中...";
 
@@ -1069,6 +1306,29 @@ function persistRemovedImagesByWord() {
   }
 }
 
+function loadCachedApiDeck() {
+  try {
+    const rawValue = window.localStorage.getItem(API_DECK_CACHE_STORAGE_KEY);
+
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    return Array.isArray(parsedValue) ? parsedValue : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function persistApiDeckCache(deckWords) {
+  try {
+    window.localStorage.setItem(API_DECK_CACHE_STORAGE_KEY, JSON.stringify(deckWords));
+  } catch (error) {
+    return;
+  }
+}
+
 function cloneWords(sourceWords) {
   return sourceWords.map((word) => ({
     ...word,
@@ -1126,6 +1386,40 @@ async function deleteWordImageApi(imageId) {
   return response.json();
 }
 
+async function uploadWordImageApi(wordId, file) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(`${API_BASE_URL}/word-images/upload/${encodeURIComponent(wordId)}`, {
+    method: "POST",
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "图片上传失败"));
+  }
+
+  return response.json();
+}
+
+async function extractApiErrorMessage(response, fallbackMessage) {
+  try {
+    const payload = await response.json();
+
+    if (Array.isArray(payload.message) && payload.message.length > 0) {
+      return String(payload.message[0]);
+    }
+
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message;
+    }
+  } catch (error) {
+    return `${fallbackMessage} (${response.status})`;
+  }
+
+  return `${fallbackMessage} (${response.status})`;
+}
+
 function updateWordInDeck(nextWord) {
   if (!nextWord) {
     return;
@@ -1139,4 +1433,8 @@ function updateWordInDeck(nextWord) {
   }
 
   words[wordIndex] = normalizedWord;
+
+  if (state.dataSource !== "local") {
+    persistApiDeckCache(words);
+  }
 }

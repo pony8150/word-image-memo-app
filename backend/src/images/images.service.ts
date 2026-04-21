@@ -1,7 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PoolClient } from "pg";
 import { appEnv } from "../config/env";
 import { DatabaseService } from "../database/database.service";
+import { StorageService } from "../storage/storage.service";
 import { WordsService } from "../words/words.service";
 
 interface ImageTargetRow {
@@ -10,12 +11,73 @@ interface ImageTargetRow {
   status: "active" | "deleted";
 }
 
+interface UploadWordImageInput {
+  storageKey: string;
+  mimetype: string;
+}
+
 @Injectable()
 export class ImagesService {
   constructor(
     private readonly database: DatabaseService,
-    private readonly wordsService: WordsService
+    private readonly wordsService: WordsService,
+    private readonly storage: StorageService
   ) {}
+
+  async uploadImage(wordId: string, uploadedImage: UploadWordImageInput) {
+    if (!uploadedImage.storageKey) {
+      throw new BadRequestException("Upload storage key is missing.");
+    }
+
+    const existingWord = await this.wordsService.getWordById(wordId);
+
+    if (!existingWord) {
+      await this.safeDeleteLocalFile(uploadedImage.storageKey);
+      throw new NotFoundException("Word not found.");
+    }
+
+    try {
+      return await this.database.transaction(async (client) => {
+        const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
+          `
+            SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_sort_order
+            FROM word_images
+            WHERE word_id = $1
+          `,
+          [wordId]
+        );
+
+        const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
+        await client.query(
+          `
+            INSERT INTO word_images (
+              word_id,
+              storage_type,
+              storage_key,
+              public_url,
+              source_label,
+              source_credit,
+              status,
+              sort_order
+            )
+            VALUES ($1, 'local', $2, NULL, 'Manual Upload', NULL, 'active', $3)
+          `,
+          [wordId, uploadedImage.storageKey, nextSortOrder]
+        );
+
+        const word = await this.wordsService.getWordById(wordId, client);
+
+        if (!word) {
+          throw new NotFoundException("Word not found after upload.");
+        }
+
+        return { word };
+      });
+    } catch (error) {
+      await this.safeDeleteLocalFile(uploadedImage.storageKey);
+      throw error;
+    }
+  }
 
   async deleteImage(imageId: number) {
     return this.database.transaction(async (client) => {
@@ -130,5 +192,13 @@ export class ImagesService {
       `,
       [imageId, wordId, action, note]
     );
+  }
+
+  private async safeDeleteLocalFile(storageKey: string): Promise<void> {
+    try {
+      await this.storage.deleteLocalFile(storageKey);
+    } catch (error) {
+      return;
+    }
   }
 }
