@@ -246,6 +246,7 @@ const IMAGE_REMOVALS_STORAGE_KEY = "word-image-memo.removed-images.v1";
 const API_DECK_CACHE_STORAGE_KEY = "word-image-memo.api-deck.v1";
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
+const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
 const LEARN_LONG_PRESS_MS = 650;
 
 let words = cloneWords(defaultWords).map(normalizeWord);
@@ -257,6 +258,13 @@ const state = {
   learnImageIndex: 0,
   learnListOpen: false,
   learnDeleteMenuOpen: false,
+  learnSearchOpen: false,
+  learnSearchPending: false,
+  learnSearchImportingId: null,
+  learnSearchQuery: "",
+  learnSearchStatus: "",
+  learnSearchResults: [],
+  learnSearchRequestId: 0,
   learnUploadOpen: false,
   learnUploadDragging: false,
   learnUploadPending: false,
@@ -335,6 +343,13 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
   state.learnIndex = nextIndex >= 0 ? nextIndex : 0;
   state.learnImageIndex = 0;
   state.learnDeleteMenuOpen = false;
+  state.learnSearchOpen = false;
+  state.learnSearchPending = false;
+  state.learnSearchImportingId = null;
+  state.learnSearchQuery = "";
+  state.learnSearchStatus = "";
+  state.learnSearchResults = [];
+  state.learnSearchRequestId = 0;
   state.learnUploadOpen = false;
   state.learnUploadDragging = false;
   state.learnUploadPending = false;
@@ -356,6 +371,7 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
   state.imageLastCorrect = false;
   state.imageSelectedIndex = null;
   resetLearnUploadInput();
+  syncLearnSearchModal();
   syncLearnUploadModal();
 }
 
@@ -379,6 +395,12 @@ function cacheElements() {
   elements.learnImageSearch = document.getElementById("learn-image-search");
   elements.learnImageUpload = document.getElementById("learn-image-upload");
   elements.learnImageDelete = document.getElementById("learn-image-delete");
+  elements.learnSearchModal = document.getElementById("learn-search-modal");
+  elements.learnSearchForm = document.getElementById("learn-search-form");
+  elements.learnSearchInput = document.getElementById("learn-search-input");
+  elements.learnSearchSubmit = document.getElementById("learn-search-submit");
+  elements.learnSearchStatus = document.getElementById("learn-search-status");
+  elements.learnSearchResults = document.getElementById("learn-search-results");
   elements.learnUploadModal = document.getElementById("learn-upload-modal");
   elements.learnUploadDropzone = document.getElementById("learn-upload-dropzone");
   elements.learnUploadInput = document.getElementById("learn-upload-input");
@@ -493,10 +515,9 @@ function bindEvents() {
     renderLearn();
   });
 
-  // Prototype actions should not break core learning navigation if the menu markup is stale.
   if (elements.learnImageSearch) {
     elements.learnImageSearch.addEventListener("click", () => {
-      handlePendingLearnImageAction("search");
+      openLearnSearchModal();
     });
   }
 
@@ -512,6 +533,8 @@ function bindEvents() {
 
   if (elements.learnImageMenu) {
     elements.learnImageMenu.addEventListener("click", (event) => {
+      event.stopPropagation();
+
       if (event.target === elements.learnImageMenu) {
         setLearnDeleteMenu(false);
       }
@@ -523,6 +546,39 @@ function bindEvents() {
       if (event.target === elements.learnUploadModal) {
         closeLearnUploadModal();
       }
+    });
+  }
+
+  if (elements.learnSearchModal) {
+    elements.learnSearchModal.addEventListener("click", (event) => {
+      if (event.target === elements.learnSearchModal) {
+        closeLearnSearchModal();
+      }
+    });
+  }
+
+  if (elements.learnSearchForm) {
+    elements.learnSearchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      searchLearnImages(state.learnSearchQuery);
+    });
+  }
+
+  if (elements.learnSearchInput) {
+    elements.learnSearchInput.addEventListener("input", (event) => {
+      state.learnSearchQuery = event.target.value;
+    });
+  }
+
+  if (elements.learnSearchResults) {
+    elements.learnSearchResults.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-search-result-id]");
+
+      if (!button || state.learnSearchPending || state.learnSearchImportingId) {
+        return;
+      }
+
+      importSelectedSearchImage(button.dataset.searchResultId);
     });
   }
 
@@ -626,12 +682,19 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (state.learnSearchOpen) {
+        closeLearnSearchModal();
+        return;
+      }
+
       if (state.learnUploadOpen) {
         closeLearnUploadModal();
+        return;
       }
 
       if (state.learnDeleteMenuOpen) {
         setLearnDeleteMenu(false);
+        return;
       }
 
       if (state.learnListOpen) {
@@ -1037,12 +1100,193 @@ function clearLearnMediaLongPress() {
   state.learnLongPressTimer = null;
 }
 
-function handlePendingLearnImageAction(action) {
+function openLearnSearchModal() {
+  const currentWord = words[state.learnIndex];
+
+  if (state.learnUploadOpen) {
+    closeLearnUploadModal();
+  }
+
   setLearnDeleteMenu(false);
-  console.info(`Learn image action is not implemented yet: ${action}`);
+  state.learnSearchOpen = true;
+  state.learnSearchPending = false;
+  state.learnSearchImportingId = null;
+  state.learnSearchQuery = currentWord?.english || "";
+  state.learnSearchStatus = "";
+  state.learnSearchResults = [];
+  state.learnSearchRequestId += 1;
+  syncLearnSearchModal();
+
+  window.requestAnimationFrame(() => {
+    if (elements.learnSearchInput) {
+      elements.learnSearchInput.focus({ preventScroll: true });
+      elements.learnSearchInput.select();
+    }
+  });
+
+  searchLearnImages(state.learnSearchQuery);
+}
+
+function closeLearnSearchModal() {
+  if (state.learnSearchImportingId) {
+    return;
+  }
+
+  state.learnSearchOpen = false;
+  state.learnSearchPending = false;
+  state.learnSearchImportingId = null;
+  state.learnSearchQuery = "";
+  state.learnSearchStatus = "";
+  state.learnSearchResults = [];
+  state.learnSearchRequestId += 1;
+  syncLearnSearchModal();
+}
+
+function syncLearnSearchModal() {
+  if (
+    !elements.learnSearchModal ||
+    !elements.learnSearchInput ||
+    !elements.learnSearchSubmit ||
+    !elements.learnSearchStatus ||
+    !elements.learnSearchResults
+  ) {
+    return;
+  }
+
+  const isBusy = state.learnSearchPending || Boolean(state.learnSearchImportingId);
+
+  elements.learnSearchModal.hidden = !state.learnSearchOpen;
+  elements.learnSearchModal.setAttribute("aria-hidden", String(!state.learnSearchOpen));
+  elements.learnSearchInput.value = state.learnSearchQuery;
+  elements.learnSearchInput.disabled = Boolean(state.learnSearchImportingId);
+  elements.learnSearchSubmit.disabled = isBusy;
+  elements.learnSearchSubmit.textContent = state.learnSearchPending ? "Searching..." : "Search";
+  elements.learnSearchStatus.textContent = state.learnSearchStatus;
+  renderLearnSearchResults();
+}
+
+function renderLearnSearchResults() {
+  if (!elements.learnSearchResults) {
+    return;
+  }
+
+  elements.learnSearchResults.innerHTML = state.learnSearchResults
+    .map((result) => {
+      const isImporting = state.learnSearchImportingId === result.id;
+      const title = escapeHtml(result.title || state.learnSearchQuery || "Image result");
+      const thumbnailUrl = escapeHtml(result.thumbnailUrl || result.mediaUrl);
+      const classNames = ["learn-search-result"];
+
+      if (isImporting) {
+        classNames.push("is-loading");
+      }
+
+      return `
+        <button
+          class="${classNames.join(" ")}"
+          data-search-result-id="${escapeHtml(result.id)}"
+          type="button"
+          aria-label="${isImporting ? `Importing ${title}` : `Import ${title}`}"
+          ${state.learnSearchPending || state.learnSearchImportingId ? "disabled" : ""}
+        >
+          <div class="learn-search-thumb">
+            <img src="${thumbnailUrl}" alt="${title}" loading="lazy" decoding="async" />
+          </div>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+async function searchLearnImages(query) {
+  const normalizedQuery = String(query || "").trim();
+  const requestId = state.learnSearchRequestId + 1;
+
+  state.learnSearchQuery = normalizedQuery;
+  state.learnSearchRequestId = requestId;
+  state.learnSearchImportingId = null;
+
+  if (!normalizedQuery) {
+    state.learnSearchPending = false;
+    state.learnSearchResults = [];
+    state.learnSearchStatus = LEARN_SEARCH_EMPTY_STATUS;
+    syncLearnSearchModal();
+    return;
+  }
+
+  state.learnSearchPending = true;
+  state.learnSearchResults = [];
+  state.learnSearchStatus = "Searching...";
+  syncLearnSearchModal();
+
+  try {
+    const payload = await searchBingImagesApi(normalizedQuery);
+
+    if (state.learnSearchRequestId !== requestId) {
+      return;
+    }
+
+    state.learnSearchPending = false;
+    state.learnSearchResults = Array.isArray(payload.results) ? payload.results : [];
+    state.learnSearchStatus =
+      state.learnSearchResults.length > 0 ? `Found ${state.learnSearchResults.length} images` : "No images found";
+    syncLearnSearchModal();
+  } catch (error) {
+    if (state.learnSearchRequestId !== requestId) {
+      return;
+    }
+
+    console.error(error);
+    state.learnSearchPending = false;
+    state.learnSearchResults = [];
+    state.learnSearchStatus = getLearnSearchErrorMessage(error);
+    syncLearnSearchModal();
+  }
+}
+
+async function importSelectedSearchImage(resultId) {
+  const result = state.learnSearchResults.find((item) => item.id === resultId);
+
+  if (!result) {
+    return;
+  }
+
+  const currentWord = words[state.learnIndex];
+  state.learnSearchImportingId = result.id;
+  state.learnSearchStatus = "导入中...";
+  syncLearnSearchModal();
+
+  try {
+    const payload = await importBingSearchImageApi(currentWord.id, result);
+    state.dataSource = "api";
+    updateWordInDeck(payload.word);
+    state.learnImageIndex = Math.max(getWordImages(words[state.learnIndex]).length - 1, 0);
+    state.learnSearchImportingId = null;
+    closeLearnSearchModal();
+    renderLearn();
+    renderReview();
+    renderImage();
+  } catch (error) {
+    console.error(error);
+    state.learnSearchImportingId = null;
+    state.learnSearchStatus = getLearnSearchErrorMessage(error);
+    syncLearnSearchModal();
+  }
+}
+
+function getLearnSearchErrorMessage(error) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Search failed. Make sure the backend is running.";
 }
 
 function openLearnUploadModal() {
+  if (state.learnSearchOpen) {
+    closeLearnSearchModal();
+  }
+
   setLearnDeleteMenu(false);
   state.learnUploadOpen = true;
   state.learnUploadDragging = false;
@@ -1386,6 +1630,45 @@ async function deleteWordImageApi(imageId) {
   return response.json();
 }
 
+async function searchBingImagesApi(query) {
+  const searchParams = new URLSearchParams({
+    q: query
+  });
+  const response = await fetch(`${API_BASE_URL}/word-images/search/bing?${searchParams.toString()}`, {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "图片搜索失败"));
+  }
+
+  return response.json();
+}
+
+async function importBingSearchImageApi(wordId, result) {
+  const response = await fetch(`${API_BASE_URL}/word-images/search/import/${encodeURIComponent(wordId)}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      mediaUrl: result.mediaUrl,
+      thumbnailUrl: result.thumbnailUrl,
+      sourcePageUrl: result.sourcePageUrl,
+      title: result.title
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "图片导入失败"));
+  }
+
+  return response.json();
+}
+
 async function uploadWordImageApi(wordId, file) {
   const formData = new FormData();
   formData.append("image", file);
@@ -1437,4 +1720,23 @@ function updateWordInDeck(nextWord) {
   if (state.dataSource !== "local") {
     persistApiDeckCache(words);
   }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case "\"":
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return character;
+    }
+  });
 }

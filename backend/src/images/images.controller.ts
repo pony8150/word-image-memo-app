@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors
 } from "@nestjs/common";
@@ -18,9 +21,21 @@ const { diskStorage } = require("multer");
 
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
+interface ImportSearchedImageBody {
+  mediaUrl?: string;
+  thumbnailUrl?: string;
+  sourcePageUrl?: string;
+  title?: string;
+}
+
 @Controller("api/word-images")
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
+
+  @Get("search/bing")
+  async searchBingImages(@Query("q") query = "") {
+    return this.imagesService.searchBingImages(query);
+  }
 
   @Post("upload/:wordId")
   @UseInterceptors(
@@ -81,6 +96,19 @@ export class ImagesController {
     return this.imagesService.uploadImage(wordId, {
       storageKey,
       mimetype: uploadedFile.mimetype || "image/jpeg"
+    });
+  }
+
+  @Post("search/import/:wordId")
+  async importSearchedImage(
+    @Param("wordId") wordId: string,
+    @Body() body: ImportSearchedImageBody
+  ) {
+    return this.imagesService.importSearchedImage(wordId, {
+      mediaUrl: body?.mediaUrl || "",
+      thumbnailUrl: body?.thumbnailUrl || "",
+      sourcePageUrl: body?.sourcePageUrl || "",
+      title: body?.title || ""
     });
   }
 

@@ -213,6 +213,28 @@
           </div>
         </div>
 
+        <div class="learn-search-modal" id="learn-search-modal" aria-hidden="true" hidden>
+          <div class="learn-search-card" role="dialog" aria-modal="true" aria-labelledby="learn-search-heading">
+            <div class="learn-search-head">
+              <h3 class="learn-search-heading" id="learn-search-heading">上网搜索</h3>
+              <form class="learn-search-form" id="learn-search-form">
+                <input
+                  class="learn-search-input"
+                  id="learn-search-input"
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="搜索图片"
+                />
+                <button class="primary-btn learn-search-submit" id="learn-search-submit" type="submit">搜索</button>
+              </form>
+            </div>
+
+            <p class="learn-search-status" id="learn-search-status" aria-live="polite"></p>
+            <div class="learn-search-results" id="learn-search-results"></div>
+          </div>
+        </div>
+
         <section class="view" id="review" hidden>
           <div class="section-header">
             <div>
