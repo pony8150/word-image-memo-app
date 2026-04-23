@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print $1}' data/raw/junior-high.txt)",
+      "Bash(awk '{gsub\\(/\\\\uFEFF/,\"\"\\); $1=tolower\\($1\\); print $1}' data/raw/junior-high.txt)",
+      "Bash(sort.exe)",
+      "Bash(uniq.exe -d)",
+      "Bash(awk '{gsub\\(/\\\\xEF\\\\xBB\\\\xBF/,\"\"\\); w=tolower\\($1\\); print w}' data/raw/junior-high.txt)",
+      "Bash(uniq.exe -c)",
+      "Bash(sort.exe -rn)",
+      "Bash(awk '$1 > 1')",
+      "Bash(node *)"
+    ]
+  }
+}
