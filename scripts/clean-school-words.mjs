@@ -33,17 +33,16 @@ async function main() {
     const text = await readFile(source.rawPath);
     const entries = parseEntries(text, source);
 
-    const payload = {
-      sourceId: source.id,
-      label: source.label,
-      totalEntries: entries.length,
-      entries
-    };
+    const payload = entries.map((entry, i) => ({
+      index: i + 1,
+      word: entry.word,
+      meaning: entry.meaning
+    }));
 
-    const jsonPath = path.join(options.outputDir, `${source.id}-cleaned.json`);
+    const jsonPath = path.join(options.outputDir, `${source.id === "junior-high" ? "初中词汇" : "高中词汇"}.json`);
     await writeFile(jsonPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 
-    console.log(`${source.label}: ${entries.length} entries saved to ${jsonPath}`);
+    console.log(`${source.label}: ${payload.length} entries saved to ${jsonPath}`);
   }
 }
 
@@ -89,8 +88,8 @@ async function readFile(filePath) {
  * 核心逻辑：
  * 1. 跳过空行、注释行、非英文开头的行、含空格的词组
  * 2. 大小写敏感：may 和 May 是不同词条
- * 3. 同一个 word 的多条记录合并：不同词性的释义合并到一起
- * 4. 每个词性最多保留 2 个义项，优先选择语义差异大的义项
+ * 3. 同一个 word 的多条记录合并：所有词性汇总到一起，每个词性只取第一个义项
+ * 4. 每个单词最多保留 3 个词性
  */
 function parseEntries(text, source) {
   const lines = text.split(/\r?\n/);
@@ -101,28 +100,36 @@ function parseEntries(text, source) {
     const parsed = parseLine(line);
     if (!parsed) continue;
 
-    const key = parsed.word; // 大小写敏感的 key
+    const key = parsed.word;
 
     if (!wordMap.has(key)) {
       wordMap.set(key, { word: key, posEntries: [], sourceId: source.id });
     }
 
     const entry = wordMap.get(key);
-    // 将该行的所有词性释义追加到 posEntries
+    // 将该行的所有词性释义合并到已有列表
     for (const pe of parsed.posEntries) {
       mergePosEntry(entry.posEntries, pe);
     }
   }
 
-  // 对每个词条的每个词性，截取最多 2 个义项
+  // 每个词性只保留 1 个义项，每个单词最多 3 个词性
+  // 如果不同词性的义项完全相同，只保留第一个出现的词性
+  // 最终 meaning 格式参考红宝书：词性+释义合在一起，如 "n. 女士 v. 未击中"
   const result = [];
   for (const entry of wordMap.values()) {
-    const trimmedPos = entry.posEntries.map(pe => ({
-      pos: pe.pos,
-      meanings: pickDiverseMeanings(pe.meanings, 2)
-    }));
-    result.push({ word: entry.word, definitions: trimmedPos, sourceId: entry.sourceId });
-  }
+    const seenMeanings = new Set();
+    const meaningParts = [];
+    for (const pe of entry.posEntries) {
+      if (meaningParts.length >= 3) break;
+      const meaning = pe.meanings[0];
+      if (meaning.match(/人名|地名|姓氏/)) continue;
+      if (seenMeanings.has(meaning)) continue;
+      seenMeanings.add(meaning);
+      meaningParts.push(`${pe.pos} ${meaning}`);
+    }
+    result.push({ word: entry.word, meaning: meaningParts.join(" ") });
+  };
 
   return result;
 }
@@ -244,52 +251,6 @@ function splitMeanings(text) {
   return [trimmed];
 }
 
-/**
- * 从义项列表中选取最多 maxCount 个，优先选择语义差异大的。
- *
- * 策略：取第一个义项，然后从剩余中选与已选义项最不相似的。
- * "最不相似"的判断：共享汉字越少越不相似。
- */
-function pickDiverseMeanings(meanings, maxCount) {
-  if (meanings.length <= maxCount) return meanings;
-
-  const picked = [meanings[0]];
-
-  while (picked.length < maxCount) {
-    const pickedChars = new Set(picked.join("").split(""));
-    let bestCandidate = null;
-    let bestScore = -1;
-
-    for (const m of meanings) {
-      if (picked.includes(m)) continue;
-      const mChars = new Set(m.split(""));
-      // 计算与已选义项的共享字符数，越少越好（语义差异大）
-      let overlap = 0;
-      for (const ch of mChars) {
-        if (pickedChars.has(ch)) overlap++;
-      }
-      // score = 总字符数 - 共享字符数，越大说明越不同
-      const score = mChars.size - overlap;
-      if (score > bestScore) {
-        bestScore = score;
-        bestCandidate = m;
-      }
-    }
-
-    if (bestCandidate) {
-      picked.push(bestCandidate);
-    } else {
-      break;
-    }
-  }
-
-  return picked;
-}
-
-/**
- * 将新解析出的词性释义合并到已有列表中。
- * 同词性的义项追加到已有义项列表（去重）。
- */
 function mergePosEntry(posEntries, newPe) {
   const existing = posEntries.find(pe => pe.pos === newPe.pos);
   if (existing) {
