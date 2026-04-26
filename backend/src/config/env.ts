@@ -8,15 +8,36 @@ function toNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsedValue) ? parsedValue : fallback;
 }
 
+function toBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return /^(1|true|yes|on)$/i.test(value);
+}
+
 const port = toNumber(process.env.PORT, 3000);
 const uploadsDirName = process.env.UPLOADS_DIR || "uploads";
+const smtpPort = toNumber(process.env.SMTP_PORT, 465);
+const smtpUser = process.env.SMTP_USER || "";
+const smtpPass = process.env.SMTP_PASS || "";
+const smtpFromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
 
 export const appEnv = {
   port,
   publicBaseUrl: process.env.PUBLIC_BASE_URL || `http://localhost:${port}`,
   databaseUrl: process.env.DATABASE_URL || "",
   uploadsDir: path.resolve(process.cwd(), uploadsDirName),
-  imagePurgeRetentionHours: toNumber(process.env.IMAGE_PURGE_RETENTION_HOURS, 24)
+  imagePurgeRetentionHours: toNumber(process.env.IMAGE_PURGE_RETENTION_HOURS, 24),
+  authSessionTtlDays: toNumber(process.env.AUTH_SESSION_TTL_DAYS, 30),
+  smtpEnabled: Boolean(process.env.SMTP_HOST && smtpUser && smtpPass && smtpFromEmail),
+  smtpHost: process.env.SMTP_HOST || "",
+  smtpPort,
+  smtpSecure: toBoolean(process.env.SMTP_SECURE, smtpPort === 465),
+  smtpUser,
+  smtpPass,
+  smtpFromEmail,
+  smtpFromName: process.env.SMTP_FROM_NAME || "Word Image Memo"
 };
 
 export function getRequiredDatabaseUrl(): string {

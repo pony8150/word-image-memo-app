@@ -13,6 +13,41 @@ CREATE TABLE IF NOT EXISTS words (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  password_hash TEXT,
+  auth_provider TEXT NOT NULL DEFAULT 'email' CHECK (auth_provider IN ('email', 'wechat')),
+  wechat_open_id TEXT UNIQUE,
+  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_token_hash TEXT NOT NULL UNIQUE,
+  user_agent TEXT,
+  last_ip TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS email_verification_codes (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT NOT NULL,
+  purpose TEXT NOT NULL CHECK (purpose IN ('register')),
+  code_hash TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS word_images (
   id BIGSERIAL PRIMARY KEY,
   word_id TEXT NOT NULL REFERENCES words(id) ON DELETE CASCADE,
@@ -33,7 +68,18 @@ CREATE TABLE IF NOT EXISTS word_images (
   )
 );
 
+ALTER TABLE word_images
+  ADD COLUMN IF NOT EXISTS created_by_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL;
+
+ALTER TABLE word_images
+  ADD COLUMN IF NOT EXISTS deleted_by_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_words_sort_order ON words(sort_order);
+CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_email_verification_codes_email_purpose
+  ON email_verification_codes(email, purpose, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_word_images_word_id_status ON word_images(word_id, status);
 CREATE INDEX IF NOT EXISTS idx_word_images_purge_after_at ON word_images(purge_after_at);
 CREATE INDEX IF NOT EXISTS idx_word_images_storage_key ON word_images(storage_key);

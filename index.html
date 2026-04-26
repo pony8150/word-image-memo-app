@@ -29,6 +29,18 @@
           <button class="nav-pill" data-target="image" hidden>图片联想</button>
           <button class="nav-pill" data-target="stats" hidden>学习统计</button>
         </nav>
+
+        <section class="account-pill" aria-label="Account">
+          <div class="account-copy">
+            <p class="eyebrow">Account</p>
+            <strong id="auth-user-name">未登录</strong>
+            <span id="auth-user-meta">登录后再管理你的图片与账号数据</span>
+          </div>
+          <div class="account-actions">
+            <button class="secondary-btn" id="auth-open-button" type="button">登录 / 注册</button>
+            <button class="secondary-btn" id="auth-logout-button" type="button" hidden>退出</button>
+          </div>
+        </section>
       </header>
 
       <main>
@@ -137,7 +149,7 @@
               >
                 显示单词列表
               </button>
-              <div class="progress-pill" id="learn-progress"></div>
+<div class="progress-pill" id="learn-progress"></div>
             </div>
           </div>
 
@@ -397,9 +409,102 @@
             </section>
           </div>
         </section>
+
+        <section class="view auth-view" id="auth">
+          <div class="auth-page-shell">
+            <section class="auth-stage auth-stage-page">
+              <p class="eyebrow">Email Sign In</p>
+              <h2 id="auth-page-title">先登录，再继续管理你的单词与图片</h2>
+              <p class="auth-stage-copy">
+                这一版先把邮箱登录做好，注册流程改成更接近真实网站的样子：
+                先发送邮箱验证码，再用邮箱、验证码和密码完成注册。
+              </p>
+
+              <div class="auth-feature-grid">
+                <article class="auth-feature-card">
+                  <span>01</span>
+                  <h3>独立登录页</h3>
+                  <p>不再走弹窗或抽屉，登录和注册放到单独页面里处理。</p>
+                </article>
+                <article class="auth-feature-card">
+                  <span>02</span>
+                  <h3>验证码注册</h3>
+                  <p>注册时先发送邮箱验证码，再提交邮箱、验证码和密码完成注册。</p>
+                </article>
+                <article class="auth-feature-card">
+                  <span>03</span>
+                  <h3>微信稍后接入</h3>
+                  <p>微信扫码入口保留为下一步，先把邮箱账号体系打稳。</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="auth-page-main">
+              <section class="auth-panel card">
+                <div class="auth-mode-switch" aria-label="Email auth mode">
+                  <button class="auth-mode-btn active" id="auth-page-mode-login" type="button">登录</button>
+                  <button class="auth-mode-btn" id="auth-page-mode-register" type="button">注册</button>
+                </div>
+
+                <p class="eyebrow">Account Access</p>
+                <h3 class="auth-panel-title" id="auth-page-form-heading">邮箱登录</h3>
+                <p class="auth-panel-copy" id="auth-page-form-copy">
+                  使用邮箱和密码直接登录。注册入口也在这里切换。
+                </p>
+
+                <form class="auth-form" id="auth-page-form">
+                  <label class="auth-field">
+                    <span>邮箱</span>
+                    <input id="auth-page-email" type="email" autocomplete="email" placeholder="name@example.com" required />
+                  </label>
+
+                  <label class="auth-field auth-code-field" id="auth-page-code-field" hidden>
+                    <span>邮箱验证码</span>
+                    <div class="auth-code-row">
+                      <input id="auth-page-verification-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6 位验证码" />
+                      <button class="secondary-btn auth-code-send" id="auth-page-send-code" type="button">发送验证码</button>
+                    </div>
+                  </label>
+
+                  <label class="auth-field">
+                    <span>密码</span>
+                    <input id="auth-page-password" type="password" autocomplete="current-password" placeholder="输入你的密码" required />
+                  </label>
+
+                  <label class="auth-field" id="auth-page-confirm-password-field" hidden>
+                    <span>确认密码</span>
+                    <input id="auth-page-confirm-password" type="password" autocomplete="new-password" placeholder="再输入一次密码" />
+                  </label>
+
+                  <button class="primary-btn auth-submit" id="auth-page-submit" type="submit">登录</button>
+                </form>
+
+                <p class="auth-status" id="auth-page-status" aria-live="polite"></p>
+                <p class="auth-dev-hint" id="auth-page-dev-hint" hidden></p>
+              </section>
+
+              <aside class="auth-side-stack">
+                <section class="card auth-side-card">
+                  <p class="eyebrow">Why Now</p>
+                  <h3>先把账号体系立住</h3>
+                  <p>
+                    图片目录、用户 OSS、个人词库和后续权限控制，都会依赖用户身份。先把邮箱链路走通，后面才不会反复返工。
+                  </p>
+                </section>
+
+                <section class="card auth-side-card">
+                  <p class="eyebrow">Guest Access</p>
+                  <h3>先体验当前词卡，再决定是否登录</h3>
+                  <p>
+                    游客可以直接浏览当前主页和单词内容。登录只在管理图片、同步个人数据，以及后续选择词书时才需要。
+                  </p>
+                </section>
+              </aside>
+            </section>
+          </div>
+        </section>
       </main>
     </div>
-
     <script src="app.js" defer></script>
   </body>
 </html>

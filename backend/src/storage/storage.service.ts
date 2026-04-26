@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 import { appEnv } from "../config/env";
 
@@ -34,12 +34,29 @@ export class StorageService implements OnModuleInit {
     await writeFile(absoluteFilePath, content);
   }
 
+  async moveLocalFile(tempFilePath: string, storageKey: string): Promise<void> {
+    const absoluteTempPath = this.resolveManagedAbsolutePath(tempFilePath);
+    const absoluteFilePath = this.resolveLocalPath(storageKey);
+    await mkdir(path.dirname(absoluteFilePath), { recursive: true });
+    await rename(absoluteTempPath, absoluteFilePath);
+  }
+
+  async deleteManagedAbsoluteFile(filePath: string): Promise<void> {
+    const absoluteFilePath = this.resolveManagedAbsolutePath(filePath);
+    await rm(absoluteFilePath, { force: true });
+  }
+
   private resolveLocalPath(storageKey: string): string {
     const absoluteFilePath = path.resolve(appEnv.uploadsDir, storageKey);
+    return this.resolveManagedAbsolutePath(absoluteFilePath);
+  }
+
+  private resolveManagedAbsolutePath(filePath: string): string {
+    const absoluteFilePath = path.resolve(filePath);
     const relativePath = path.relative(appEnv.uploadsDir, absoluteFilePath);
 
     if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-      throw new Error(`Refusing to access file outside uploads directory: ${storageKey}`);
+      throw new Error(`Refusing to access file outside uploads directory: ${filePath}`);
     }
 
     return absoluteFilePath;

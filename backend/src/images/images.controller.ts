@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   Patch,
@@ -14,6 +15,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { mkdirSync } from "node:fs";
 import * as path from "node:path";
+import { AuthService } from "../auth/auth.service";
 import { appEnv } from "../config/env";
 import { ImagesService } from "./images.service";
 
@@ -30,10 +32,17 @@ interface ImportSearchedImageBody {
 
 @Controller("api/word-images")
 export class ImagesController {
-  constructor(private readonly imagesService: ImagesService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly imagesService: ImagesService
+  ) {}
 
   @Get("search/bing")
-  async searchBingImages(@Query("q") query = "") {
+  async searchBingImages(
+    @Query("q") query = "",
+    @Headers("authorization") authorization?: string
+  ) {
+    await this.authService.requireUserFromAuthorization(authorization);
     return this.imagesService.searchBingImages(query);
   }
 
@@ -42,12 +51,11 @@ export class ImagesController {
     FileInterceptor("image", {
       storage: diskStorage({
         destination: (
-          request: { params?: { wordId?: string } },
+          _request: { params?: { wordId?: string } },
           _file: { originalname?: string },
           callback: (error: Error | null, destination: string) => void
         ) => {
-          const safeWordId = sanitizeWordId(request.params?.wordId || "");
-          const destination = path.resolve(appEnv.uploadsDir, "user-images", safeWordId);
+          const destination = path.resolve(appEnv.uploadsDir, "user-images", "_temp");
           mkdirSync(destination, { recursive: true });
           callback(null, destination);
         },
@@ -80,21 +88,23 @@ export class ImagesController {
   )
   async uploadImage(
     @Param("wordId") wordId: string,
+    @Headers("authorization") authorization?: string,
     @UploadedFile()
     uploadedFile?: {
       filename?: string;
       mimetype?: string;
+      path?: string;
     }
   ) {
-    if (!uploadedFile?.filename) {
+    if (!uploadedFile?.filename || !uploadedFile.path) {
       throw new BadRequestException("Please choose one image file.");
     }
 
-    const safeWordId = sanitizeWordId(wordId);
-    const storageKey = path.posix.join("user-images", safeWordId, uploadedFile.filename);
+    const user = await this.authService.requireUserFromAuthorization(authorization);
 
-    return this.imagesService.uploadImage(wordId, {
-      storageKey,
+    return this.imagesService.uploadImage(wordId, user, {
+      tempFilePath: uploadedFile.path,
+      fileName: uploadedFile.filename,
       mimetype: uploadedFile.mimetype || "image/jpeg"
     });
   }
@@ -102,9 +112,12 @@ export class ImagesController {
   @Post("search/import/:wordId")
   async importSearchedImage(
     @Param("wordId") wordId: string,
-    @Body() body: ImportSearchedImageBody
+    @Body() body: ImportSearchedImageBody,
+    @Headers("authorization") authorization?: string
   ) {
-    return this.imagesService.importSearchedImage(wordId, {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+
+    return this.imagesService.importSearchedImage(wordId, user, {
       mediaUrl: body?.mediaUrl || "",
       thumbnailUrl: body?.thumbnailUrl || "",
       sourcePageUrl: body?.sourcePageUrl || "",
@@ -113,19 +126,22 @@ export class ImagesController {
   }
 
   @Patch(":id/delete")
-  async deleteImage(@Param("id", ParseIntPipe) imageId: number) {
-    return this.imagesService.deleteImage(imageId);
+  async deleteImage(
+    @Param("id", ParseIntPipe) imageId: number,
+    @Headers("authorization") authorization?: string
+  ) {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+    return this.imagesService.deleteImage(imageId, user);
   }
 
   @Patch(":id/restore")
-  async restoreImage(@Param("id", ParseIntPipe) imageId: number) {
-    return this.imagesService.restoreImage(imageId);
+  async restoreImage(
+    @Param("id", ParseIntPipe) imageId: number,
+    @Headers("authorization") authorization?: string
+  ) {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+    return this.imagesService.restoreImage(imageId, user);
   }
-}
-
-function sanitizeWordId(wordId: string): string {
-  const normalizedValue = wordId.trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
-  return normalizedValue.replace(/-{2,}/g, "-").replace(/^-|-$/g, "") || "word";
 }
 
 function resolveImageExtension(originalName = "", mimeType = ""): string {

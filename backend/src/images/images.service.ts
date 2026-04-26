@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import * as path from "node:path";
 import { PoolClient } from "pg";
+import { AuthenticatedUser } from "../auth/auth.service";
 import { appEnv } from "../config/env";
 import { DatabaseService } from "../database/database.service";
 import { StorageService } from "../storage/storage.service";
@@ -19,7 +20,8 @@ interface ImageTargetRow {
 }
 
 interface UploadWordImageInput {
-  storageKey: string;
+  tempFilePath: string;
+  fileName: string;
   mimetype: string;
 }
 
@@ -73,19 +75,32 @@ export class ImagesService {
     };
   }
 
-  async uploadImage(wordId: string, uploadedImage: UploadWordImageInput) {
-    if (!uploadedImage.storageKey) {
-      throw new BadRequestException("Upload storage key is missing.");
+  async uploadImage(
+    wordId: string,
+    user: AuthenticatedUser,
+    uploadedImage: UploadWordImageInput
+  ) {
+    if (!uploadedImage.tempFilePath || !uploadedImage.fileName) {
+      throw new BadRequestException("Uploaded image file is missing.");
     }
 
     const existingWord = await this.wordsService.getWordById(wordId);
 
     if (!existingWord) {
-      await this.safeDeleteLocalFile(uploadedImage.storageKey);
+      await this.safeDeleteManagedFile(uploadedImage.tempFilePath);
       throw new NotFoundException("Word not found.");
     }
 
+    const storageKey = path.posix.join(
+      "user-images",
+      `user-${user.id}`,
+      sanitizeWordId(wordId),
+      uploadedImage.fileName
+    );
+
     try {
+      await this.storage.moveLocalFile(uploadedImage.tempFilePath, storageKey);
+
       return await this.database.transaction(async (client) => {
         const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
           `
@@ -106,12 +121,13 @@ export class ImagesService {
               public_url,
               source_label,
               source_credit,
+              created_by_user_id,
               status,
               sort_order
             )
-            VALUES ($1, 'local', $2, NULL, 'Manual Upload', NULL, 'active', $3)
+            VALUES ($1, 'local', $2, NULL, 'Manual Upload', NULL, $3, 'active', $4)
           `,
-          [wordId, uploadedImage.storageKey, nextSortOrder]
+          [wordId, storageKey, user.id, nextSortOrder]
         );
 
         const word = await this.wordsService.getWordById(wordId, client);
@@ -123,19 +139,24 @@ export class ImagesService {
         return { word };
       });
     } catch (error) {
-      await this.safeDeleteLocalFile(uploadedImage.storageKey);
+      await this.safeDeleteLocalFile(storageKey);
+      await this.safeDeleteManagedFile(uploadedImage.tempFilePath);
       throw error;
     }
   }
 
-  async importSearchedImage(wordId: string, input: ImportSearchedImageInput) {
+  async importSearchedImage(
+    wordId: string,
+    user: AuthenticatedUser,
+    input: ImportSearchedImageInput
+  ) {
     const existingWord = await this.wordsService.getWordById(wordId);
 
     if (!existingWord) {
       throw new NotFoundException("Word not found.");
     }
 
-    const downloadedImage = await this.downloadRemoteImage(wordId, input);
+    const downloadedImage = await this.downloadRemoteImage(wordId, user, input);
 
     try {
       return await this.database.transaction(async (client) => {
@@ -158,12 +179,13 @@ export class ImagesService {
               public_url,
               source_label,
               source_credit,
+              created_by_user_id,
               status,
               sort_order
             )
-            VALUES ($1, 'local', $2, NULL, 'Bing Search', $3, 'active', $4)
+            VALUES ($1, 'local', $2, NULL, 'Bing Search', $3, $4, 'active', $5)
           `,
-          [wordId, downloadedImage.storageKey, downloadedImage.sourceDomain, nextSortOrder]
+          [wordId, downloadedImage.storageKey, downloadedImage.sourceDomain, user.id, nextSortOrder]
         );
 
         const word = await this.wordsService.getWordById(wordId, client);
@@ -180,7 +202,7 @@ export class ImagesService {
     }
   }
 
-  async deleteImage(imageId: number) {
+  async deleteImage(imageId: number, user: AuthenticatedUser) {
     return this.database.transaction(async (client) => {
       const target = await this.getImageTarget(client, imageId);
 
@@ -211,15 +233,22 @@ export class ImagesService {
           UPDATE word_images
           SET
             status = 'deleted',
+            deleted_by_user_id = $3,
             deleted_at = NOW(),
             purge_after_at = NOW() + make_interval(hours => $2::int),
             updated_at = NOW()
           WHERE id = $1
         `,
-        [imageId, appEnv.imagePurgeRetentionHours]
+        [imageId, appEnv.imagePurgeRetentionHours, user.id]
       );
 
-      await this.insertLog(client, imageId, target.word_id, "delete", "manual delete");
+      await this.insertLog(
+        client,
+        imageId,
+        target.word_id,
+        "delete",
+        `manual delete by ${user.email}`
+      );
       const word = await this.wordsService.getWordById(target.word_id, client);
 
       if (!word) {
@@ -230,7 +259,7 @@ export class ImagesService {
     });
   }
 
-  async restoreImage(imageId: number) {
+  async restoreImage(imageId: number, user: AuthenticatedUser) {
     return this.database.transaction(async (client) => {
       const target = await this.getImageTarget(client, imageId);
 
@@ -247,6 +276,7 @@ export class ImagesService {
           UPDATE word_images
           SET
             status = 'active',
+            deleted_by_user_id = NULL,
             deleted_at = NULL,
             purge_after_at = NULL,
             updated_at = NOW()
@@ -255,7 +285,13 @@ export class ImagesService {
         [imageId]
       );
 
-      await this.insertLog(client, imageId, target.word_id, "restore", "manual restore");
+      await this.insertLog(
+        client,
+        imageId,
+        target.word_id,
+        "restore",
+        `manual restore by ${user.email}`
+      );
       const word = await this.wordsService.getWordById(target.word_id, client);
 
       if (!word) {
@@ -298,6 +334,14 @@ export class ImagesService {
   private async safeDeleteLocalFile(storageKey: string): Promise<void> {
     try {
       await this.storage.deleteLocalFile(storageKey);
+    } catch (error) {
+      return;
+    }
+  }
+
+  private async safeDeleteManagedFile(filePath: string): Promise<void> {
+    try {
+      await this.storage.deleteManagedAbsoluteFile(filePath);
     } catch (error) {
       return;
     }
@@ -514,7 +558,11 @@ export class ImagesService {
     }
   }
 
-  private async downloadRemoteImage(wordId: string, input: ImportSearchedImageInput): Promise<DownloadedImageAsset> {
+  private async downloadRemoteImage(
+    wordId: string,
+    user: AuthenticatedUser,
+    input: ImportSearchedImageInput
+  ): Promise<DownloadedImageAsset> {
     const mediaUrl = this.normalizeHttpUrl(input.mediaUrl);
 
     if (!mediaUrl) {
@@ -550,6 +598,7 @@ export class ImagesService {
     const content = await this.readResponseBufferWithLimit(response, REMOTE_IMAGE_DOWNLOAD_MAX_BYTES);
     const storageKey = path.posix.join(
       "search-images",
+      `user-${user.id}`,
       sanitizeWordId(wordId),
       `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${resolveRemoteImageExtension(contentType, mediaUrl)}`
     );

@@ -241,9 +241,13 @@ const defaultWords = [
   }
 ];
 
-const API_BASE_URL = (window.WORD_IMAGE_MEMO_API_BASE || "http://localhost:3000/api").replace(/\/$/, "");
+const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const API_BASE_URL = resolveApiBaseUrl();
+const API_ORIGIN = resolveApiOrigin(API_BASE_URL);
 const IMAGE_REMOVALS_STORAGE_KEY = "word-image-memo.removed-images.v1";
 const API_DECK_CACHE_STORAGE_KEY = "word-image-memo.api-deck.v1";
+const AUTH_SESSION_TOKEN_STORAGE_KEY = "word-image-memo.auth-token.v1";
+const AUTH_USER_STORAGE_KEY = "word-image-memo.auth-user.v1";
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
 const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
@@ -285,15 +289,30 @@ const state = {
   imageAttempts: 0,
   imageChoices: [],
   imageLastCorrect: false,
-  imageSelectedIndex: null
+  imageSelectedIndex: null,
+  authToken: loadAuthToken(),
+  authUser: loadStoredAuthUser(),
+  authPending: false,
+  authMode: "login",
+  authStatus: "",
+  authStatusTone: "info",
+  authWechatStatus: null,
+  authWechatLoading: false,
+  authCodePending: false,
+  authCodeCooldownUntil: 0,
+  authDevHint: ""
 };
 
 const elements = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
+  document.querySelector(".auth-side-stack")?.remove();
   cacheElements();
+  hydrateAudioButtons();
   bindEvents();
+  const hasSession = await initializeAuthState();
   await refreshDeckFromServer({ silent: true });
+
   renderAllViews();
   switchView("learn");
 });
@@ -305,6 +324,7 @@ function renderAllViews() {
   renderReview();
   renderImage();
   renderStats();
+  renderAuth();
 }
 
 async function refreshDeckFromServer({ preserveWordId = null, silent = false } = {}) {
@@ -379,6 +399,26 @@ function cacheElements() {
   elements.views = [...document.querySelectorAll(".view")];
   elements.targetButtons = [...document.querySelectorAll("[data-target]")];
   elements.navPills = [...document.querySelectorAll(".nav-pill")];
+  elements.authUserName = document.getElementById("auth-user-name");
+  elements.authUserMeta = document.getElementById("auth-user-meta");
+  elements.authOpenButton = document.getElementById("auth-open-button");
+  elements.authLogoutButton = document.getElementById("auth-logout-button");
+  elements.authView = document.getElementById("auth");
+  elements.authModeLogin = document.getElementById("auth-page-mode-login");
+  elements.authModeRegister = document.getElementById("auth-page-mode-register");
+  elements.authForm = document.getElementById("auth-page-form");
+  elements.authFormHeading = document.getElementById("auth-page-form-heading");
+  elements.authFormCopy = document.getElementById("auth-page-form-copy");
+  elements.authCodeField = document.getElementById("auth-page-code-field");
+  elements.authVerificationCode = document.getElementById("auth-page-verification-code");
+  elements.authSendCode = document.getElementById("auth-page-send-code");
+  elements.authEmail = document.getElementById("auth-page-email");
+  elements.authPassword = document.getElementById("auth-page-password");
+  elements.authConfirmPasswordField = document.getElementById("auth-page-confirm-password-field");
+  elements.authConfirmPassword = document.getElementById("auth-page-confirm-password");
+  elements.authSubmit = document.getElementById("auth-page-submit");
+  elements.authStatus = document.getElementById("auth-page-status");
+  elements.authDevHint = document.getElementById("auth-page-dev-hint");
 
   elements.heroWordCount = document.getElementById("hero-word-count");
   elements.deckPreview = document.getElementById("deck-preview");
@@ -449,7 +489,52 @@ function cacheElements() {
   };
 }
 
+function hydrateAudioButtons() {
+  const speakerMarkup = '<img class="speak-icon" src="assets/speaker.svg" alt="" />';
+
+  if (elements.learnWordAudio) {
+    elements.learnWordAudio.innerHTML = speakerMarkup;
+  }
+
+  if (elements.learnExampleAudio) {
+    elements.learnExampleAudio.innerHTML = speakerMarkup;
+  }
+}
+
 function bindEvents() {
+  if (elements.authOpenButton) {
+    elements.authOpenButton.addEventListener("click", () => {
+      setAuthMode("login");
+      switchView("auth");
+    });
+  }
+
+  if (elements.authLogoutButton) {
+    elements.authLogoutButton.addEventListener("click", handleLogout);
+  }
+
+  if (elements.authModeLogin) {
+    elements.authModeLogin.addEventListener("click", () => {
+      setAuthMode("login");
+    });
+  }
+
+  if (elements.authModeRegister) {
+    elements.authModeRegister.addEventListener("click", () => {
+      setAuthMode("register");
+    });
+  }
+
+  if (elements.authForm) {
+    elements.authForm.addEventListener("submit", handleAuthSubmit);
+  }
+
+  if (elements.authSendCode) {
+    elements.authSendCode.addEventListener("click", handleSendRegisterCode);
+  }
+
+
+
   elements.targetButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const target = button.dataset.target;
@@ -472,6 +557,7 @@ function bindEvents() {
     setLearnDrawer(!state.learnListOpen);
   });
 
+
   elements.learnDrawerBackdrop.addEventListener("click", () => {
     setLearnDrawer(false);
   });
@@ -479,6 +565,9 @@ function bindEvents() {
   elements.learnListClose.addEventListener("click", () => {
     setLearnDrawer(false);
   });
+
+
+
 
   elements.learnWordAudio.addEventListener("click", () => {
     speakEnglish(words[state.learnIndex].english);
@@ -682,6 +771,7 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+
       if (state.learnSearchOpen) {
         closeLearnSearchModal();
         return;
@@ -704,8 +794,309 @@ function bindEvents() {
   });
 }
 
+async function initializeAuthState() {
+  if (!state.authToken) {
+    clearStoredAuthSession();
+    state.authUser = null;
+    state.authDevHint = "";
+    return false;
+  }
+
+  try {
+    const payload = await fetchCurrentUserApi();
+    persistAuthSession(state.authToken, payload.user);
+    state.authUser = payload.user;
+    state.authDevHint = "";
+    state.authStatus = "";
+    state.authStatusTone = "info";
+    return true;
+  } catch (error) {
+    clearAuthSessionState();
+    state.authStatus = "登录状态已失效，请重新登录。";
+    state.authStatusTone = "error";
+    return false;
+  }
+}
+
+function setAuthModal(isOpen) {
+  switchView(isOpen || !state.authUser ? "auth" : "welcome");
+}
+
+function setAuthMode(mode) {
+  state.authMode = mode;
+  state.authStatus = "";
+  state.authStatusTone = "info";
+  state.authDevHint = "";
+
+  if (mode !== "register") {
+    state.authCodeCooldownUntil = 0;
+  }
+
+  if (elements.authPassword) {
+    elements.authPassword.autocomplete = mode === "register" ? "new-password" : "current-password";
+  }
+
+  if (elements.authConfirmPassword) {
+    elements.authConfirmPassword.autocomplete = mode === "register" ? "new-password" : "off";
+  }
+
+  if (mode !== "register") {
+    if (elements.authVerificationCode) {
+      elements.authVerificationCode.value = "";
+    }
+
+    if (elements.authConfirmPassword) {
+      elements.authConfirmPassword.value = "";
+    }
+  }
+
+  renderAuth();
+}
+
+function renderAuth() {
+  const isSignedIn = Boolean(state.authUser);
+  const isRegisterMode = state.authMode === "register";
+  const cooldownSeconds = getAuthCodeCooldownSeconds();
+
+  if (elements.authUserName) {
+    elements.authUserName.textContent = isSignedIn ? state.authUser.email : "\u672a\u767b\u5f55";
+  }
+
+  if (elements.authUserMeta) {
+    elements.authUserMeta.textContent = isSignedIn
+      ? `${state.authUser.email} | \u5df2\u767b\u5f55`
+      : "\u6e38\u5ba2\u53ef\u5148\u6d4f\u89c8\u5f53\u524d\u8bcd\u5361\uff0c\u767b\u5f55\u540e\u518d\u7ba1\u7406\u56fe\u7247\u4e0e\u540e\u7eed\u8bcd\u4e66\u3002";
+  }
+
+  if (elements.authOpenButton) {
+    elements.authOpenButton.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
+  }
+
+  if (elements.authLogoutButton) {
+    elements.authLogoutButton.hidden = !isSignedIn;
+    elements.authLogoutButton.disabled = state.authPending;
+  }
+
+  if (elements.authModeLogin) {
+    elements.authModeLogin.classList.toggle("active", !isRegisterMode);
+  }
+
+  if (elements.authModeRegister) {
+    elements.authModeRegister.classList.toggle("active", isRegisterMode);
+  }
+
+  if (elements.authCodeField) {
+    elements.authCodeField.hidden = !isRegisterMode;
+    elements.authCodeField.style.display = isRegisterMode ? "" : "none";
+  }
+
+  if (elements.authVerificationCode) {
+    elements.authVerificationCode.required = isRegisterMode;
+    elements.authVerificationCode.disabled = !isRegisterMode || state.authPending;
+  }
+
+  if (elements.authConfirmPasswordField) {
+    elements.authConfirmPasswordField.hidden = !isRegisterMode;
+    elements.authConfirmPasswordField.style.display = isRegisterMode ? "" : "none";
+  }
+
+  if (elements.authConfirmPassword) {
+    elements.authConfirmPassword.required = isRegisterMode;
+    elements.authConfirmPassword.disabled = !isRegisterMode || state.authPending;
+  }
+
+  if (elements.authFormHeading) {
+    elements.authFormHeading.textContent = isRegisterMode ? "\u90ae\u7bb1\u6ce8\u518c" : "\u90ae\u7bb1\u767b\u5f55";
+  }
+
+  if (elements.authFormCopy) {
+    elements.authFormCopy.textContent = isRegisterMode
+      ? "\u5148\u53d1\u9001\u90ae\u7bb1\u9a8c\u8bc1\u7801\uff0c\u518d\u7528\u90ae\u7bb1\u3001\u9a8c\u8bc1\u7801\u548c\u5bc6\u7801\u5b8c\u6210\u6ce8\u518c\u3002"
+      : "\u4f7f\u7528\u90ae\u7bb1\u548c\u5bc6\u7801\u76f4\u63a5\u767b\u5f55\u3002";
+  }
+
+  if (elements.authSubmit) {
+    elements.authSubmit.disabled = state.authPending;
+    elements.authSubmit.textContent = state.authPending
+      ? isRegisterMode
+        ? "\u6ce8\u518c\u4e2d..."
+        : "\u767b\u5f55\u4e2d..."
+      : isRegisterMode
+        ? "\u6ce8\u518c"
+        : "\u767b\u5f55";
+  }
+
+  if (elements.authSendCode) {
+    elements.authSendCode.hidden = !isRegisterMode;
+    elements.authSendCode.disabled =
+      !isRegisterMode || state.authCodePending || state.authPending || cooldownSeconds > 0;
+    elements.authSendCode.textContent =
+      cooldownSeconds > 0
+        ? `${cooldownSeconds}s \u540e\u91cd\u53d1`
+        : state.authCodePending
+          ? "\u53d1\u9001\u4e2d..."
+          : "\u53d1\u9001\u9a8c\u8bc1\u7801";
+  }
+
+  if (elements.authStatus) {
+    elements.authStatus.textContent = state.authStatus || "";
+    elements.authStatus.classList.toggle("error", state.authStatusTone === "error");
+    elements.authStatus.classList.toggle("success", state.authStatusTone === "success");
+  }
+
+  if (elements.authDevHint) {
+    elements.authDevHint.hidden = !state.authDevHint;
+    elements.authDevHint.textContent = state.authDevHint || "";
+  }
+}
+
+function openAuthView(message = "", tone = "info") {
+  setAuthMode("login");
+  state.authStatus = message;
+  state.authStatusTone = tone;
+  switchView("auth");
+  renderAuth();
+}
+
+function requireSignedInForAction(message) {
+  if (state.authUser) {
+    return true;
+  }
+
+  openAuthView(message, "info");
+  return false;
+}
+
+async function handleSendRegisterCode() {
+  const email = elements.authEmail?.value?.trim() || "";
+
+  state.authCodePending = true;
+  state.authStatus = "\u6b63\u5728\u53d1\u9001\u9a8c\u8bc1\u7801...";
+  state.authStatusTone = "info";
+  state.authDevHint = "";
+  renderAuth();
+
+  try {
+    const payload = await sendRegisterCodeApi({ email });
+    state.authCodeCooldownUntil = Date.now() + (Number(payload.cooldownSeconds || 60) * 1000);
+    state.authStatus = `\u9a8c\u8bc1\u7801\u5df2\u53d1\u9001\u5230 ${payload.sentTo}`;
+    state.authStatusTone = "success";
+    state.authDevHint = payload.devCode
+      ? `\u5f00\u53d1\u73af\u5883\u9a8c\u8bc1\u7801\uff1a${payload.devCode}`
+      : "";
+
+    if (elements.authVerificationCode && payload.devCode) {
+      elements.authVerificationCode.value = payload.devCode;
+    }
+  } catch (error) {
+    state.authStatus = getErrorMessage(error, "\u53d1\u9001\u9a8c\u8bc1\u7801\u5931\u8d25");
+    state.authStatusTone = "error";
+  } finally {
+    state.authCodePending = false;
+    renderAuth();
+  }
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+
+  const email = elements.authEmail?.value?.trim() || "";
+  const password = elements.authPassword?.value || "";
+  const verificationCode = elements.authVerificationCode?.value?.trim() || "";
+  const confirmPassword = elements.authConfirmPassword?.value || "";
+  const isRegisterMode = state.authMode === "register";
+
+  if (isRegisterMode && !verificationCode) {
+    state.authStatus = "\u8bf7\u5148\u8f93\u5165\u90ae\u7bb1\u9a8c\u8bc1\u7801\u3002";
+    state.authStatusTone = "error";
+    renderAuth();
+    return;
+  }
+
+  if (isRegisterMode && !confirmPassword) {
+    state.authStatus = "\u8bf7\u518d\u8f93\u5165\u4e00\u6b21\u5bc6\u7801\u3002";
+    state.authStatusTone = "error";
+    renderAuth();
+    return;
+  }
+
+  if (isRegisterMode && password !== confirmPassword) {
+    state.authStatus = "\u4e24\u6b21\u8f93\u5165\u7684\u5bc6\u7801\u4e0d\u4e00\u81f4\u3002";
+    state.authStatusTone = "error";
+    renderAuth();
+    return;
+  }
+
+  state.authPending = true;
+  state.authStatus = isRegisterMode ? "\u6b63\u5728\u521b\u5efa\u8d26\u53f7..." : "\u6b63\u5728\u767b\u5f55...";
+  state.authStatusTone = "info";
+  renderAuth();
+
+  try {
+    const payload = isRegisterMode
+      ? await registerWithEmailApi({ email, password, verificationCode })
+      : await loginWithEmailApi({ email, password });
+
+    await applyAuthSuccess(payload);
+  } catch (error) {
+    state.authStatus = getErrorMessage(error, isRegisterMode ? "\u6ce8\u518c\u5931\u8d25" : "\u767b\u5f55\u5931\u8d25");
+    state.authStatusTone = "error";
+  } finally {
+    state.authPending = false;
+    renderAuth();
+  }
+}
+
+async function applyAuthSuccess(payload) {
+  if (!payload?.token || !payload?.user) {
+    throw new Error("\u767b\u5f55\u54cd\u5e94\u7f3a\u5c11\u4f1a\u8bdd\u4fe1\u606f\u3002");
+  }
+
+  state.authToken = payload.token;
+  state.authUser = payload.user;
+  state.authStatus = "\u767b\u5f55\u6210\u529f\u3002";
+  state.authStatusTone = "success";
+  state.authDevHint = "";
+  persistAuthSession(payload.token, payload.user);
+  resetAuthInputs();
+
+  await refreshDeckFromServer({ preserveWordId: words[state.learnIndex]?.id || null, silent: true });
+  renderAllViews();
+  switchView("learn");
+}
+
+async function handleLogout() {
+  const currentWordId = words[state.learnIndex]?.id || null;
+  state.authPending = true;
+  renderAuth();
+
+  try {
+    await logoutApi();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    clearAuthSessionState();
+    state.authStatus = "\u5df2\u9000\u51fa\u767b\u5f55\u3002";
+    state.authStatusTone = "success";
+    state.authPending = false;
+    resetAuthInputs();
+    await refreshDeckFromServer({ preserveWordId: currentWordId, silent: true });
+    renderAllViews();
+    switchView("learn");
+  }
+}
+
+function clearAuthSessionState() {
+  state.authToken = null;
+  state.authUser = null;
+  state.authDevHint = "";
+  clearStoredAuthSession();
+}
+
 function switchView(viewId) {
-  const nextView = viewId === "learn" ? "learn" : "learn";
+  const publicViews = new Set(["welcome", "learn", "review", "image", "stats", "auth"]);
+  const nextView = publicViews.has(viewId) ? viewId : "learn";
+
   state.currentView = nextView;
 
   if (nextView !== "learn" && state.learnListOpen) {
@@ -720,8 +1111,46 @@ function switchView(viewId) {
     button.classList.toggle("active", button.dataset.target === nextView);
   });
 
+  if (nextView === "welcome") {
+    renderWelcome();
+  }
+
   if (nextView === "learn") {
     renderLearn();
+  }
+
+  if (nextView === "review") {
+    renderReview();
+  }
+
+  if (nextView === "image") {
+    renderImage();
+  }
+
+  if (nextView === "stats") {
+    renderStats();
+  }
+
+  if (nextView === "auth") {
+    renderAuth();
+  }
+}
+
+function getAuthCodeCooldownSeconds() {
+  return Math.max(0, Math.ceil((state.authCodeCooldownUntil - Date.now()) / 1000));
+}
+
+function resetAuthInputs() {
+  if (elements.authPassword) {
+    elements.authPassword.value = "";
+  }
+
+  if (elements.authVerificationCode) {
+    elements.authVerificationCode.value = "";
+  }
+
+  if (elements.authConfirmPassword) {
+    elements.authConfirmPassword.value = "";
   }
 }
 
@@ -1101,6 +1530,9 @@ function clearLearnMediaLongPress() {
 }
 
 function openLearnSearchModal() {
+  if (!requireSignedInForAction("\u8bf7\u5148\u767b\u5f55\uff0c\u7136\u540e\u518d\u4e0a\u7f51\u641c\u56fe\u3002")) {
+    return;
+  }
   const currentWord = words[state.learnIndex];
 
   if (state.learnUploadOpen) {
@@ -1275,6 +1707,8 @@ async function importSelectedSearchImage(resultId) {
 }
 
 function getLearnSearchErrorMessage(error) {
+  handlePossibleAuthError(error);
+
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -1283,6 +1717,9 @@ function getLearnSearchErrorMessage(error) {
 }
 
 function openLearnUploadModal() {
+  if (!requireSignedInForAction("\u8bf7\u5148\u767b\u5f55\uff0c\u7136\u540e\u518d\u4e0a\u4f20\u56fe\u7247\u3002")) {
+    return;
+  }
   if (state.learnSearchOpen) {
     closeLearnSearchModal();
   }
@@ -1438,6 +1875,8 @@ function resetLearnUploadInput() {
 }
 
 function getLearnUploadErrorMessage(error) {
+  handlePossibleAuthError(error);
+
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -1446,6 +1885,11 @@ function getLearnUploadErrorMessage(error) {
 }
 
 async function deleteCurrentLearnImage() {
+  if (!requireSignedInForAction("\u8bf7\u5148\u767b\u5f55\uff0c\u7136\u540e\u518d\u5220\u9664\u56fe\u7247\u3002")) {
+    setLearnDeleteMenu(false);
+    return;
+  }
+
   const word = words[state.learnIndex];
   const images = getWordImages(word);
 
@@ -1573,6 +2017,47 @@ function persistApiDeckCache(deckWords) {
   }
 }
 
+function loadAuthToken() {
+  try {
+    return window.localStorage.getItem(AUTH_SESSION_TOKEN_STORAGE_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+function loadStoredAuthUser() {
+  try {
+    const rawValue = window.localStorage.getItem(AUTH_USER_STORAGE_KEY);
+
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    return parsedValue && typeof parsedValue === "object" ? parsedValue : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function persistAuthSession(token, user) {
+  try {
+    window.localStorage.setItem(AUTH_SESSION_TOKEN_STORAGE_KEY, token);
+    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+  } catch (error) {
+    return;
+  }
+}
+
+function clearStoredAuthSession() {
+  try {
+    window.localStorage.removeItem(AUTH_SESSION_TOKEN_STORAGE_KEY);
+    window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  } catch (error) {
+    return;
+  }
+}
+
 function cloneWords(sourceWords) {
   return sourceWords.map((word) => ({
     ...word,
@@ -1580,10 +2065,54 @@ function cloneWords(sourceWords) {
   }));
 }
 
+function resolveApiBaseUrl() {
+  const explicitBaseUrl =
+    typeof window.WORD_IMAGE_MEMO_API_BASE === "string" ? window.WORD_IMAGE_MEMO_API_BASE.trim() : "";
+
+  if (explicitBaseUrl) {
+    return explicitBaseUrl.replace(/\/$/, "");
+  }
+
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+  const hostname = window.location.hostname || "localhost";
+  return `${protocol}//${hostname}:3000/api`;
+}
+
+function resolveApiOrigin(apiBaseUrl) {
+  try {
+    return new URL(apiBaseUrl).origin;
+  } catch (error) {
+    return "";
+  }
+}
+
+function resolveRuntimeUrl(rawUrl) {
+  if (!rawUrl) {
+    return "";
+  }
+
+  try {
+    if (rawUrl.startsWith("/")) {
+      return API_ORIGIN ? new URL(rawUrl, API_ORIGIN).toString() : rawUrl;
+    }
+
+    const runtimeUrl = new URL(rawUrl);
+    const runtimeHostName = window.location.hostname || "localhost";
+
+    if (LOCALHOST_HOSTNAMES.has(runtimeUrl.hostname) && !LOCALHOST_HOSTNAMES.has(runtimeHostName)) {
+      runtimeUrl.hostname = runtimeHostName;
+    }
+
+    return runtimeUrl.toString();
+  } catch (error) {
+    return rawUrl;
+  }
+}
+
 function normalizeWord(word) {
   const normalizedImages = (Array.isArray(word.images) ? word.images : []).map((image, index) => ({
     id: typeof image.id === "number" ? image.id : image.id || `${word.id}-${index + 1}`,
-    url: image.url || image.publicUrl || "",
+    url: resolveRuntimeUrl(image.url || image.publicUrl || ""),
     source: image.source || image.sourceLabel || word.imageSource || "Image",
     credit: image.credit ?? image.sourceCredit ?? word.imageCredit ?? null,
     storageType: image.storageType || "external",
@@ -1593,7 +2122,7 @@ function normalizeWord(word) {
 
   return {
     ...word,
-    image: word.image || normalizedImages[0]?.url || "",
+    image: resolveRuntimeUrl(word.image || normalizedImages[0]?.url || ""),
     imageSource: word.imageSource || normalizedImages[0]?.source || null,
     imageCredit: word.imageCredit || normalizedImages[0]?.credit || null,
     images: normalizedImages
@@ -1602,9 +2131,9 @@ function normalizeWord(word) {
 
 async function fetchLearningDeck() {
   const response = await fetch(`${API_BASE_URL}/learning-deck`, {
-    headers: {
+    headers: buildApiHeaders({
       Accept: "application/json"
-    }
+    })
   });
 
   if (!response.ok) {
@@ -1618,9 +2147,9 @@ async function fetchLearningDeck() {
 async function deleteWordImageApi(imageId) {
   const response = await fetch(`${API_BASE_URL}/word-images/${imageId}/delete`, {
     method: "PATCH",
-    headers: {
+    headers: buildApiHeaders({
       Accept: "application/json"
-    }
+    })
   });
 
   if (!response.ok) {
@@ -1635,9 +2164,9 @@ async function searchBingImagesApi(query) {
     q: query
   });
   const response = await fetch(`${API_BASE_URL}/word-images/search/bing?${searchParams.toString()}`, {
-    headers: {
+    headers: buildApiHeaders({
       Accept: "application/json"
-    }
+    })
   });
 
   if (!response.ok) {
@@ -1650,10 +2179,10 @@ async function searchBingImagesApi(query) {
 async function importBingSearchImageApi(wordId, result) {
   const response = await fetch(`${API_BASE_URL}/word-images/search/import/${encodeURIComponent(wordId)}`, {
     method: "POST",
-    headers: {
+    headers: buildApiHeaders({
       Accept: "application/json",
       "Content-Type": "application/json"
-    },
+    }),
     body: JSON.stringify({
       mediaUrl: result.mediaUrl,
       thumbnailUrl: result.thumbnailUrl,
@@ -1675,6 +2204,7 @@ async function uploadWordImageApi(wordId, file) {
 
   const response = await fetch(`${API_BASE_URL}/word-images/upload/${encodeURIComponent(wordId)}`, {
     method: "POST",
+    headers: buildApiHeaders(),
     body: formData
   });
 
@@ -1683,6 +2213,98 @@ async function uploadWordImageApi(wordId, file) {
   }
 
   return response.json();
+}
+
+async function loginWithEmailApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "登录失败"));
+  }
+
+  return response.json();
+}
+
+async function sendRegisterCodeApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/auth/register/send-code`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "发送验证码失败"));
+  }
+
+  return response.json();
+}
+
+async function registerWithEmailApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "注册失败"));
+  }
+
+  return response.json();
+}
+
+async function fetchCurrentUserApi() {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "获取登录状态失败"));
+  }
+
+  return response.json();
+}
+
+async function logoutApi() {
+  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "退出失败"));
+  }
+
+  return response.json();
+}
+
+
+
+function buildApiHeaders(headers = {}) {
+  const nextHeaders = { ...headers };
+
+  if (state.authToken) {
+    nextHeaders.Authorization = `Bearer ${state.authToken}`;
+  }
+
+  return nextHeaders;
 }
 
 async function extractApiErrorMessage(response, fallbackMessage) {
@@ -1719,6 +2341,27 @@ function updateWordInDeck(nextWord) {
 
   if (state.dataSource !== "local") {
     persistApiDeckCache(words);
+  }
+}
+
+function getErrorMessage(error, fallbackMessage) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
+
+function handlePossibleAuthError(error) {
+  const message = error instanceof Error ? error.message : "";
+
+  if (!message) {
+    return;
+  }
+
+  if (/sign in|session|\u767b\u5f55|\u4f1a\u8bdd/i.test(message)) {
+    clearAuthSessionState();
+    openAuthView(message, "error");
   }
 }
 
