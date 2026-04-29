@@ -1,37 +1,55 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
 import { getRequiredDatabaseUrl } from "../config/env";
+import {
+  createDatabasePool,
+  type DatabaseClient,
+  type DatabaseQueryResult,
+  executeQuery
+} from "./mysql";
+import type { PoolConnection, RowDataPacket } from "mysql2/promise";
+
+export type TransactionClient = DatabaseClient;
 
 @Injectable()
-export class DatabaseService implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: getRequiredDatabaseUrl()
-  });
+export class DatabaseService implements DatabaseClient, OnModuleDestroy {
+  private readonly pool = createDatabasePool(getRequiredDatabaseUrl());
 
-  async query<Row extends QueryResultRow = QueryResultRow>(
+  async query<Row extends object = RowDataPacket>(
     text: string,
     params: readonly unknown[] = []
-  ): Promise<QueryResult<Row>> {
-    return this.pool.query<Row>(text, params as unknown[]);
+  ): Promise<DatabaseQueryResult<Row>> {
+    return executeQuery<Row>(this.pool, text, params);
   }
 
-  async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
+  async transaction<T>(callback: (client: TransactionClient) => Promise<T>): Promise<T> {
+    const connection = await this.pool.getConnection();
+    const client = new MysqlTransactionClient(connection);
 
     try {
-      await client.query("BEGIN");
+      await connection.beginTransaction();
       const result = await callback(client);
-      await client.query("COMMIT");
+      await connection.commit();
       return result;
     } catch (error) {
-      await client.query("ROLLBACK");
+      await connection.rollback();
       throw error;
     } finally {
-      client.release();
+      connection.release();
     }
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
+  }
+}
+
+class MysqlTransactionClient implements TransactionClient {
+  constructor(private readonly connection: PoolConnection) {}
+
+  async query<Row extends object = RowDataPacket>(
+    text: string,
+    params: readonly unknown[] = []
+  ): Promise<DatabaseQueryResult<Row>> {
+    return executeQuery<Row>(this.connection, text, params);
   }
 }

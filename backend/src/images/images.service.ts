@@ -6,10 +6,10 @@ import {
   NotFoundException
 } from "@nestjs/common";
 import * as path from "node:path";
-import { PoolClient } from "pg";
 import { AuthenticatedUser } from "../auth/auth.service";
 import { appEnv } from "../config/env";
 import { DatabaseService } from "../database/database.service";
+import { DatabaseClient } from "../database/mysql";
 import { StorageService } from "../storage/storage.service";
 import { WordsService } from "../words/words.service";
 
@@ -214,9 +214,9 @@ export class ImagesService {
         throw new ConflictException("Only active images can be deleted.");
       }
 
-      const activeCountResult = await client.query<{ count: string }>(
+      const activeCountResult = await client.query<{ count: number | string }>(
         `
-          SELECT COUNT(*)::text AS count
+          SELECT COUNT(*) AS count
           FROM word_images
           WHERE word_id = $1
             AND status = 'active'
@@ -228,6 +228,10 @@ export class ImagesService {
         throw new ConflictException("Each word must keep at least one active image.");
       }
 
+      const purgeAfterAt = new Date(
+        Date.now() + appEnv.imagePurgeRetentionHours * 60 * 60 * 1000
+      );
+
       await client.query(
         `
           UPDATE word_images
@@ -235,11 +239,11 @@ export class ImagesService {
             status = 'deleted',
             deleted_by_user_id = $3,
             deleted_at = NOW(),
-            purge_after_at = NOW() + make_interval(hours => $2::int),
+            purge_after_at = $2,
             updated_at = NOW()
           WHERE id = $1
         `,
-        [imageId, appEnv.imagePurgeRetentionHours, user.id]
+        [imageId, purgeAfterAt, user.id]
       );
 
       await this.insertLog(
@@ -302,10 +306,10 @@ export class ImagesService {
     });
   }
 
-  private async getImageTarget(client: PoolClient, imageId: number): Promise<ImageTargetRow | null> {
+  private async getImageTarget(client: DatabaseClient, imageId: number): Promise<ImageTargetRow | null> {
     const result = await client.query<ImageTargetRow>(
       `
-        SELECT id::text, word_id, status
+        SELECT CAST(id AS CHAR) AS id, word_id, status
         FROM word_images
         WHERE id = $1
       `,
@@ -316,7 +320,7 @@ export class ImagesService {
   }
 
   private async insertLog(
-    client: PoolClient,
+    client: DatabaseClient,
     imageId: number,
     wordId: string,
     action: "delete" | "restore",

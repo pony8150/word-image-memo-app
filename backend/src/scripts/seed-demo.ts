@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import * as path from "node:path";
-import { Pool } from "pg";
 import { getRequiredDatabaseUrl } from "../config/env";
+import { createDatabasePool, executeQuery } from "../database/mysql";
 
 interface DemoSeedImage {
   sortOrder: number;
@@ -27,16 +27,15 @@ interface DemoSeedWord {
 }
 
 async function main() {
-  const pool = new Pool({
-    connectionString: getRequiredDatabaseUrl()
-  });
+  const pool = createDatabasePool(getRequiredDatabaseUrl());
 
   try {
     const seedFilePath = path.resolve(process.cwd(), "seeds", "demo-learning-deck.json");
     const seedWords = JSON.parse(await readFile(seedFilePath, "utf8")) as DemoSeedWord[];
 
     for (const word of seedWords) {
-      await pool.query(
+      await executeQuery(
+        pool,
         `
           INSERT INTO words (
             id,
@@ -51,17 +50,16 @@ async function main() {
             scene
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          ON CONFLICT (id)
-          DO UPDATE SET
-            sort_order = EXCLUDED.sort_order,
-            english = EXCLUDED.english,
-            chinese = EXCLUDED.chinese,
-            level = EXCLUDED.level,
-            theme = EXCLUDED.theme,
-            example_text = EXCLUDED.example_text,
-            example_translation = EXCLUDED.example_translation,
-            image_reason = EXCLUDED.image_reason,
-            scene = EXCLUDED.scene,
+          ON DUPLICATE KEY UPDATE
+            sort_order = VALUES(sort_order),
+            english = VALUES(english),
+            chinese = VALUES(chinese),
+            level = VALUES(level),
+            theme = VALUES(theme),
+            example_text = VALUES(example_text),
+            example_translation = VALUES(example_translation),
+            image_reason = VALUES(image_reason),
+            scene = VALUES(scene),
             updated_at = NOW()
         `,
         [
@@ -78,10 +76,11 @@ async function main() {
         ]
       );
 
-      await pool.query("DELETE FROM word_images WHERE word_id = $1", [word.id]);
+      await executeQuery(pool, "DELETE FROM word_images WHERE word_id = $1", [word.id]);
 
       for (const image of word.images) {
-        const insertedImageResult = await pool.query<{ id: string }>(
+        const insertedImageResult = await executeQuery(
+          pool,
           `
             INSERT INTO word_images (
               word_id,
@@ -94,7 +93,6 @@ async function main() {
               sort_order
             )
             VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)
-            RETURNING id::text
           `,
           [
             word.id,
@@ -107,12 +105,13 @@ async function main() {
           ]
         );
 
-        await pool.query(
+        await executeQuery(
+          pool,
           `
             INSERT INTO image_operation_logs (word_image_id, word_id, action, actor_type, note)
             VALUES ($1, $2, 'seed', 'system', 'seeded demo image')
           `,
-          [Number(insertedImageResult.rows[0].id), word.id]
+          [insertedImageResult.insertId, word.id]
         );
       }
     }

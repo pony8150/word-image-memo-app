@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { PoolClient } from "pg";
 import { DatabaseService } from "../database/database.service";
+import { DatabaseClient } from "../database/mysql";
 import { StorageService } from "../storage/storage.service";
 import { LearningDeckImage, LearningDeckWord } from "./words.types";
 
@@ -36,13 +36,13 @@ export class WordsService {
     return { words: this.mapDeckRows(rows) };
   }
 
-  async getWordById(wordId: string, client?: PoolClient): Promise<LearningDeckWord | null> {
+  async getWordById(wordId: string, client?: DatabaseClient): Promise<LearningDeckWord | null> {
     const rows = await this.fetchDeckRows(client, wordId);
     const words = this.mapDeckRows(rows);
     return words[0] || null;
   }
 
-  private async fetchDeckRows(client?: PoolClient, wordId?: string): Promise<DeckRow[]> {
+  private async fetchDeckRows(client?: DatabaseClient, wordId?: string): Promise<DeckRow[]> {
     const params: unknown[] = [];
     let whereClause = "";
 
@@ -63,7 +63,7 @@ export class WordsService {
           w.example_translation,
           w.image_reason,
           w.scene,
-          wi.id::text AS image_id,
+          CAST(wi.id AS CHAR) AS image_id,
           wi.storage_type AS image_storage_type,
           wi.storage_key AS image_storage_key,
           wi.public_url AS image_public_url,

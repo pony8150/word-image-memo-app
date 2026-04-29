@@ -1,16 +1,24 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: word-image-memo-postgres
+  mysql:
+    image: mysql:8.4
+    container_name: word-image-memo-mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: word_image_memo
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MYSQL_ROOT_PASSWORD: 8150
+      MYSQL_DATABASE: word_image_memo
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p8150"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
 volumes:
-  postgres_data:
+  mysql_data:

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PoolClient } from "pg";
 import { DatabaseService } from "../database/database.service";
+import { DatabaseClient } from "../database/mysql";
 import { StorageService } from "../storage/storage.service";
 
 interface DueImageRow {
@@ -28,7 +28,7 @@ export class ImagesCleanupService {
   async purgeDueImages(): Promise<number> {
     const dueImagesResult = await this.database.query<DueImageRow>(
       `
-        SELECT id::text, word_id, storage_type, storage_key
+        SELECT CAST(id AS CHAR) AS id, word_id, storage_type, storage_key
         FROM word_images
         WHERE status = 'deleted'
           AND purge_after_at IS NOT NULL
@@ -49,9 +49,9 @@ export class ImagesCleanupService {
         }
 
         if (lockedRow.storage_type === "local" && lockedRow.storage_key) {
-          const referenceCountResult = await client.query<{ count: string }>(
+          const referenceCountResult = await client.query<{ count: number | string }>(
             `
-              SELECT COUNT(*)::text AS count
+              SELECT COUNT(*) AS count
               FROM word_images
               WHERE storage_key = $1
                 AND id <> $2
@@ -84,10 +84,10 @@ export class ImagesCleanupService {
     return purgedCount;
   }
 
-  private async lockImageRow(client: PoolClient, imageId: number): Promise<DueImageRow | null> {
+  private async lockImageRow(client: DatabaseClient, imageId: number): Promise<DueImageRow | null> {
     const result = await client.query<DueImageRow>(
       `
-        SELECT id::text, word_id, storage_type, storage_key
+        SELECT CAST(id AS CHAR) AS id, word_id, storage_type, storage_key
         FROM word_images
         WHERE id = $1
           AND status = 'deleted'

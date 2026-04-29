@@ -6,7 +6,7 @@
 
 - 前端：`index.html` + `styles.css` + `app.js`
 - 后端：NestJS
-- 数据库：PostgreSQL
+- 数据库：MySQL
 - 图片存储：当前先落本地，后续可切 OSS
 
 ## 设计原则
@@ -145,15 +145,15 @@
 
 - 前端：原生 HTML / CSS / JavaScript
 - 后端：NestJS
-- 数据库：PostgreSQL
+- 数据库：MySQL
 - 图片存储：本地目录
 - 后续 OSS：可以切火山引擎 OSS，也可以切 S3 / R2，当前代码先按“本地存储抽象”实现
 
 ## 数据与持久化
 
-- PostgreSQL 不是内存数据库
+- MySQL 不是内存数据库
 - 数据不会因为你重启电脑或重启服务就自动消失
-- 当前图片数据、单词数据、删除状态都保存在 PostgreSQL
+- 当前图片数据、单词数据、删除状态都保存在 MySQL
 - 本地图片文件保存在 `backend/uploads/`
 - 前端还会缓存一份最近一次成功拉到的学习卡片数据，避免后端暂时不可用时页面直接空掉
 
@@ -167,6 +167,7 @@ word-image-memo-app/
 ├─ app.js
 ├─ backend/
 │  ├─ package.json
+│  ├─ docker-compose.yml
 │  ├─ sql/
 │  ├─ seeds/
 │  ├─ src/
@@ -190,14 +191,33 @@ word-image-memo-app/
 
 ### 1. 启动后端
 
-先准备好本机 PostgreSQL，并创建数据库，例如：
+推荐直接用 Docker 启动项目自带的 MySQL。
 
-- `word_image_memo`
+先启动数据库：
+
+```powershell
+cd backend
+docker compose up -d
+docker compose ps
+```
+
+当前默认数据库连接信息：
+
+- Host：`localhost`
+- Port：`3307`
+- User：`root`
+- Password：`8150`
+- Database：`word_image_memo`
+
+说明：
+
+- Docker 容器里的 MySQL 实际监听 `3306`
+- 为了避免和你本机已有的 MySQL 冲突，宿主机映射端口用了 `3307`
 
 然后配置 `backend/.env`：
 
 ```env
-DATABASE_URL=postgres://postgres:你的密码@localhost:5432/word_image_memo
+DATABASE_URL=mysql://root:8150@localhost:3307/word_image_memo
 PUBLIC_BASE_URL=http://localhost:3000
 UPLOADS_DIR=uploads
 IMAGE_PURGE_RETENTION_HOURS=24
@@ -223,6 +243,7 @@ http://localhost:3000/api/learning-deck
 注意：
 
 - `http://localhost:3000/` 返回 `Cannot GET /` 是正常的，因为后端只提供 API，不提供首页
+- 如果数据库容器第一次启动较慢，`npm.cmd run db:init` 会自动等待数据库就绪
 
 ### 2. 启动前端静态服务
 
@@ -242,6 +263,7 @@ http://localhost:8000/
 
 - `8000`：前端页面
 - `3000`：后端 API 和本地图片访问
+- `3307`：Docker 中的 MySQL 对宿主机暴露的端口
 
 ### 3. 前端改完后如何刷新
 
@@ -256,6 +278,15 @@ http://localhost:8000/
 - `Ctrl + F5`
 
 因为它会强制刷新，比普通 `F5` 更不容易继续吃旧缓存。
+
+### 4. 常用数据库命令
+
+```powershell
+cd backend
+docker compose ps
+docker compose logs -f mysql
+docker compose down
+```
 
 ## 页面说明
 
