@@ -1,5 +1,98 @@
 # Word Image Memo App
 
+## 2026-04-30 Update Notes
+
+This section is the current source of truth for the latest multi-user image model.
+If an AI agent reads only one section before making changes, read this one first.
+
+### Product rules
+
+- Guests cannot view word cards anymore.
+- If the user is not logged in, the frontend should stay on the auth page and should not show learning/review/image/stat content.
+- After login, the user chooses a book and then sees that book's words and images.
+- Current built-in books are `junior-high`, `senior-high`, and `college`.
+
+### Image ownership model
+
+- `words` is global. Do not duplicate `apple` three times just because it appears in different books.
+- `books` stores the book list.
+- `book_words` maps words into books.
+- Cold-start images are shared defaults.
+- User-uploaded or searched images are private to that user.
+- One user hiding/deleting an image must not affect another user.
+
+### Storage model
+
+- Real binary files are stored through `image_assets`.
+- Local/OSS file keys must be deduplicated by image content hash (`sha256`).
+- The same binary image should only be stored once even if many users use it.
+- `word_images.scope = 'default'` means a shared cold-start image.
+- `word_images.scope = 'private'` means a user-private image relation.
+- `user_hidden_word_images` stores "this user hid this default image".
+
+### Delete semantics
+
+- Deleting a default image does not delete the shared image for everyone.
+- It only inserts a row into `user_hidden_word_images` for the current user.
+- Deleting a private image only soft-deletes that user's `word_images` relation.
+- Physical file deletion should happen only when the asset has no remaining references.
+
+### Important implementation notes
+
+- `GET /api/learning-deck` now requires login.
+- It accepts `?book=<code>`.
+- It returns `books`, `activeBookCode`, and `words`.
+- Frontend local fallback word cards should not be used for guests anymore.
+- Frontend API deck cache is user-scoped by email to avoid leaking one user's cached deck to another user on the same browser.
+- If the session becomes invalid, the frontend should clear the local auth state, empty the deck, and go back to the auth page instead of reusing cached cards.
+
+### Frontend layout note
+
+- The old top navigation bar is no longer the main layout.
+- The app now uses a left sidebar on desktop.
+- On narrow screens, that sidebar becomes an off-canvas drawer and should stay hidden by default.
+- The mobile goal is to maximize content width and height for the word card area, not keep a permanent top dock.
+- Sidebar open/close behavior is handled in the frontend only. It should close on backdrop click, nav click, and `Esc`.
+
+### Database caution
+
+- The schema changed a lot.
+- Treat this as a new schema, not a tiny patch on top of the old one.
+- The safest path is to use a new empty database, or rebuild the current dev database before running init/seed again.
+
+### Run steps for tonight
+
+From `backend/`:
+
+```powershell
+npm.cmd install
+npm.cmd run db:init
+npm.cmd run download:demo-images
+npm.cmd run seed:demo
+npm.cmd run start:dev
+```
+
+From repo root:
+
+```powershell
+python -m http.server 8000
+```
+
+### Auth note
+
+- If SMTP is not configured, registration code sending still works in dev mode.
+- The backend returns `devCode`, and the frontend will auto-fill it.
+
+### Files to inspect first
+
+- `backend/sql/001_init.sql`
+- `backend/src/images/images.service.ts`
+- `backend/src/words/words.service.ts`
+- `backend/src/scripts/seed-demo.ts`
+- `index.html`
+- `styles.css`
+- `app.js`
+
 一个以“先看图，再记词”为核心的英语单词学习 Demo。
 
 当前项目已经不是纯静态页，而是一个本地可运行的前后端原型：

@@ -15,6 +15,34 @@ CREATE TABLE IF NOT EXISTS words (
   KEY idx_words_sort_order (sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS books (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  code VARCHAR(64) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_books_code (code),
+  KEY idx_books_sort_order (sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS book_words (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  book_id BIGINT NOT NULL,
+  word_id VARCHAR(191) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_book_words_book_word (book_id, word_id),
+  KEY idx_book_words_word_id (word_id),
+  KEY idx_book_words_book_sort (book_id, sort_order),
+  CONSTRAINT fk_book_words_book
+    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+  CONSTRAINT fk_book_words_word
+    FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT NOT NULL AUTO_INCREMENT,
   email VARCHAR(255) NOT NULL,
@@ -62,12 +90,27 @@ CREATE TABLE IF NOT EXISTS email_verification_codes (
   KEY idx_email_verification_codes_email_purpose (email, purpose, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS word_images (
+CREATE TABLE IF NOT EXISTS image_assets (
   id BIGINT NOT NULL AUTO_INCREMENT,
-  word_id VARCHAR(191) NOT NULL,
   storage_type ENUM('external', 'local', 'oss') NOT NULL,
   storage_key VARCHAR(255) NULL,
   public_url TEXT NULL,
+  sha256_hash CHAR(64) NULL,
+  mime_type VARCHAR(128) NULL,
+  file_size_bytes BIGINT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_image_assets_sha256_hash (sha256_hash),
+  KEY idx_image_assets_storage_key (storage_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS word_images (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  word_id VARCHAR(191) NOT NULL,
+  image_asset_id BIGINT NOT NULL,
+  scope ENUM('default', 'private') NOT NULL DEFAULT 'default',
+  owner_user_id BIGINT NULL,
   source_label VARCHAR(128) NULL,
   source_credit VARCHAR(255) NULL,
   status ENUM('active', 'deleted') NOT NULL DEFAULT 'active',
@@ -79,24 +122,44 @@ CREATE TABLE IF NOT EXISTS word_images (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_word_images_word_id_status (word_id, status),
+  KEY idx_word_images_word_scope_status (word_id, scope, status),
+  KEY idx_word_images_owner_scope_status (owner_user_id, scope, status),
+  KEY idx_word_images_asset_id (image_asset_id),
   KEY idx_word_images_purge_after_at (purge_after_at),
-  KEY idx_word_images_storage_key (storage_key),
   CONSTRAINT fk_word_images_word
     FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
+  CONSTRAINT fk_word_images_asset
+    FOREIGN KEY (image_asset_id) REFERENCES image_assets(id) ON DELETE CASCADE,
+  CONSTRAINT fk_word_images_owner_user
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_word_images_created_by_user
     FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT fk_word_images_deleted_by_user
     FOREIGN KEY (deleted_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS user_hidden_word_images (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  word_image_id BIGINT NOT NULL,
+  hidden_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_user_hidden_word_images_user_image (user_id, word_image_id),
+  KEY idx_user_hidden_word_images_word_image_id (word_image_id),
+  CONSTRAINT fk_user_hidden_word_images_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_user_hidden_word_images_word_image
+    FOREIGN KEY (word_image_id) REFERENCES word_images(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS image_operation_logs (
   id BIGINT NOT NULL AUTO_INCREMENT,
   word_image_id BIGINT NULL,
   word_id VARCHAR(191) NOT NULL,
-  action ENUM('seed', 'delete', 'restore', 'purge') NOT NULL,
+  action ENUM('seed', 'hide', 'unhide', 'delete', 'restore', 'purge') NOT NULL,
   actor_type VARCHAR(32) NOT NULL DEFAULT 'system',
   note TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  KEY idx_image_operation_logs_word_id_created_at (word_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

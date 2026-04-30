@@ -7,7 +7,8 @@ import { StorageService } from "../storage/storage.service";
 interface DueImageRow {
   id: string;
   word_id: string;
-  storage_type: string;
+  image_asset_id: string;
+  storage_type: string | null;
   storage_key: string | null;
 }
 
@@ -28,12 +29,19 @@ export class ImagesCleanupService {
   async purgeDueImages(): Promise<number> {
     const dueImagesResult = await this.database.query<DueImageRow>(
       `
-        SELECT CAST(id AS CHAR) AS id, word_id, storage_type, storage_key
-        FROM word_images
-        WHERE status = 'deleted'
-          AND purge_after_at IS NOT NULL
-          AND purge_after_at <= NOW()
-        ORDER BY purge_after_at ASC
+        SELECT
+          CAST(wi.id AS CHAR) AS id,
+          wi.word_id,
+          CAST(wi.image_asset_id AS CHAR) AS image_asset_id,
+          ia.storage_type,
+          ia.storage_key
+        FROM word_images wi
+        LEFT JOIN image_assets ia
+          ON ia.id = wi.image_asset_id
+        WHERE wi.status = 'deleted'
+          AND wi.purge_after_at IS NOT NULL
+          AND wi.purge_after_at <= NOW()
+        ORDER BY wi.purge_after_at ASC
         LIMIT 200
       `
     );
@@ -48,20 +56,30 @@ export class ImagesCleanupService {
           return;
         }
 
-        if (lockedRow.storage_type === "local" && lockedRow.storage_key) {
-          const referenceCountResult = await client.query<{ count: number | string }>(
-            `
-              SELECT COUNT(*) AS count
-              FROM word_images
-              WHERE storage_key = $1
-                AND id <> $2
-            `,
-            [lockedRow.storage_key, Number(lockedRow.id)]
-          );
+        const assetReferenceCountResult = await client.query<{ count: number | string }>(
+          `
+            SELECT COUNT(*) AS count
+            FROM word_images
+            WHERE image_asset_id = $1
+              AND id <> $2
+          `,
+          [Number(lockedRow.image_asset_id), Number(lockedRow.id)]
+        );
 
-          if (Number(referenceCountResult.rows[0]?.count || "0") === 0) {
+        const hasOtherReferences = Number(assetReferenceCountResult.rows[0]?.count || "0") > 0;
+
+        if (!hasOtherReferences) {
+          if (lockedRow.storage_type === "local" && lockedRow.storage_key) {
             await this.storage.deleteLocalFile(lockedRow.storage_key);
           }
+
+          await client.query(
+            `
+              DELETE FROM image_assets
+              WHERE id = $1
+            `,
+            [Number(lockedRow.image_asset_id)]
+          );
         }
 
         await client.query(
@@ -72,13 +90,20 @@ export class ImagesCleanupService {
           [Number(lockedRow.id), lockedRow.word_id]
         );
 
-        await client.query("DELETE FROM word_images WHERE id = $1", [Number(lockedRow.id)]);
+        await client.query(
+          `
+            DELETE FROM word_images
+            WHERE id = $1
+          `,
+          [Number(lockedRow.id)]
+        );
+
         purgedCount += 1;
       });
     }
 
     if (purgedCount > 0) {
-      this.logger.log(`Purged ${purgedCount} deleted image record(s).`);
+      this.logger.log(`Purged ${purgedCount} deleted private image record(s).`);
     }
 
     return purgedCount;
@@ -87,12 +112,19 @@ export class ImagesCleanupService {
   private async lockImageRow(client: DatabaseClient, imageId: number): Promise<DueImageRow | null> {
     const result = await client.query<DueImageRow>(
       `
-        SELECT CAST(id AS CHAR) AS id, word_id, storage_type, storage_key
-        FROM word_images
-        WHERE id = $1
-          AND status = 'deleted'
-          AND purge_after_at IS NOT NULL
-          AND purge_after_at <= NOW()
+        SELECT
+          CAST(wi.id AS CHAR) AS id,
+          wi.word_id,
+          CAST(wi.image_asset_id AS CHAR) AS image_asset_id,
+          ia.storage_type,
+          ia.storage_key
+        FROM word_images wi
+        LEFT JOIN image_assets ia
+          ON ia.id = wi.image_asset_id
+        WHERE wi.id = $1
+          AND wi.status = 'deleted'
+          AND wi.purge_after_at IS NOT NULL
+          AND wi.purge_after_at <= NOW()
         FOR UPDATE
       `,
       [imageId]

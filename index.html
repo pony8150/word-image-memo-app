@@ -10,24 +10,68 @@
     <div class="page-glow glow-left"></div>
     <div class="page-glow glow-right"></div>
     <div class="page-grid"></div>
-
+    <button
+      class="sidebar-open-btn"
+      id="sidebar-open-button"
+      type="button"
+      aria-controls="app-sidebar"
+      aria-expanded="false"
+      hidden
+    >
+      <span class="sidebar-open-btn-icon" aria-hidden="true"></span>
+      <span class="sidebar-open-btn-label">Menu</span>
+    </button>
+    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close sidebar" hidden></button>
 
     <div class="app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="brand-badge">W</div>
-          <div>
-            <p class="eyebrow">Word Image Memo</p>
-            <h1>看图记单词</h1>
+      <header class="topbar" id="app-sidebar">
+        <div class="sidebar-head">
+          <div class="brand">
+            <div class="brand-badge">W</div>
+            <div>
+              <p class="eyebrow">Word Image Memo</p>
+              <h1>看图记单词</h1>
+            </div>
           </div>
+          <button class="sidebar-close-btn" id="sidebar-close-button" type="button" hidden>Close</button>
         </div>
 
         <nav class="nav-pills" aria-label="Primary">
-          <button class="nav-pill active" data-target="learn">学习卡片</button>
-          <button class="nav-pill" data-target="welcome" hidden>欢迎页</button>
-          <button class="nav-pill" data-target="review" hidden>复习模式</button>
-          <button class="nav-pill" data-target="image" hidden>图片联想</button>
-          <button class="nav-pill" data-target="stats" hidden>学习统计</button>
+          <button class="nav-pill" data-target="learn" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>学习卡片</strong>
+              <small>Words and images</small>
+            </span>
+          </button>
+          <button class="nav-pill" data-target="welcome" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>欢迎页</strong>
+              <small>Overview</small>
+            </span>
+          </button>
+          <button class="nav-pill" data-target="review" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>复习模式</strong>
+              <small>Recall loop</small>
+            </span>
+          </button>
+          <button class="nav-pill" data-target="image" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>图片联想</strong>
+              <small>Image quiz</small>
+            </span>
+          </button>
+          <button class="nav-pill" data-target="stats" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>学习统计</strong>
+              <small>Progress</small>
+            </span>
+          </button>
         </nav>
 
         <section class="account-pill" aria-label="Account">
@@ -134,13 +178,19 @@
           </div>
         </section>
 
-        <section class="view active" id="learn">
+        <section class="view" id="learn" hidden>
           <div class="section-header">
             <div>
               <p class="eyebrow">Learn Mode</p>
               <h2>单词学习卡片</h2>
             </div>
             <div class="section-tools">
+              <label class="book-select-wrap" for="book-select">
+                <span>词书</span>
+                <select class="book-select" id="book-select">
+                  <option value="">加载中</option>
+                </select>
+              </label>
               <button
                 class="secondary-btn list-toggle"
                 id="learn-list-toggle"
@@ -410,7 +460,7 @@
           </div>
         </section>
 
-        <section class="view auth-view" id="auth">
+        <section class="view auth-view active" id="auth">
           <div class="auth-page-shell">
             <section class="auth-stage auth-stage-page">
               <p class="eyebrow">Email Sign In</p>

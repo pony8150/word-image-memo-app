@@ -252,11 +252,14 @@ const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
 const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
 const LEARN_LONG_PRESS_MS = 650;
+const SIDEBAR_COLLAPSE_MEDIA_QUERY = "(max-width: 1024px)";
 
 let words = cloneWords(defaultWords).map(normalizeWord);
 
 const state = {
   dataSource: "local",
+  books: [],
+  activeBookCode: "",
   currentView: "learn",
   learnIndex: 0,
   learnImageIndex: 0,
@@ -290,6 +293,7 @@ const state = {
   imageChoices: [],
   imageLastCorrect: false,
   imageSelectedIndex: null,
+  sidebarOpen: false,
   authToken: loadAuthToken(),
   authUser: loadStoredAuthUser(),
   authPending: false,
@@ -314,7 +318,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshDeckFromServer({ silent: true });
 
   renderAllViews();
-  switchView("learn");
+  switchView(hasSession ? "learn" : "auth");
+  syncSidebarVisibility();
 });
 
 function renderAllViews() {
@@ -328,28 +333,61 @@ function renderAllViews() {
 }
 
 async function refreshDeckFromServer({ preserveWordId = null, silent = false } = {}) {
-  try {
-    const remoteWords = await fetchLearningDeck();
+  if (!state.authUser || !state.authToken) {
+    state.books = [];
+    state.activeBookCode = "";
+    applyDeckWords([], "locked", preserveWordId);
+    return false;
+  }
 
-    if (Array.isArray(remoteWords) && remoteWords.length > 0) {
-      persistApiDeckCache(remoteWords);
-      applyDeckWords(remoteWords, "api", preserveWordId);
+  try {
+    const payload = await fetchLearningDeck(state.activeBookCode);
+
+    if (payload && Array.isArray(payload.words)) {
+      state.books = Array.isArray(payload.books) ? payload.books : [];
+      state.activeBookCode =
+        payload.activeBookCode || state.activeBookCode || state.books[0]?.code || "";
+      persistApiDeckCache({
+        ownerEmail: state.authUser?.email || null,
+        books: state.books,
+        activeBookCode: state.activeBookCode,
+        words: payload.words
+      });
+      applyDeckWords(payload.words, "api", preserveWordId);
       return true;
     }
   } catch (error) {
+    if (handlePossibleAuthError(error)) {
+      state.books = [];
+      state.activeBookCode = "";
+      applyDeckWords([], "locked", preserveWordId);
+      return false;
+    }
+
     if (!silent) {
       console.error(error);
     }
   }
 
-  const cachedApiWords = loadCachedApiDeck();
+  const cachedDeck = loadCachedApiDeck();
 
-  if (Array.isArray(cachedApiWords) && cachedApiWords.length > 0) {
-    applyDeckWords(cachedApiWords, "api-cache", preserveWordId);
+  if (
+    cachedDeck &&
+    Array.isArray(cachedDeck.words) &&
+    cachedDeck.ownerEmail &&
+    state.authUser?.email &&
+    cachedDeck.ownerEmail === state.authUser.email
+  ) {
+    state.books = Array.isArray(cachedDeck.books) ? cachedDeck.books : [];
+    state.activeBookCode =
+      cachedDeck.activeBookCode || state.activeBookCode || state.books[0]?.code || "";
+    applyDeckWords(cachedDeck.words, "api-cache", preserveWordId);
     return false;
   }
 
-  applyDeckWords(defaultWords, "local", preserveWordId);
+  state.books = [];
+  state.activeBookCode = "";
+  applyDeckWords([], "empty", preserveWordId);
   return false;
 }
 
@@ -396,6 +434,11 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
 }
 
 function cacheElements() {
+  elements.appShell = document.querySelector(".app-shell");
+  elements.sidebar = document.getElementById("app-sidebar");
+  elements.sidebarOpenButton = document.getElementById("sidebar-open-button");
+  elements.sidebarCloseButton = document.getElementById("sidebar-close-button");
+  elements.sidebarBackdrop = document.getElementById("sidebar-backdrop");
   elements.views = [...document.querySelectorAll(".view")];
   elements.targetButtons = [...document.querySelectorAll("[data-target]")];
   elements.navPills = [...document.querySelectorAll(".nav-pill")];
@@ -423,6 +466,7 @@ function cacheElements() {
   elements.heroWordCount = document.getElementById("hero-word-count");
   elements.deckPreview = document.getElementById("deck-preview");
 
+  elements.bookSelect = document.getElementById("book-select");
   elements.learnProgress = document.getElementById("learn-progress");
   elements.learnListToggle = document.getElementById("learn-list-toggle");
   elements.learnDrawer = document.getElementById("learn-drawer");
@@ -533,6 +577,30 @@ function bindEvents() {
     elements.authSendCode.addEventListener("click", handleSendRegisterCode);
   }
 
+  if (elements.bookSelect) {
+    elements.bookSelect.addEventListener("change", handleBookChange);
+  }
+
+  if (elements.sidebarOpenButton) {
+    elements.sidebarOpenButton.addEventListener("click", () => {
+      setSidebarOpen(true);
+    });
+  }
+
+  if (elements.sidebarCloseButton) {
+    elements.sidebarCloseButton.addEventListener("click", () => {
+      setSidebarOpen(false);
+    });
+  }
+
+  if (elements.sidebarBackdrop) {
+    elements.sidebarBackdrop.addEventListener("click", () => {
+      setSidebarOpen(false);
+    });
+  }
+
+  window.addEventListener("resize", syncSidebarVisibility);
+
 
 
   elements.targetButtons.forEach((button) => {
@@ -540,6 +608,7 @@ function bindEvents() {
       const target = button.dataset.target;
       if (target) {
         switchView(target);
+        setSidebarOpen(false);
       }
     });
   });
@@ -570,10 +639,18 @@ function bindEvents() {
 
 
   elements.learnWordAudio.addEventListener("click", () => {
+    if (!hasDeckWords()) {
+      return;
+    }
+
     speakEnglish(words[state.learnIndex].english);
   });
 
   elements.learnExampleAudio.addEventListener("click", () => {
+    if (!hasDeckWords()) {
+      return;
+    }
+
     speakEnglish(words[state.learnIndex].example);
   });
 
@@ -587,6 +664,10 @@ function bindEvents() {
   elements.learnMedia.addEventListener("click", () => {
     if (state.learnLongPressTriggered) {
       state.learnLongPressTriggered = false;
+      return;
+    }
+
+    if (!hasDeckWords()) {
       return;
     }
 
@@ -697,6 +778,10 @@ function bindEvents() {
   });
 
   elements.learnPrev.addEventListener("click", () => {
+    if (!hasDeckWords()) {
+      return;
+    }
+
     if (state.learnIndex === 0) {
       return;
     }
@@ -710,6 +795,10 @@ function bindEvents() {
   });
 
   elements.learnNext.addEventListener("click", () => {
+    if (!hasDeckWords()) {
+      return;
+    }
+
     setLearnDeleteMenu(false);
     state.learnIndex = state.learnIndex < words.length - 1 ? state.learnIndex + 1 : 0;
     state.learnImageIndex = 0;
@@ -789,9 +878,49 @@ function bindEvents() {
 
       if (state.learnListOpen) {
         setLearnDrawer(false);
+        return;
+      }
+
+      if (state.sidebarOpen) {
+        setSidebarOpen(false);
       }
     }
   });
+}
+
+function isCompactSidebarLayout() {
+  return window.matchMedia(SIDEBAR_COLLAPSE_MEDIA_QUERY).matches;
+}
+
+function syncSidebarVisibility() {
+  const isCompact = isCompactSidebarLayout();
+  const shouldShowSidebar = isCompact && state.sidebarOpen;
+
+  if (elements.appShell) {
+    elements.appShell.classList.toggle("sidebar-open", shouldShowSidebar);
+  }
+
+  if (elements.sidebarOpenButton) {
+    elements.sidebarOpenButton.hidden = !isCompact || shouldShowSidebar;
+    elements.sidebarOpenButton.setAttribute("aria-expanded", String(shouldShowSidebar));
+  }
+
+  if (elements.sidebarCloseButton) {
+    elements.sidebarCloseButton.hidden = !isCompact;
+    elements.sidebarCloseButton.setAttribute("aria-expanded", String(shouldShowSidebar));
+  }
+
+  if (elements.sidebarBackdrop) {
+    elements.sidebarBackdrop.hidden = !shouldShowSidebar;
+    elements.sidebarBackdrop.setAttribute("aria-hidden", String(!shouldShowSidebar));
+  }
+
+  document.body.classList.toggle("sidebar-open", shouldShowSidebar);
+}
+
+function setSidebarOpen(isOpen) {
+  state.sidebarOpen = Boolean(isOpen);
+  syncSidebarVisibility();
 }
 
 async function initializeAuthState() {
@@ -857,6 +986,7 @@ function renderAuth() {
   const isSignedIn = Boolean(state.authUser);
   const isRegisterMode = state.authMode === "register";
   const cooldownSeconds = getAuthCodeCooldownSeconds();
+  const learnNavButton = elements.navPills.find((button) => button.dataset.target === "learn");
 
   if (elements.authUserName) {
     elements.authUserName.textContent = isSignedIn ? state.authUser.email : "\u672a\u767b\u5f55";
@@ -865,11 +995,16 @@ function renderAuth() {
   if (elements.authUserMeta) {
     elements.authUserMeta.textContent = isSignedIn
       ? `${state.authUser.email} | \u5df2\u767b\u5f55`
-      : "\u6e38\u5ba2\u53ef\u5148\u6d4f\u89c8\u5f53\u524d\u8bcd\u5361\uff0c\u767b\u5f55\u540e\u518d\u7ba1\u7406\u56fe\u7247\u4e0e\u540e\u7eed\u8bcd\u4e66\u3002";
+      : "\u767b\u5f55\u540e\u53ef\u4ee5\u540c\u6b65\u4f60\u7684\u8bcd\u4e66\u3001\u4e2a\u4eba\u56fe\u7247\u548c\u5220\u56fe\u8bb0\u5f55\u3002";
   }
 
   if (elements.authOpenButton) {
     elements.authOpenButton.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
+  }
+
+  if (learnNavButton) {
+    learnNavButton.hidden = !isSignedIn;
+    learnNavButton.disabled = !isSignedIn;
   }
 
   if (elements.authLogoutButton) {
@@ -1082,7 +1217,7 @@ async function handleLogout() {
     resetAuthInputs();
     await refreshDeckFromServer({ preserveWordId: currentWordId, silent: true });
     renderAllViews();
-    switchView("learn");
+    switchView("auth");
   }
 }
 
@@ -1095,7 +1230,13 @@ function clearAuthSessionState() {
 
 function switchView(viewId) {
   const publicViews = new Set(["welcome", "learn", "review", "image", "stats", "auth"]);
-  const nextView = publicViews.has(viewId) ? viewId : "learn";
+  const requestedView = publicViews.has(viewId) ? viewId : "learn";
+  const nextView = !state.authUser && requestedView !== "auth" ? "auth" : requestedView;
+
+  if (isCompactSidebarLayout()) {
+    state.sidebarOpen = false;
+    syncSidebarVisibility();
+  }
 
   state.currentView = nextView;
 
@@ -1104,7 +1245,9 @@ function switchView(viewId) {
   }
 
   elements.views.forEach((view) => {
-    view.classList.toggle("active", view.id === nextView);
+    const isActive = view.id === nextView;
+    view.classList.toggle("active", isActive);
+    view.hidden = !isActive;
   });
 
   elements.navPills.forEach((button) => {
@@ -1156,6 +1299,19 @@ function resetAuthInputs() {
 
 function renderWelcome() {
   elements.heroWordCount.textContent = String(words.length);
+
+  if (!hasDeckWords()) {
+    elements.deckPreview.innerHTML = `
+      <div class="deck-card active">
+        <div>
+          <strong>${state.authUser ? "当前词书暂无内容" : "请先登录"}</strong>
+          <small>${state.authUser ? "换一本词书，或检查词书数据。" : "登录后才能查看单词、图片和词书。"}</small>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   elements.deckPreview.innerHTML = words
     .slice(0, 4)
     .map(
@@ -1173,6 +1329,35 @@ function renderWelcome() {
 }
 
 function renderLearn() {
+  syncBookSelector();
+
+  if (!hasDeckWords()) {
+    const placeholderImage = buildEmptyImagePlaceholder({
+      id: "deck-locked",
+      english: state.authUser ? "No words" : "Sign in"
+    });
+
+    elements.learnProgress.textContent = state.authUser ? "当前词书暂无单词" : "请先登录后查看词书";
+    elements.learnImage.src = placeholderImage.url;
+    elements.learnImage.alt = state.authUser ? "当前词书暂无单词" : "请先登录";
+    elements.learnMedia.classList.remove("is-switchable", "is-manage-open");
+    elements.learnWord.textContent = state.authUser ? "当前词书暂无单词" : "请先登录";
+    elements.learnTranslation.textContent = state.authUser
+      ? "这个词书暂时没有可学习的单词。"
+      : "登录后才能查看单词卡片和个人图片。";
+    elements.learnExample.textContent = state.authUser
+      ? "可以切换到别的词书，或者检查后端 seed 数据。"
+      : "邮箱登录成功后，系统才会加载你的词书和图片。";
+    elements.learnExampleTranslation.textContent = "";
+    elements.learnPrev.disabled = true;
+    elements.learnNext.disabled = true;
+    elements.learnNext.textContent = state.authUser ? "暂无内容" : "请先登录";
+    elements.wordList.innerHTML = "";
+    syncLearnListVisibility();
+    renderWelcome();
+    return;
+  }
+
   const word = words[state.learnIndex];
   const images = getWordImages(word);
   const activeImage = images[Math.min(state.learnImageIndex, images.length - 1)];
@@ -1188,6 +1373,7 @@ function renderLearn() {
   elements.learnExampleTranslation.textContent = word.exampleChinese || "";
 
   elements.learnPrev.disabled = state.learnIndex === 0;
+  elements.learnNext.disabled = false;
   elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "回到第一张" : "下一张";
 
   elements.wordList.innerHTML = words
@@ -1206,6 +1392,40 @@ function renderLearn() {
 
   syncLearnListVisibility();
   renderWelcome();
+}
+
+function syncBookSelector() {
+  if (!elements.bookSelect) {
+    return;
+  }
+
+  if (!Array.isArray(state.books) || state.books.length === 0) {
+    elements.bookSelect.innerHTML = '<option value="">当前词书</option>';
+    elements.bookSelect.disabled = true;
+    return;
+  }
+
+  elements.bookSelect.innerHTML = state.books
+    .map((book) => {
+      const isSelected = book.code === state.activeBookCode;
+      const label = `${book.name}${Number.isFinite(book.wordCount) ? ` (${book.wordCount})` : ""}`;
+      return `<option value="${escapeHtml(book.code)}" ${isSelected ? "selected" : ""}>${escapeHtml(label)}</option>`;
+    })
+    .join("");
+  elements.bookSelect.disabled = state.authPending || !state.authUser;
+}
+
+async function handleBookChange(event) {
+  const nextBookCode = event.target.value;
+
+  if (!nextBookCode || nextBookCode === state.activeBookCode) {
+    return;
+  }
+
+  state.activeBookCode = nextBookCode;
+  await refreshDeckFromServer({ silent: true });
+  renderAllViews();
+  switchView("learn");
 }
 
 function syncLearnListVisibility() {
@@ -1227,6 +1447,14 @@ function setLearnDeleteMenu(isOpen) {
     return;
   }
 
+  if (!hasDeckWords()) {
+    state.learnDeleteMenuOpen = false;
+    elements.learnImageMenu.hidden = true;
+    elements.learnImageMenu.setAttribute("aria-hidden", "true");
+    elements.learnImageDelete.disabled = true;
+    return;
+  }
+
   state.learnDeleteMenuOpen = isOpen;
   clearLearnMediaLongPress();
 
@@ -1244,6 +1472,34 @@ function setLearnDeleteMenu(isOpen) {
 function renderReview() {
   const counts = getReviewCounts();
   const total = state.reviewOrder.length;
+
+  if (!hasDeckWords()) {
+    const placeholderImage = buildEmptyImagePlaceholder({
+      id: "review-locked",
+      english: state.authUser ? "No review words" : "Sign in"
+    });
+
+    elements.reviewCounts.know.textContent = "0";
+    elements.reviewCounts.fuzzy.textContent = "0";
+    elements.reviewCounts.unknown.textContent = "0";
+    elements.reviewProgress.textContent = "暂无复习内容";
+    elements.reviewSuggestion.textContent = state.authUser
+      ? "当前词书为空，暂时没有复习内容。"
+      : "登录后才能进入复习模式。";
+    elements.reviewImage.src = placeholderImage.url;
+    elements.reviewImage.alt = state.authUser ? "当前没有可复习单词" : "请先登录";
+    elements.reviewWord.textContent = state.authUser ? "当前没有可复习单词" : "请先登录";
+    elements.reviewPromptText.textContent = state.authUser
+      ? "换一本词书，或者检查后端 seed 数据。"
+      : "登录成功后会自动加载你的词书。";
+    elements.reviewTranslation.textContent = state.authUser ? "暂无可复习词卡" : "未登录无法查看词卡";
+    elements.reviewAnswer.classList.add("revealed");
+    elements.reviewReveal.disabled = true;
+    elements.rateButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    return;
+  }
 
   elements.reviewCounts.know.textContent = String(counts.know);
   elements.reviewCounts.fuzzy.textContent = String(counts.fuzzy);
@@ -1288,6 +1544,28 @@ function renderReview() {
 function renderImage() {
   const total = state.imageOrder.length;
   const accuracy = state.imageAttempts === 0 ? 0 : Math.round((state.imageScore / state.imageAttempts) * 100);
+
+  if (!hasDeckWords()) {
+    const placeholderImage = buildEmptyImagePlaceholder({
+      id: "image-locked",
+      english: state.authUser ? "No image quiz" : "Sign in"
+    });
+
+    elements.imageProgress.textContent = state.authUser ? "当前词书暂无题目" : "请先登录";
+    elements.imageVisual.src = placeholderImage.url;
+    elements.imageVisual.alt = state.authUser ? "当前词书暂无题目" : "请先登录";
+    elements.imagePromptText.textContent = state.authUser
+      ? "当前词书没有足够的单词来生成题目。"
+      : "登录后才能进入看图猜词。";
+    elements.imageReason.textContent = state.authUser
+      ? "切换词书，或者检查后端词书数据。"
+      : "登录成功后会自动加载你的词书题目。";
+    elements.imageOptions.innerHTML = "";
+    elements.imageResult.innerHTML = "";
+    elements.imageNext.disabled = true;
+    elements.imageReset.disabled = true;
+    return;
+  }
 
   if (state.imageIndex >= total) {
     elements.imageProgress.textContent = `完成 ${total} / ${total}`;
@@ -1349,6 +1627,7 @@ function renderImage() {
       `;
 
   elements.imageNext.disabled = !state.imageAnswered;
+  elements.imageReset.disabled = false;
 }
 
 function renderStats() {
@@ -1361,6 +1640,19 @@ function renderStats() {
   elements.stats.learned.textContent = String(state.learnedSet.size);
   elements.stats.reviewed.textContent = String(reviewed);
   elements.stats.imageAccuracy.textContent = `${accuracy}%`;
+
+  if (!hasDeckWords()) {
+    elements.stats.reviewBars.innerHTML = "";
+    elements.stats.wordStatusList.innerHTML = `
+      <div class="summary-item">
+        <div>
+          <p><strong>${state.authUser ? "当前没有可统计内容" : "请先登录"}</strong></p>
+        </div>
+        <span class="status-pill new">${state.authUser ? "空词书" : "未登录"}</span>
+      </div>
+    `;
+    return;
+  }
 
   elements.stats.reviewBars.innerHTML = [
     { key: "know", label: "认识", className: "good" },
@@ -1397,6 +1689,13 @@ function renderStats() {
 }
 
 function jumpToWord(index) {
+  if (!hasDeckWords()) {
+    if (!state.authUser) {
+      openAuthView("\u8bf7\u5148\u767b\u5f55\u540e\u518d\u67e5\u770b\u8bcd\u5361\u3002", "info");
+    }
+    return;
+  }
+
   setLearnDeleteMenu(false);
   state.learnIndex = index;
   state.learnImageIndex = 0;
@@ -1448,6 +1747,10 @@ function getWordImages(word) {
     : [];
 
   const images = Array.isArray(word.images) && word.images.length > 0 ? word.images : fallback;
+  if (images.length === 0) {
+    return [buildEmptyImagePlaceholder(word)];
+  }
+
   const uniqueImages = images.filter(
     (image, index, collection) => collection.findIndex((candidate) => candidate.url === image.url) === index
   );
@@ -1463,6 +1766,11 @@ function getRoundImage(word, roundIndex) {
 }
 
 function prepareImageQuestion() {
+  if (!hasDeckWords()) {
+    state.imageChoices = [];
+    return;
+  }
+
   if (state.imageIndex >= state.imageOrder.length) {
     return;
   }
@@ -1474,6 +1782,10 @@ function prepareImageQuestion() {
 }
 
 function handleImageAnswer(selectedIndex) {
+  if (!hasDeckWords()) {
+    return;
+  }
+
   const correctIndex = state.imageOrder[state.imageIndex];
   state.imageAnswered = true;
   state.imageAttempts += 1;
@@ -1489,6 +1801,20 @@ function handleImageAnswer(selectedIndex) {
 }
 
 function resetImageMode() {
+  if (!hasDeckWords()) {
+    state.imageOrder = [];
+    state.imageIndex = 0;
+    state.imageAnswered = false;
+    state.imageScore = 0;
+    state.imageAttempts = 0;
+    state.imageChoices = [];
+    state.imageLastCorrect = false;
+    state.imageSelectedIndex = null;
+    renderImage();
+    renderStats();
+    return;
+  }
+
   state.imageOrder = shuffle(words.map((_, index) => index));
   state.imageIndex = 0;
   state.imageAnswered = false;
@@ -1533,6 +1859,11 @@ function openLearnSearchModal() {
   if (!requireSignedInForAction("\u8bf7\u5148\u767b\u5f55\uff0c\u7136\u540e\u518d\u4e0a\u7f51\u641c\u56fe\u3002")) {
     return;
   }
+
+  if (!hasDeckWords()) {
+    return;
+  }
+
   const currentWord = words[state.learnIndex];
 
   if (state.learnUploadOpen) {
@@ -1720,6 +2051,11 @@ function openLearnUploadModal() {
   if (!requireSignedInForAction("\u8bf7\u5148\u767b\u5f55\uff0c\u7136\u540e\u518d\u4e0a\u4f20\u56fe\u7247\u3002")) {
     return;
   }
+
+  if (!hasDeckWords()) {
+    return;
+  }
+
   if (state.learnSearchOpen) {
     closeLearnSearchModal();
   }
@@ -1890,6 +2226,11 @@ async function deleteCurrentLearnImage() {
     return;
   }
 
+  if (!hasDeckWords()) {
+    setLearnDeleteMenu(false);
+    return;
+  }
+
   const word = words[state.learnIndex];
   const images = getWordImages(word);
 
@@ -2003,15 +2344,29 @@ function loadCachedApiDeck() {
     }
 
     const parsedValue = JSON.parse(rawValue);
-    return Array.isArray(parsedValue) ? parsedValue : null;
+
+    if (Array.isArray(parsedValue)) {
+      return {
+        ownerEmail: null,
+        books: [],
+        activeBookCode: "",
+        words: parsedValue
+      };
+    }
+
+    if (parsedValue && typeof parsedValue === "object" && Array.isArray(parsedValue.words)) {
+      return parsedValue;
+    }
+
+    return null;
   } catch (error) {
     return null;
   }
 }
 
-function persistApiDeckCache(deckWords) {
+function persistApiDeckCache(deckPayload) {
   try {
-    window.localStorage.setItem(API_DECK_CACHE_STORAGE_KEY, JSON.stringify(deckWords));
+    window.localStorage.setItem(API_DECK_CACHE_STORAGE_KEY, JSON.stringify(deckPayload));
   } catch (error) {
     return;
   }
@@ -2129,19 +2484,25 @@ function normalizeWord(word) {
   };
 }
 
-async function fetchLearningDeck() {
-  const response = await fetch(`${API_BASE_URL}/learning-deck`, {
+async function fetchLearningDeck(bookCode = "") {
+  const searchParams = new URLSearchParams();
+
+  if (bookCode) {
+    searchParams.set("book", bookCode);
+  }
+
+  const requestUrl = `${API_BASE_URL}/learning-deck${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  const response = await fetch(requestUrl, {
     headers: buildApiHeaders({
       Accept: "application/json"
     })
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to load learning deck: ${response.status}`);
+    throw new Error(await extractApiErrorMessage(response, "Failed to load learning deck"));
   }
 
-  const payload = await response.json();
-  return payload.words || [];
+  return response.json();
 }
 
 async function deleteWordImageApi(imageId) {
@@ -2340,8 +2701,44 @@ function updateWordInDeck(nextWord) {
   words[wordIndex] = normalizedWord;
 
   if (state.dataSource !== "local") {
-    persistApiDeckCache(words);
+    persistApiDeckCache({
+      ownerEmail: state.authUser?.email || null,
+      books: state.books,
+      activeBookCode: state.activeBookCode,
+      words
+    });
   }
+}
+
+function buildEmptyImagePlaceholder(word) {
+  const title = encodeURIComponent(word?.english ? `${word.english} has no image` : "No image yet");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#eff8ff" />
+        <stop offset="100%" stop-color="#d9ecfb" />
+      </linearGradient>
+    </defs>
+    <rect width="960" height="720" rx="48" fill="url(#bg)" />
+    <circle cx="300" cy="250" r="88" fill="#9bd2ee" opacity="0.7" />
+    <path d="M180 520 360 350l120 116 92-90 208 144v80H180Z" fill="#7fb9da" opacity="0.85" />
+    <text x="480" y="612" text-anchor="middle" font-family="Avenir Next, Segoe UI, sans-serif" font-size="42" fill="#31506b">No image yet</text>
+  </svg>`;
+
+  return {
+    id: `${word?.id || "word"}-empty`,
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    source: "Placeholder",
+    credit: null,
+    storageType: "placeholder",
+    storageKey: null,
+    sortOrder: 0,
+    alt: title
+  };
+}
+
+function hasDeckWords() {
+  return Array.isArray(words) && words.length > 0;
 }
 
 function getErrorMessage(error, fallbackMessage) {
@@ -2356,13 +2753,16 @@ function handlePossibleAuthError(error) {
   const message = error instanceof Error ? error.message : "";
 
   if (!message) {
-    return;
+    return false;
   }
 
-  if (/sign in|session|\u767b\u5f55|\u4f1a\u8bdd/i.test(message)) {
+  if (/sign in|session|401|403|\u767b\u5f55|\u4f1a\u8bdd/i.test(message)) {
     clearAuthSessionState();
     openAuthView(message, "error");
+    return true;
   }
+
+  return false;
 }
 
 function escapeHtml(value) {

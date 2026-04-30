@@ -6,6 +6,8 @@ export interface LearningDeckImage {
   storageType: string;
   storageKey: string | null;
   sortOrder: number;
+  scope: "default" | "private";
+  ownerUserId: number | null;
 }
 
 export interface LearningDeckWord {
@@ -22,4 +24,16 @@ export interface LearningDeckWord {
   imageSource: string | null;
   imageCredit: string | null;
   images: LearningDeckImage[];
+}
+
+export interface LearningDeckBook {
+  code: string;
+  name: string;
+  wordCount: number;
+}
+
+export interface LearningDeckResponse {
+  books: LearningDeckBook[];
+  activeBookCode: string | null;
+  words: LearningDeckWord[];
 }

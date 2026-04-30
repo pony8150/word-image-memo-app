@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 import { appEnv } from "../config/env";
 
@@ -44,6 +44,11 @@ export class StorageService implements OnModuleInit {
   async deleteManagedAbsoluteFile(filePath: string): Promise<void> {
     const absoluteFilePath = this.resolveManagedAbsolutePath(filePath);
     await rm(absoluteFilePath, { force: true });
+  }
+
+  async readManagedAbsoluteFile(filePath: string): Promise<Buffer> {
+    const absoluteFilePath = this.resolveManagedAbsolutePath(filePath);
+    return readFile(absoluteFilePath);
   }
 
   private resolveLocalPath(storageKey: string): string {

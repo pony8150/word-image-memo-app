@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException
 } from "@nestjs/common";
+import { createHash } from "node:crypto";
 import * as path from "node:path";
 import { AuthenticatedUser } from "../auth/auth.service";
 import { appEnv } from "../config/env";
@@ -16,6 +17,9 @@ import { WordsService } from "../words/words.service";
 interface ImageTargetRow {
   id: string;
   word_id: string;
+  image_asset_id: string;
+  scope: "default" | "private";
+  owner_user_id: string | null;
   status: "active" | "deleted";
 }
 
@@ -41,9 +45,31 @@ interface ImportSearchedImageInput {
   title?: string;
 }
 
-interface DownloadedImageAsset {
-  storageKey: string;
+interface DownloadedImageCandidate {
+  content: Buffer;
+  contentType: string;
+  fileExtension: string;
   sourceDomain: string | null;
+}
+
+interface PersistedImageAsset {
+  id: number;
+  storageType: "external" | "local" | "oss";
+  storageKey: string | null;
+  publicUrl: string | null;
+  sha256Hash: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+}
+
+interface ImageAssetRow {
+  id: string;
+  storage_type: "external" | "local" | "oss";
+  storage_key: string | null;
+  public_url: string | null;
+  sha256_hash: string | null;
+  mime_type: string | null;
+  file_size_bytes: number | string | null;
 }
 
 const BING_SEARCH_RESULTS_LIMIT = 48;
@@ -84,53 +110,29 @@ export class ImagesService {
       throw new BadRequestException("Uploaded image file is missing.");
     }
 
-    const existingWord = await this.wordsService.getWordById(wordId);
+    const existingWord = await this.wordsService.hasWord(wordId);
 
     if (!existingWord) {
       await this.safeDeleteManagedFile(uploadedImage.tempFilePath);
       throw new NotFoundException("Word not found.");
     }
 
-    const storageKey = path.posix.join(
-      "user-images",
-      `user-${user.id}`,
-      sanitizeWordId(wordId),
-      uploadedImage.fileName
-    );
+    const fileBuffer = await this.storage.readManagedAbsoluteFile(uploadedImage.tempFilePath);
 
     try {
-      await this.storage.moveLocalFile(uploadedImage.tempFilePath, storageKey);
+      const asset = await this.resolveOrCreateLocalAsset(
+        fileBuffer,
+        this.normalizeContentType(uploadedImage.mimetype) || inferMimeTypeFromFileName(uploadedImage.fileName),
+        uploadedImage.fileName
+      );
 
       return await this.database.transaction(async (client) => {
-        const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
-          `
-            SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_sort_order
-            FROM word_images
-            WHERE word_id = $1
-          `,
-          [wordId]
-        );
+        await this.ensurePrivateImageRelation(client, wordId, user, asset.id, {
+          sourceLabel: "Manual Upload",
+          sourceCredit: null
+        });
 
-        const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
-        await client.query(
-          `
-            INSERT INTO word_images (
-              word_id,
-              storage_type,
-              storage_key,
-              public_url,
-              source_label,
-              source_credit,
-              created_by_user_id,
-              status,
-              sort_order
-            )
-            VALUES ($1, 'local', $2, NULL, 'Manual Upload', NULL, $3, 'active', $4)
-          `,
-          [wordId, storageKey, user.id, nextSortOrder]
-        );
-
-        const word = await this.wordsService.getWordById(wordId, client);
+        const word = await this.wordsService.getWordByIdForUser(wordId, user.id, client);
 
         if (!word) {
           throw new NotFoundException("Word not found after upload.");
@@ -138,10 +140,8 @@ export class ImagesService {
 
         return { word };
       });
-    } catch (error) {
-      await this.safeDeleteLocalFile(storageKey);
+    } finally {
       await this.safeDeleteManagedFile(uploadedImage.tempFilePath);
-      throw error;
     }
   }
 
@@ -150,56 +150,33 @@ export class ImagesService {
     user: AuthenticatedUser,
     input: ImportSearchedImageInput
   ) {
-    const existingWord = await this.wordsService.getWordById(wordId);
+    const existingWord = await this.wordsService.hasWord(wordId);
 
     if (!existingWord) {
       throw new NotFoundException("Word not found.");
     }
 
-    const downloadedImage = await this.downloadRemoteImage(wordId, user, input);
+    const downloadedImage = await this.downloadRemoteImage(input);
+    const asset = await this.resolveOrCreateLocalAsset(
+      downloadedImage.content,
+      downloadedImage.contentType,
+      `bing${downloadedImage.fileExtension}`
+    );
 
-    try {
-      return await this.database.transaction(async (client) => {
-        const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
-          `
-            SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_sort_order
-            FROM word_images
-            WHERE word_id = $1
-          `,
-          [wordId]
-        );
-
-        const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
-        await client.query(
-          `
-            INSERT INTO word_images (
-              word_id,
-              storage_type,
-              storage_key,
-              public_url,
-              source_label,
-              source_credit,
-              created_by_user_id,
-              status,
-              sort_order
-            )
-            VALUES ($1, 'local', $2, NULL, 'Bing Search', $3, $4, 'active', $5)
-          `,
-          [wordId, downloadedImage.storageKey, downloadedImage.sourceDomain, user.id, nextSortOrder]
-        );
-
-        const word = await this.wordsService.getWordById(wordId, client);
-
-        if (!word) {
-          throw new NotFoundException("Word not found after import.");
-        }
-
-        return { word };
+    return this.database.transaction(async (client) => {
+      await this.ensurePrivateImageRelation(client, wordId, user, asset.id, {
+        sourceLabel: "Bing Search",
+        sourceCredit: downloadedImage.sourceDomain
       });
-    } catch (error) {
-      await this.safeDeleteLocalFile(downloadedImage.storageKey);
-      throw error;
-    }
+
+      const word = await this.wordsService.getWordByIdForUser(wordId, user.id, client);
+
+      if (!word) {
+        throw new NotFoundException("Word not found after import.");
+      }
+
+      return { word };
+    });
   }
 
   async deleteImage(imageId: number, user: AuthenticatedUser) {
@@ -210,22 +187,49 @@ export class ImagesService {
         throw new NotFoundException("Image record not found.");
       }
 
-      if (target.status !== "active") {
-        throw new ConflictException("Only active images can be deleted.");
+      if (target.scope === "default") {
+        const hiddenResult = await client.query(
+          `
+            INSERT INTO user_hidden_word_images (user_id, word_image_id)
+            VALUES ($1, $2)
+          `,
+          [user.id, imageId]
+        ).catch((error: unknown) => {
+          if (isDuplicateKeyError(error)) {
+            throw new ConflictException("Image is already hidden for this user.");
+          }
+
+          throw error;
+        });
+
+        if (!hiddenResult) {
+          throw new ConflictException("Image is already hidden for this user.");
+        }
+
+        await this.insertLog(
+          client,
+          imageId,
+          target.word_id,
+          "hide",
+          "user",
+          `default image hidden by ${user.email}`
+        );
+
+        const word = await this.wordsService.getWordByIdForUser(target.word_id, user.id, client);
+
+        if (!word) {
+          throw new NotFoundException("Word not found after delete.");
+        }
+
+        return { word };
       }
 
-      const activeCountResult = await client.query<{ count: number | string }>(
-        `
-          SELECT COUNT(*) AS count
-          FROM word_images
-          WHERE word_id = $1
-            AND status = 'active'
-        `,
-        [target.word_id]
-      );
+      if (Number(target.owner_user_id || "0") !== user.id) {
+        throw new ConflictException("You can only delete your own private images.");
+      }
 
-      if (Number(activeCountResult.rows[0]?.count || "0") <= 1) {
-        throw new ConflictException("Each word must keep at least one active image.");
+      if (target.status !== "active") {
+        throw new ConflictException("Only active private images can be deleted.");
       }
 
       const purgeAfterAt = new Date(
@@ -251,9 +255,11 @@ export class ImagesService {
         imageId,
         target.word_id,
         "delete",
-        `manual delete by ${user.email}`
+        "user",
+        `private image deleted by ${user.email}`
       );
-      const word = await this.wordsService.getWordById(target.word_id, client);
+
+      const word = await this.wordsService.getWordByIdForUser(target.word_id, user.id, client);
 
       if (!word) {
         throw new NotFoundException("Word not found after delete.");
@@ -271,8 +277,44 @@ export class ImagesService {
         throw new NotFoundException("Image record not found.");
       }
 
+      if (target.scope === "default") {
+        const restoreResult = await client.query(
+          `
+            DELETE FROM user_hidden_word_images
+            WHERE user_id = $1
+              AND word_image_id = $2
+          `,
+          [user.id, imageId]
+        );
+
+        if (restoreResult.affectedRows === 0) {
+          throw new ConflictException("Default image is not hidden for this user.");
+        }
+
+        await this.insertLog(
+          client,
+          imageId,
+          target.word_id,
+          "unhide",
+          "user",
+          `default image restored by ${user.email}`
+        );
+
+        const word = await this.wordsService.getWordByIdForUser(target.word_id, user.id, client);
+
+        if (!word) {
+          throw new NotFoundException("Word not found after restore.");
+        }
+
+        return { word };
+      }
+
+      if (Number(target.owner_user_id || "0") !== user.id) {
+        throw new ConflictException("You can only restore your own private images.");
+      }
+
       if (target.status !== "deleted") {
-        throw new ConflictException("Only deleted images can be restored.");
+        throw new ConflictException("Only deleted private images can be restored.");
       }
 
       await client.query(
@@ -294,9 +336,11 @@ export class ImagesService {
         imageId,
         target.word_id,
         "restore",
-        `manual restore by ${user.email}`
+        "user",
+        `private image restored by ${user.email}`
       );
-      const word = await this.wordsService.getWordById(target.word_id, client);
+
+      const word = await this.wordsService.getWordByIdForUser(target.word_id, user.id, client);
 
       if (!word) {
         throw new NotFoundException("Word not found after restore.");
@@ -306,10 +350,73 @@ export class ImagesService {
     });
   }
 
+  private async ensurePrivateImageRelation(
+    client: DatabaseClient,
+    wordId: string,
+    user: AuthenticatedUser,
+    assetId: number,
+    source: { sourceLabel: string; sourceCredit: string | null }
+  ): Promise<void> {
+    const existingRelationResult = await client.query<{ id: string }>(
+      `
+        SELECT CAST(id AS CHAR) AS id
+        FROM word_images
+        WHERE word_id = $1
+          AND image_asset_id = $2
+          AND scope = 'private'
+          AND owner_user_id = $3
+          AND status = 'active'
+        LIMIT 1
+      `,
+      [wordId, assetId, user.id]
+    );
+
+    if (existingRelationResult.rows[0]) {
+      return;
+    }
+
+    const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
+      `
+        SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_sort_order
+        FROM word_images
+        WHERE word_id = $1
+          AND scope = 'private'
+          AND owner_user_id = $2
+          AND status = 'active'
+      `,
+      [wordId, user.id]
+    );
+
+    const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
+    await client.query(
+      `
+        INSERT INTO word_images (
+          word_id,
+          image_asset_id,
+          scope,
+          owner_user_id,
+          source_label,
+          source_credit,
+          status,
+          sort_order,
+          created_by_user_id
+        )
+        VALUES ($1, $2, 'private', $3, $4, $5, 'active', $6, $3)
+      `,
+      [wordId, assetId, user.id, source.sourceLabel, source.sourceCredit, nextSortOrder]
+    );
+  }
+
   private async getImageTarget(client: DatabaseClient, imageId: number): Promise<ImageTargetRow | null> {
     const result = await client.query<ImageTargetRow>(
       `
-        SELECT CAST(id AS CHAR) AS id, word_id, status
+        SELECT
+          CAST(id AS CHAR) AS id,
+          word_id,
+          CAST(image_asset_id AS CHAR) AS image_asset_id,
+          scope,
+          CAST(owner_user_id AS CHAR) AS owner_user_id,
+          status
         FROM word_images
         WHERE id = $1
       `,
@@ -323,24 +430,111 @@ export class ImagesService {
     client: DatabaseClient,
     imageId: number,
     wordId: string,
-    action: "delete" | "restore",
+    action: "hide" | "unhide" | "delete" | "restore",
+    actorType: "user" | "system",
     note: string
   ): Promise<void> {
     await client.query(
       `
         INSERT INTO image_operation_logs (word_image_id, word_id, action, actor_type, note)
-        VALUES ($1, $2, $3, 'admin', $4)
+        VALUES ($1, $2, $3, $4, $5)
       `,
-      [imageId, wordId, action, note]
+      [imageId, wordId, action, actorType, note]
     );
   }
 
-  private async safeDeleteLocalFile(storageKey: string): Promise<void> {
-    try {
-      await this.storage.deleteLocalFile(storageKey);
-    } catch (error) {
-      return;
+  private async resolveOrCreateLocalAsset(
+    content: Buffer,
+    mimeType: string,
+    fileName: string
+  ): Promise<PersistedImageAsset> {
+    const normalizedMimeType = mimeType || inferMimeTypeFromFileName(fileName);
+    const sha256Hash = createHash("sha256").update(content).digest("hex");
+    const existingAsset = await this.findAssetBySha256(sha256Hash);
+
+    if (existingAsset) {
+      return existingAsset;
     }
+
+    const fileExtension = resolveStoredImageExtension(normalizedMimeType, fileName);
+    const storageKey = buildAssetStorageKey(sha256Hash, fileExtension);
+
+    await this.storage.writeLocalFile(storageKey, content);
+
+    try {
+      const insertResult = await this.database.query(
+        `
+          INSERT INTO image_assets (
+            storage_type,
+            storage_key,
+            public_url,
+            sha256_hash,
+            mime_type,
+            file_size_bytes
+          )
+          VALUES ('local', $1, NULL, $2, $3, $4)
+        `,
+        [storageKey, sha256Hash, normalizedMimeType, content.byteLength]
+      );
+
+      return {
+        id: Number(insertResult.insertId),
+        storageType: "local",
+        storageKey,
+        publicUrl: null,
+        sha256Hash,
+        mimeType: normalizedMimeType,
+        fileSizeBytes: content.byteLength
+      };
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        const duplicatedAsset = await this.findAssetBySha256(sha256Hash);
+
+        if (duplicatedAsset) {
+          return duplicatedAsset;
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  private async findAssetBySha256(sha256Hash: string): Promise<PersistedImageAsset | null> {
+    const result = await this.database.query<ImageAssetRow>(
+      `
+        SELECT
+          CAST(id AS CHAR) AS id,
+          storage_type,
+          storage_key,
+          public_url,
+          sha256_hash,
+          mime_type,
+          file_size_bytes
+        FROM image_assets
+        WHERE sha256_hash = $1
+        LIMIT 1
+      `,
+      [sha256Hash]
+    );
+
+    const row = result.rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: Number(row.id),
+      storageType: row.storage_type,
+      storageKey: row.storage_key,
+      publicUrl: row.public_url,
+      sha256Hash: row.sha256_hash,
+      mimeType: row.mime_type,
+      fileSizeBytes:
+        row.file_size_bytes === null || row.file_size_bytes === undefined
+          ? null
+          : Number(row.file_size_bytes)
+    };
   }
 
   private async safeDeleteManagedFile(filePath: string): Promise<void> {
@@ -493,7 +687,7 @@ export class ImagesService {
     try {
       const decodedValue = this.decodeHtmlEntities(rawValue);
       const parsedValue = JSON.parse(decodedValue);
-      return parsedValue && typeof parsedValue === "object" ? parsedValue as Record<string, string> : null;
+      return parsedValue && typeof parsedValue === "object" ? (parsedValue as Record<string, string>) : null;
     } catch (error) {
       return null;
     }
@@ -562,11 +756,7 @@ export class ImagesService {
     }
   }
 
-  private async downloadRemoteImage(
-    wordId: string,
-    user: AuthenticatedUser,
-    input: ImportSearchedImageInput
-  ): Promise<DownloadedImageAsset> {
+  private async downloadRemoteImage(input: ImportSearchedImageInput): Promise<DownloadedImageCandidate> {
     const mediaUrl = this.normalizeHttpUrl(input.mediaUrl);
 
     if (!mediaUrl) {
@@ -600,18 +790,12 @@ export class ImagesService {
     }
 
     const content = await this.readResponseBufferWithLimit(response, REMOTE_IMAGE_DOWNLOAD_MAX_BYTES);
-    const storageKey = path.posix.join(
-      "search-images",
-      `user-${user.id}`,
-      sanitizeWordId(wordId),
-      `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${resolveRemoteImageExtension(contentType, mediaUrl)}`
-    );
-
-    await this.storage.writeLocalFile(storageKey, content);
-
     const sourcePageUrl = this.normalizeHttpUrl(input.sourcePageUrl);
+
     return {
-      storageKey,
+      content,
+      contentType,
+      fileExtension: resolveStoredImageExtension(contentType, mediaUrl),
       sourceDomain: sourcePageUrl ? this.extractHostname(sourcePageUrl) : null
     };
   }
@@ -674,12 +858,37 @@ export class ImagesService {
   }
 }
 
-function sanitizeWordId(wordId: string): string {
-  const normalizedValue = wordId.trim().replace(/[^a-zA-Z0-9_-]+/g, "-");
-  return normalizedValue.replace(/-{2,}/g, "-").replace(/^-|-$/g, "") || "word";
+function buildAssetStorageKey(sha256Hash: string, extension: string): string {
+  return path.posix.join(
+    "assets",
+    sha256Hash.slice(0, 2),
+    sha256Hash.slice(2, 4),
+    `${sha256Hash}${extension}`
+  );
 }
 
-function resolveRemoteImageExtension(contentType: string, url: string): string {
+function inferMimeTypeFromFileName(fileName: string): string {
+  const extension = path.extname(fileName).toLowerCase();
+
+  switch (extension) {
+    case ".png":
+      return "image/png";
+    case ".webp":
+      return "image/webp";
+    case ".gif":
+      return "image/gif";
+    case ".svg":
+      return "image/svg+xml";
+    case ".avif":
+      return "image/avif";
+    case ".jpg":
+    case ".jpeg":
+    default:
+      return "image/jpeg";
+  }
+}
+
+function resolveStoredImageExtension(contentType: string, fileNameOrUrl: string): string {
   switch (contentType) {
     case "image/avif":
       return ".avif";
@@ -696,8 +905,18 @@ function resolveRemoteImageExtension(contentType: string, url: string): string {
     case "image/jpeg":
       return ".jpg";
     default: {
-      const extension = path.extname(new URL(url).pathname).toLowerCase();
-      return extension || ".jpg";
+      try {
+        const url = new URL(fileNameOrUrl);
+        const extension = path.extname(url.pathname).toLowerCase();
+        return extension || ".jpg";
+      } catch (error) {
+        const extension = path.extname(fileNameOrUrl).toLowerCase();
+        return extension || ".jpg";
+      }
     }
   }
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "ER_DUP_ENTRY");
 }

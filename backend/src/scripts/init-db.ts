@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import * as path from "node:path";
 import { getRequiredDatabaseUrl } from "../config/env";
 import { createDatabasePool, executeQuery } from "../database/mysql";
@@ -8,9 +8,18 @@ async function main() {
 
   try {
     await waitForDatabase(pool);
-    const sqlFilePath = path.resolve(process.cwd(), "sql", "001_init.sql");
-    const sql = await readFile(sqlFilePath, "utf8");
-    await executeQuery(pool, sql);
+    const sqlDirectoryPath = path.resolve(process.cwd(), "sql");
+    const sqlFileNames = (await readdir(sqlDirectoryPath))
+      .filter((fileName) => /^\d+.*\.sql$/i.test(fileName))
+      .sort((left, right) => left.localeCompare(right, "en"));
+
+    for (const sqlFileName of sqlFileNames) {
+      const sqlFilePath = path.resolve(sqlDirectoryPath, sqlFileName);
+      const sql = await readFile(sqlFilePath, "utf8");
+      await executeQuery(pool, sql);
+      console.log(`Applied ${sqlFileName}.`);
+    }
+
     console.log("Database schema initialized.");
   } finally {
     await pool.end();
