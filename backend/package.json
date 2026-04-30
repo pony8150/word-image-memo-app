@@ -8,6 +8,7 @@
     "start:dev": "nest start --watch",
     "db:init": "ts-node -r tsconfig-paths/register src/scripts/init-db.ts",
     "download:demo-images": "ts-node -r tsconfig-paths/register src/scripts/download-demo-images.ts",
+    "import:wordlists": "ts-node -r tsconfig-paths/register src/scripts/import-wordlists.ts",
     "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/seed-demo.ts",
     "purge:images": "ts-node -r tsconfig-paths/register src/scripts/purge-images.ts"
   },

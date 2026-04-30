@@ -98,8 +98,7 @@
               </p>
 
               <div class="hero-actions">
-                <button class="primary-btn" data-target="learn">开始学习今日词卡</button>
-                <button class="secondary-btn" data-target="image">先玩看图猜词</button>
+                <button class="primary-btn" id="welcome-auth-button" data-target="auth">登录 / 注册</button>
               </div>
 
               <div class="mini-metrics">
@@ -147,7 +146,6 @@
                   <p class="eyebrow">Today Deck</p>
                   <h3>今日词卡预览</h3>
                 </div>
-                <button class="text-link" data-target="learn">进入学习卡片</button>
               </div>
               <div class="deck-grid" id="deck-preview"></div>
             </section>
@@ -462,33 +460,6 @@
 
         <section class="view auth-view active" id="auth">
           <div class="auth-page-shell">
-            <section class="auth-stage auth-stage-page">
-              <p class="eyebrow">Email Sign In</p>
-              <h2 id="auth-page-title">先登录，再继续管理你的单词与图片</h2>
-              <p class="auth-stage-copy">
-                这一版先把邮箱登录做好，注册流程改成更接近真实网站的样子：
-                先发送邮箱验证码，再用邮箱、验证码和密码完成注册。
-              </p>
-
-              <div class="auth-feature-grid">
-                <article class="auth-feature-card">
-                  <span>01</span>
-                  <h3>独立登录页</h3>
-                  <p>不再走弹窗或抽屉，登录和注册放到单独页面里处理。</p>
-                </article>
-                <article class="auth-feature-card">
-                  <span>02</span>
-                  <h3>验证码注册</h3>
-                  <p>注册时先发送邮箱验证码，再提交邮箱、验证码和密码完成注册。</p>
-                </article>
-                <article class="auth-feature-card">
-                  <span>03</span>
-                  <h3>微信稍后接入</h3>
-                  <p>微信扫码入口保留为下一步，先把邮箱账号体系打稳。</p>
-                </article>
-              </div>
-            </section>
-
             <section class="auth-page-main">
               <section class="auth-panel card">
                 <div class="auth-mode-switch" aria-label="Email auth mode">
@@ -498,9 +469,6 @@
 
                 <p class="eyebrow">Account Access</p>
                 <h3 class="auth-panel-title" id="auth-page-form-heading">邮箱登录</h3>
-                <p class="auth-panel-copy" id="auth-page-form-copy">
-                  使用邮箱和密码直接登录。注册入口也在这里切换。
-                </p>
 
                 <form class="auth-form" id="auth-page-form">
                   <label class="auth-field">
@@ -532,24 +500,6 @@
                 <p class="auth-status" id="auth-page-status" aria-live="polite"></p>
                 <p class="auth-dev-hint" id="auth-page-dev-hint" hidden></p>
               </section>
-
-              <aside class="auth-side-stack">
-                <section class="card auth-side-card">
-                  <p class="eyebrow">Why Now</p>
-                  <h3>先把账号体系立住</h3>
-                  <p>
-                    图片目录、用户 OSS、个人词库和后续权限控制，都会依赖用户身份。先把邮箱链路走通，后面才不会反复返工。
-                  </p>
-                </section>
-
-                <section class="card auth-side-card">
-                  <p class="eyebrow">Guest Access</p>
-                  <h3>先体验当前词卡，再决定是否登录</h3>
-                  <p>
-                    游客可以直接浏览当前主页和单词内容。登录只在管理图片、同步个人数据，以及后续选择词书时才需要。
-                  </p>
-                </section>
-              </aside>
             </section>
           </div>
         </section>

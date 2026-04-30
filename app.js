@@ -310,15 +310,14 @@ const state = {
 const elements = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
-  document.querySelector(".auth-side-stack")?.remove();
   cacheElements();
   hydrateAudioButtons();
   bindEvents();
-  const hasSession = await initializeAuthState();
+  await initializeAuthState();
   await refreshDeckFromServer({ silent: true });
 
   renderAllViews();
-  switchView(hasSession ? "learn" : "auth");
+  switchView("welcome");
   syncSidebarVisibility();
 });
 
@@ -447,6 +446,7 @@ function cacheElements() {
   elements.authOpenButton = document.getElementById("auth-open-button");
   elements.authLogoutButton = document.getElementById("auth-logout-button");
   elements.authView = document.getElementById("auth");
+  elements.welcomeAuthButton = document.getElementById("welcome-auth-button");
   elements.authModeLogin = document.getElementById("auth-page-mode-login");
   elements.authModeRegister = document.getElementById("auth-page-mode-register");
   elements.authForm = document.getElementById("auth-page-form");
@@ -986,6 +986,7 @@ function renderAuth() {
   const isSignedIn = Boolean(state.authUser);
   const isRegisterMode = state.authMode === "register";
   const cooldownSeconds = getAuthCodeCooldownSeconds();
+  const welcomeNavButton = elements.navPills.find((button) => button.dataset.target === "welcome");
   const learnNavButton = elements.navPills.find((button) => button.dataset.target === "learn");
 
   if (elements.authUserName) {
@@ -1002,9 +1003,14 @@ function renderAuth() {
     elements.authOpenButton.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
   }
 
+  if (welcomeNavButton) {
+    welcomeNavButton.hidden = false;
+    welcomeNavButton.disabled = false;
+  }
+
   if (learnNavButton) {
-    learnNavButton.hidden = !isSignedIn;
-    learnNavButton.disabled = !isSignedIn;
+    learnNavButton.hidden = true;
+    learnNavButton.disabled = true;
   }
 
   if (elements.authLogoutButton) {
@@ -1197,7 +1203,7 @@ async function applyAuthSuccess(payload) {
 
   await refreshDeckFromServer({ preserveWordId: words[state.learnIndex]?.id || null, silent: true });
   renderAllViews();
-  switchView("learn");
+  switchView("welcome");
 }
 
 async function handleLogout() {
@@ -1217,7 +1223,7 @@ async function handleLogout() {
     resetAuthInputs();
     await refreshDeckFromServer({ preserveWordId: currentWordId, silent: true });
     renderAllViews();
-    switchView("auth");
+    switchView("welcome");
   }
 }
 
@@ -1230,8 +1236,9 @@ function clearAuthSessionState() {
 
 function switchView(viewId) {
   const publicViews = new Set(["welcome", "learn", "review", "image", "stats", "auth"]);
-  const requestedView = publicViews.has(viewId) ? viewId : "learn";
-  const nextView = !state.authUser && requestedView !== "auth" ? "auth" : requestedView;
+  const protectedViews = new Set(["learn", "review", "image", "stats"]);
+  const requestedView = publicViews.has(viewId) ? viewId : "welcome";
+  const nextView = !state.authUser && protectedViews.has(requestedView) ? "auth" : requestedView;
 
   if (isCompactSidebarLayout()) {
     state.sidebarOpen = false;
@@ -1300,6 +1307,10 @@ function resetAuthInputs() {
 function renderWelcome() {
   elements.heroWordCount.textContent = String(words.length);
 
+  if (elements.welcomeAuthButton) {
+    elements.welcomeAuthButton.textContent = state.authUser ? "管理账号" : "登录 / 注册";
+  }
+
   if (!hasDeckWords()) {
     elements.deckPreview.innerHTML = `
       <div class="deck-card active">
@@ -1316,13 +1327,13 @@ function renderWelcome() {
     .slice(0, 4)
     .map(
       (word, index) => `
-        <button class="deck-card ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
+        <article class="deck-card ${index === state.learnIndex ? "active" : ""}">
           <img src="${getWordImages(word)[0].url}" alt="${word.english}" />
           <div>
             <strong>${word.english}</strong>
             <small>${word.chinese}</small>
           </div>
-        </button>
+        </article>
       `
     )
     .join("");
