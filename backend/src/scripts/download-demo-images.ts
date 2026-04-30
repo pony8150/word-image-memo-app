@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 import { appEnv } from "../config/env";
 
@@ -38,12 +38,22 @@ async function main() {
   const seedFilePath = path.resolve(process.cwd(), "seeds", "demo-learning-deck.json");
   const originalWords = JSON.parse(await readFile(seedFilePath, "utf8")) as DemoSeedWord[];
   const nextWords: DemoSeedWord[] = [];
+  let downloadedCount = 0;
 
   for (const word of originalWords) {
     const nextImages: DemoSeedImage[] = [];
 
     for (const image of word.images) {
       if (image.storageType === "local" && image.storageKey) {
+        const absoluteFilePath = path.resolve(appEnv.uploadsDir, image.storageKey);
+        const hasLocalFile = await fileExists(absoluteFilePath);
+
+        if (!hasLocalFile && !image.publicUrl) {
+          console.warn(
+            `Missing local demo image without source URL, keeping existing reference: ${image.storageKey}`
+          );
+        }
+
         nextImages.push(image);
         continue;
       }
@@ -73,6 +83,7 @@ async function main() {
 
       await mkdir(path.dirname(absoluteFilePath), { recursive: true });
       await writeFile(absoluteFilePath, Buffer.from(await response.arrayBuffer()));
+      downloadedCount += 1;
 
       nextImages.push({
         sortOrder: image.sortOrder,
@@ -90,11 +101,7 @@ async function main() {
   }
 
   await writeFile(seedFilePath, `${JSON.stringify(nextWords, null, 2)}\n`, "utf8");
-  console.log(`Downloaded ${countImages(nextWords)} demo image(s) into ${appEnv.uploadsDir}`);
-}
-
-function countImages(words: DemoSeedWord[]): number {
-  return words.reduce((total, word) => total + word.images.length, 0);
+  console.log(`Downloaded ${downloadedCount} demo image(s) into ${appEnv.uploadsDir}`);
 }
 
 function resolveFileExtension(imageUrl: string, contentType: string): string {
@@ -114,6 +121,15 @@ function resolveFileExtension(imageUrl: string, contentType: string): string {
   }
 
   return ".jpg";
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 main().catch((error) => {

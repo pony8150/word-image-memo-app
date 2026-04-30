@@ -138,7 +138,21 @@ async function main() {
       );
 
       for (const image of word.images) {
-        const assetId = await ensureImageAsset(pool, image);
+        let assetId: number;
+
+        try {
+          assetId = await ensureImageAsset(pool, image);
+        } catch (error) {
+          if (isMissingFileError(error)) {
+            console.warn(
+              `Skipping missing demo image for word "${word.id}": ${image.storageKey || image.publicUrl || "unknown source"}`
+            );
+            continue;
+          }
+
+          throw error;
+        }
+
         const insertedImageResult = await executeQuery(
           pool,
           `
@@ -303,6 +317,15 @@ function inferMimeTypeFromFileName(fileName: string): string {
     default:
       return "image/jpeg";
   }
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      String((error as { code?: unknown }).code) === "ENOENT"
+  );
 }
 
 main().catch((error) => {

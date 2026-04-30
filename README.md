@@ -1,322 +1,120 @@
 # Word Image Memo App
 
-## 2026-04-30 Update Notes
+一个以“先看图，再记词”为核心的英语单词学习原型。
 
-This section is the current source of truth for the latest multi-user image model.
-If an AI agent reads only one section before making changes, read this one first.
-
-### Product rules
-
-- Guests cannot view word cards anymore.
-- If the user is not logged in, the frontend should stay on the auth page and should not show learning/review/image/stat content.
-- After login, the user chooses a book and then sees that book's words and images.
-- Current built-in books are `junior-high`, `senior-high`, and `college`.
-
-### Image ownership model
-
-- `words` is global. Do not duplicate `apple` three times just because it appears in different books.
-- `books` stores the book list.
-- `book_words` maps words into books.
-- Cold-start images are shared defaults.
-- User-uploaded or searched images are private to that user.
-- One user hiding/deleting an image must not affect another user.
-
-### Storage model
-
-- Real binary files are stored through `image_assets`.
-- Local/OSS file keys must be deduplicated by image content hash (`sha256`).
-- The same binary image should only be stored once even if many users use it.
-- `word_images.scope = 'default'` means a shared cold-start image.
-- `word_images.scope = 'private'` means a user-private image relation.
-- `user_hidden_word_images` stores "this user hid this default image".
-
-### Delete semantics
-
-- Deleting a default image does not delete the shared image for everyone.
-- It only inserts a row into `user_hidden_word_images` for the current user.
-- Deleting a private image only soft-deletes that user's `word_images` relation.
-- Physical file deletion should happen only when the asset has no remaining references.
-
-### Important implementation notes
-
-- `GET /api/learning-deck` now requires login.
-- It accepts `?book=<code>`.
-- It returns `books`, `activeBookCode`, and `words`.
-- Frontend local fallback word cards should not be used for guests anymore.
-- Frontend API deck cache is user-scoped by email to avoid leaking one user's cached deck to another user on the same browser.
-- If the session becomes invalid, the frontend should clear the local auth state, empty the deck, and go back to the auth page instead of reusing cached cards.
-
-### Frontend layout note
-
-- The old top navigation bar is no longer the main layout.
-- The app now uses a left sidebar on desktop.
-- On narrow screens, that sidebar becomes an off-canvas drawer and should stay hidden by default.
-- The mobile goal is to maximize content width and height for the word card area, not keep a permanent top dock.
-- Sidebar open/close behavior is handled in the frontend only. It should close on backdrop click, nav click, and `Esc`.
-
-### Database caution
-
-- The schema changed a lot.
-- Treat this as a new schema, not a tiny patch on top of the old one.
-- The safest path is to use a new empty database, or rebuild the current dev database before running init/seed again.
-
-### Run steps for tonight
-
-From `backend/`:
-
-```powershell
-npm.cmd install
-npm.cmd run db:init
-npm.cmd run download:demo-images
-npm.cmd run seed:demo
-npm.cmd run start:dev
-```
-
-From repo root:
-
-```powershell
-python -m http.server 8000
-```
-
-### Auth note
-
-- If SMTP is not configured, registration code sending still works in dev mode.
-- The backend returns `devCode`, and the frontend will auto-fill it.
-
-### Files to inspect first
-
-- `backend/sql/001_init.sql`
-- `backend/src/images/images.service.ts`
-- `backend/src/words/words.service.ts`
-- `backend/src/scripts/seed-demo.ts`
-- `index.html`
-- `styles.css`
-- `app.js`
-
-一个以“先看图，再记词”为核心的英语单词学习 Demo。
-
-当前项目已经不是纯静态页，而是一个本地可运行的前后端原型：
+当前版本已经不是纯静态 Demo，而是一个可本地运行的前后端项目：
 
 - 前端：`index.html` + `styles.css` + `app.js`
 - 后端：NestJS
 - 数据库：MySQL
-- 图片存储：当前先落本地，后续可切 OSS
+- 认证：邮箱验证码注册 / 邮箱密码登录
+- 图片存储：本地文件 + `image_assets` 去重
 
-## 设计原则
+## 当前版本要点
 
-- 审美方向：偏苹果式克制、清爽、轻量，不堆没必要的 UI。
-- 交互方向：老人和小孩都能直接上手，少解释，少学习成本。
-- 产品取舍：优先保留真正影响记忆效率的功能，不为了“看起来功能多”乱加东西。
-- 图片优先：先让用户看到图，再看中文、例句、朗读。
-- 用户主导：上传、搜索、删除都服务于“用户自己挑对图”，不迷信自动匹配。
+### 访问规则
 
-## 当前产品状态
+- 当前 `GET /api/learning-deck` 需要登录。
+- 未登录时，前端应停留在认证页，不再展示学习卡片内容。
+- 登录后先选择词书，再查看该词书下的单词与图片。
 
-仓库里还保留了欢迎页、复习页、图片联想页、统计页的代码，但当前对外只保留“学习卡片”界面，其他页面默认隐藏。
+### 词书模型
 
-现在已经可用的核心能力：
+- `words` 存全局单词。
+- `books` 存词书列表。
+- `book_words` 负责把单词映射到不同词书。
+- 当前内置词书：
+  - `junior-high`
+  - `senior-high`
+  - `college`
 
-- 展示当前单词的图片、中文、例句、例句翻译
-- 支持单词朗读和例句朗读
-- 同一单词支持多张图片，点击图片可切换下一张
-- 支持抽屉式单词列表
-- 长按图片弹出管理菜单
-- 长按菜单里有 3 个入口：
-- `上网搜索`：已可用，打开图片搜索弹窗，点图即导入
-- `上传`：已可用，支持拖拽和点击选择图片
-- `删除`：已可用，走软删除
+### 图片归属模型
 
-## 图片逻辑
+- 冷启动图片是共享默认图。
+- 用户上传图、搜索导入图是用户私有图。
+- 同一个用户删除自己的私有图，不影响其他用户。
+- 用户隐藏默认图，只对自己生效，不会删掉共享图。
 
-### 1. 一个单词可以有多张图片
+### 存储模型
 
-是的。
+- 二进制文件统一落到 `image_assets`。
+- 本地文件和后续 OSS 文件都通过 `image_assets` 管理。
+- 本地图片按内容哈希去重，避免同一张二进制文件重复存储。
+- `word_images.scope = 'default'` 表示共享默认图。
+- `word_images.scope = 'private'` 表示用户私有图关系。
+- `user_hidden_word_images` 记录“这个用户隐藏了哪张默认图”。
 
-当前数据模型里：
+## 旧库升级说明
 
-- `words` 表存单词主体
-- `word_images` 表存图片记录
-- 一个单词通过 `word_id` 关联多张图片
+如果你之前已经跑过旧版本数据库，不要只看当前代码直接 `seed`。
 
-前端展示逻辑：
+现在仓库里已经补了兼容旧库的迁移脚本：
 
-- 默认展示当前单词的第一张有效图片
-- 如果这个单词有多张有效图片，点击图片会在这些图片之间轮播
-- 如果图片被软删除，前台不再展示
+- `backend/sql/001_init.sql`：当前主 schema
+- `backend/sql/002_upgrade_legacy_schema.sql`：把旧 `word_images` 结构迁到新模型
 
-### 2. 图片来源
-
-当前有 4 类来源：
-
-- Demo 初始图片
-- 用户上传图片
-- Bing 图片搜索导入的图片
-- 本地 fallback 数据里的旧外链图片
-
-为了让 Demo 更稳定，初始化图片已经支持下载到本地，不再完全依赖外链。
-
-本地图片目录：
-
-- Demo 图片：`backend/uploads/demo-images/`
-- 用户上传：`backend/uploads/user-images/<wordId>/`
-- Bing 搜索导入：`backend/uploads/search-images/<wordId>/`
-
-### 3. 搜索逻辑
-
-搜索不是自动给单词配图，而是保留传统搜索习惯：
-
-1. 长按当前图片
-2. 点击 `上网搜索`
-3. 弹出搜索面板，默认用当前单词英文去搜 Bing Images
-4. 浏览搜索结果
-5. 点击你认为最合适的一张图
-6. 系统把这张图下载到本地，并绑定到当前单词
-7. 这张图会立刻出现在当前单词的图片列表里
-
-当前实现细节：
-
-- 搜索来源：Bing 图片搜索页面
-- 实现方式：后端抓取 Bing 图片结果页并解析结果
-- 选图后不是只存远程链接，而是直接下载到本地
-- 导入成功后会写入 `word_images`
-- 搜索弹窗只展示图片本身，不展示额外文字和来源链接
-- 搜索结果区域支持纵向滚动
-- 缩略图保留原始长宽比，不再强制裁切成固定高度
-- 搜索结果列数按弹窗宽度自适应，不写死固定列数
-
-说明：
-
-- Bing 官方图片搜索 API 已经停用，所以 Demo 现在走的是“后端解析 Bing 页面”的方案
-- 这条链路可用，但依赖 Bing 页面结构，后续如果 Bing 改版，解析逻辑可能要跟着调整
-- 个别第三方图片源可能会拒绝下载，这种情况下换一张图即可
-
-## 图片管理逻辑
-
-### 上传
-
-上传已经打通。
-
-支持两种方式：
-
-- 直接把图片拖进上传框
-- 点击上传框，打开文件选择器
-
-限制：
-
-- 仅支持图片文件
-- 单张不超过 `10MB`
-
-上传成功后：
-
-- 图片保存到 `backend/uploads/user-images/<wordId>/`
-- 后端在 `word_images` 里新增记录
-- 前端立即刷新当前单词，并切到新上传的图片
-
-### 删除
-
-删除不是立即物理删除，而是先软删除。
-
-当前流程：
-
-1. 点击删除
-2. 后端把 `word_images.status` 改成 `deleted`
-3. 前端不再展示这张图
-4. 写入操作日志
-5. 定时清理任务在保留窗口后再决定是否真正删除本地文件
-
-当前保留窗口：
-
-- `24 小时`
-
-这样做的原因：
-
-- 防止误删直接把素材库打穿
-- 前台体验上仍然是“删了就消失”
-- 后台仍然保留恢复和审计空间
-
-## 当前技术栈
-
-- 前端：原生 HTML / CSS / JavaScript
-- 后端：NestJS
-- 数据库：MySQL
-- 图片存储：本地目录
-- 后续 OSS：可以切火山引擎 OSS，也可以切 S3 / R2，当前代码先按“本地存储抽象”实现
-
-## 数据与持久化
-
-- MySQL 不是内存数据库
-- 数据不会因为你重启电脑或重启服务就自动消失
-- 当前图片数据、单词数据、删除状态都保存在 MySQL
-- 本地图片文件保存在 `backend/uploads/`
-- 前端还会缓存一份最近一次成功拉到的学习卡片数据，避免后端暂时不可用时页面直接空掉
-
-## 项目结构
-
-```text
-word-image-memo-app/
-├─ README.md
-├─ index.html
-├─ styles.css
-├─ app.js
-├─ backend/
-│  ├─ package.json
-│  ├─ docker-compose.yml
-│  ├─ sql/
-│  ├─ seeds/
-│  ├─ src/
-│  └─ uploads/
-├─ scripts/
-│  └─ fetch-school-words.mjs
-└─ data/
-```
-
-关键目录说明：
-
-- `index.html`：页面结构
-- `styles.css`：视觉样式、弹层、响应式布局
-- `app.js`：前端状态、长按菜单、搜索、上传、删除、API 调用
-- `backend/src/`：NestJS API、图片上传、Bing 搜索、图片导入、软删除、定时清理
-- `backend/uploads/`：本地图片目录
-
-## 本地运行
-
-推荐按“前端 8000 + 后端 3000”分开启动。
-
-### 1. 启动后端
-
-推荐直接用 Docker 启动项目自带的 MySQL。
-
-先启动数据库：
+建议顺序：
 
 ```powershell
 cd backend
+npm.cmd run db:init
+npm.cmd run download:demo-images
+npm.cmd run seed:demo
+```
+
+说明：
+
+- `db:init` 现在会自动执行全部 `sql/*.sql`
+- 如果旧库里还保留老版 `word_images`，`002` 会补新列并迁移到 `image_assets`
+- `seed:demo` 现在会跳过缺失的本地 demo 图，不再因为单张缺图整批失败
+
+## 本地运行
+
+### 1. 启动数据库
+
+在 `backend/` 目录：
+
+```powershell
 docker compose up -d
 docker compose ps
 ```
 
-当前默认数据库连接信息：
+默认连接：
 
 - Host：`localhost`
 - Port：`3307`
 - User：`root`
-- Password：`8150`
+- Password：见 `backend/.env`
 - Database：`word_image_memo`
 
-说明：
+### 2. 配置后端环境变量
 
-- Docker 容器里的 MySQL 实际监听 `3306`
-- 为了避免和你本机已有的 MySQL 冲突，宿主机映射端口用了 `3307`
+建议先复制示例文件：
 
-然后配置 `backend/.env`：
-
-```env
-DATABASE_URL=mysql://root:8150@localhost:3307/word_image_memo
-PUBLIC_BASE_URL=http://localhost:3000
-UPLOADS_DIR=uploads
-IMAGE_PURGE_RETENTION_HOURS=24
+```powershell
+cd backend
+Copy-Item .env.example .env
 ```
 
-运行：
+核心变量：
+
+```env
+PORT=3000
+PUBLIC_BASE_URL=http://localhost:3000
+DATABASE_URL=mysql://root:8150@localhost:3307/word_image_memo
+UPLOADS_DIR=uploads
+IMAGE_PURGE_RETENTION_HOURS=24
+AUTH_SESSION_TTL_DAYS=30
+SMTP_HOST=smtp.qq.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your-email@qq.com
+SMTP_PASS=your-smtp-app-password
+SMTP_FROM_EMAIL=your-email@qq.com
+SMTP_FROM_NAME=Word Image Memo
+```
+
+### 3. 初始化后端
 
 ```powershell
 cd backend
@@ -327,26 +125,27 @@ npm.cmd run seed:demo
 npm.cmd run start:dev
 ```
 
-后端起来后，可检查：
+后端接口启动后可检查：
 
 ```text
+http://localhost:3000/api/auth/me
 http://localhost:3000/api/learning-deck
 ```
 
 注意：
 
-- `http://localhost:3000/` 返回 `Cannot GET /` 是正常的，因为后端只提供 API，不提供首页
-- 如果数据库容器第一次启动较慢，`npm.cmd run db:init` 会自动等待数据库就绪
+- `http://localhost:3000/` 返回 `Cannot GET /` 属于正常现象，后端只提供 API 和本地上传文件访问。
+- 若未配置 SMTP，注册接口仍可在开发模式下工作，后端会返回 `devCode`，前端会自动填入。
 
-### 2. 启动前端静态服务
+### 4. 启动前端静态服务
 
-在项目根目录运行：
+在仓库根目录：
 
 ```powershell
 python -m http.server 8000
 ```
 
-然后打开：
+然后访问：
 
 ```text
 http://localhost:8000/
@@ -355,75 +154,75 @@ http://localhost:8000/
 端口说明：
 
 - `8000`：前端页面
-- `3000`：后端 API 和本地图片访问
-- `3307`：Docker 中的 MySQL 对宿主机暴露的端口
+- `3000`：后端 API / 本地图片访问
+- `3307`：Docker MySQL 映射端口
 
-### 3. 前端改完后如何刷新
+## 当前主流程
 
-如果你刚改了：
+### 认证
 
-- `index.html`
-- `styles.css`
-- `app.js`
-
-建议浏览器用：
-
-- `Ctrl + F5`
-
-因为它会强制刷新，比普通 `F5` 更不容易继续吃旧缓存。
-
-### 4. 常用数据库命令
-
-```powershell
-cd backend
-docker compose ps
-docker compose logs -f mysql
-docker compose down
-```
-
-## 页面说明
+- 邮箱验证码注册
+- 邮箱密码登录
+- 本地持久化 Bearer Session
+- Session 失效后前端回到认证页
 
 ### 学习卡片
 
-这是当前唯一对外开放的主界面。
-
-支持：
-
-- 查看当前单词的大图
-- 查看中文和例句
-- 朗读单词和例句
+- 登录后按词书拉取 `learning-deck`
+- 查看当前单词的大图、中文、例句、例句翻译
+- 单词朗读和例句朗读
 - 点击切换同词多图
-- 长按打开图片管理菜单
-- 从 Bing 搜索并选图绑定
-- 搜索弹窗内直接浏览图片流并点击导入
-- 上传新图片
-- 删除当前图片
+- 左侧栏 / 移动端抽屉切换词书与内容
 
-### 其他页面
+### 图片管理
 
-这些页面的代码还在，但当前默认隐藏：
+- Bing 搜图导入
+- 本地上传图片
+- 隐藏默认图
+- 软删除私有图
+- 恢复已删除私有图
 
-- 欢迎页
-- 复习页
-- 图片联想页
-- 统计页
+## 关键目录
 
-目前属于“代码保留，产品暂不开放”的状态。
+```text
+word-image-memo-app/
+├─ README.md
+├─ index.html
+├─ styles.css
+├─ app.js
+├─ assets/
+├─ backend/
+│  ├─ .env.example
+│  ├─ docker-compose.yml
+│  ├─ sql/
+│  ├─ seeds/
+│  ├─ src/
+│  └─ uploads/
+├─ scripts/
+└─ data/
+```
+
+重点文件：
+
+- `backend/sql/001_init.sql`
+- `backend/sql/002_upgrade_legacy_schema.sql`
+- `backend/src/auth/auth.service.ts`
+- `backend/src/images/images.service.ts`
+- `backend/src/words/words.service.ts`
+- `backend/src/scripts/seed-demo.ts`
+- `backend/src/scripts/download-demo-images.ts`
 
 ## 当前限制
 
 - Bing 搜索依赖页面解析，不是官方 API
-- 第三方图片源偶尔可能拒绝下载
-- 还没有登录、权限和正式后台
-- 还没有接 OSS，当前统一落本地
-- 前端仍然保留本地 fallback 数据，不是完全只靠数据库
-- 学习进度、复习进度还没有完整做成正式持久化体系
+- 第三方图片源可能拒绝下载
+- 当前还没有权限分级和正式后台
+- 目前仍使用本地文件存储，尚未切正式 OSS
+- demo 图片如果本地文件缺失，会被 `seed:demo` 跳过；不影响启动，但会减少可用示例图数量
 
-## 后续演进方向
+## 后续建议
 
-- 补图片搜索筛选能力
-- 给上传增加预览、裁剪或压缩
-- 增加恢复删除、误删回滚、审核后台
-- 把本地图片存储切到正式 OSS
-- 增加登录、权限、管理端
-- 再逐步把隐藏页面打磨成正式产品流程
+- 把 demo 图片源信息独立保存，避免本地文件缺失后无法重新拉取
+- 增加微信登录或更多登录方式
+- 增加权限分级与管理后台
+- 把本地文件存储切到正式 OSS / S3 / R2
