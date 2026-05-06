@@ -313,11 +313,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   hydrateAudioButtons();
   bindEvents();
-  await initializeAuthState();
+  const hasSession = await initializeAuthState();
   await refreshDeckFromServer({ silent: true });
 
   renderAllViews();
-  switchView("welcome");
+  switchView(hasSession ? "learn" : "auth");
   syncSidebarVisibility();
 });
 
@@ -948,7 +948,7 @@ async function initializeAuthState() {
 }
 
 function setAuthModal(isOpen) {
-  switchView(isOpen || !state.authUser ? "auth" : "welcome");
+  switchView(isOpen || !state.authUser ? "auth" : "learn");
 }
 
 function setAuthMode(mode) {
@@ -986,8 +986,6 @@ function renderAuth() {
   const isSignedIn = Boolean(state.authUser);
   const isRegisterMode = state.authMode === "register";
   const cooldownSeconds = getAuthCodeCooldownSeconds();
-  const welcomeNavButton = elements.navPills.find((button) => button.dataset.target === "welcome");
-  const learnNavButton = elements.navPills.find((button) => button.dataset.target === "learn");
 
   if (elements.authUserName) {
     elements.authUserName.textContent = isSignedIn ? state.authUser.email : "\u672a\u767b\u5f55";
@@ -1003,15 +1001,11 @@ function renderAuth() {
     elements.authOpenButton.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
   }
 
-  if (welcomeNavButton) {
-    welcomeNavButton.hidden = false;
-    welcomeNavButton.disabled = false;
-  }
-
-  if (learnNavButton) {
-    learnNavButton.hidden = true;
-    learnNavButton.disabled = true;
-  }
+  elements.navPills.forEach((button) => {
+    const isLearnButton = button.dataset.target === "learn";
+    button.hidden = !isLearnButton;
+    button.disabled = false;
+  });
 
   if (elements.authLogoutButton) {
     elements.authLogoutButton.hidden = !isSignedIn;
@@ -1203,7 +1197,7 @@ async function applyAuthSuccess(payload) {
 
   await refreshDeckFromServer({ preserveWordId: words[state.learnIndex]?.id || null, silent: true });
   renderAllViews();
-  switchView("welcome");
+  switchView("learn");
 }
 
 async function handleLogout() {
@@ -1223,7 +1217,7 @@ async function handleLogout() {
     resetAuthInputs();
     await refreshDeckFromServer({ preserveWordId: currentWordId, silent: true });
     renderAllViews();
-    switchView("welcome");
+    switchView("auth");
   }
 }
 
@@ -1235,10 +1229,8 @@ function clearAuthSessionState() {
 }
 
 function switchView(viewId) {
-  const publicViews = new Set(["welcome", "learn", "review", "image", "stats", "auth"]);
-  const protectedViews = new Set(["learn", "review", "image", "stats"]);
-  const requestedView = publicViews.has(viewId) ? viewId : "welcome";
-  const nextView = !state.authUser && protectedViews.has(requestedView) ? "auth" : requestedView;
+  const requestedView = viewId === "auth" ? "auth" : "learn";
+  const nextView = !state.authUser && requestedView === "learn" ? "auth" : requestedView;
 
   if (isCompactSidebarLayout()) {
     state.sidebarOpen = false;
