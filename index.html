@@ -10,21 +10,10 @@
     <div class="page-glow glow-left"></div>
     <div class="page-glow glow-right"></div>
     <div class="page-grid"></div>
-    <button
-      class="sidebar-open-btn"
-      id="sidebar-open-button"
-      type="button"
-      aria-controls="app-sidebar"
-      aria-expanded="false"
-      hidden
-    >
-      <span class="sidebar-open-btn-icon" aria-hidden="true"></span>
-      <span class="sidebar-open-btn-label">Menu</span>
-    </button>
-    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close sidebar" hidden></button>
+    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="关闭目录" hidden></button>
 
     <div class="app-shell">
-      <header class="topbar" id="app-sidebar">
+      <aside class="topbar" id="app-sidebar">
         <div class="sidebar-head">
           <div class="brand">
             <div class="brand-badge">W</div>
@@ -33,7 +22,9 @@
               <h1>看图记单词</h1>
             </div>
           </div>
-          <button class="sidebar-close-btn" id="sidebar-close-button" type="button" hidden>Close</button>
+          <button class="sidebar-close-btn" id="sidebar-close-button" type="button" aria-label="关闭目录" hidden>
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
 
         <nav class="nav-pills" aria-label="Primary">
@@ -74,21 +65,107 @@
           </button>
         </nav>
 
-        <section class="account-pill" aria-label="Account">
-          <div class="account-copy">
-            <p class="eyebrow">Account</p>
-            <strong id="auth-user-name">未登录</strong>
-            <span id="auth-user-meta">登录后再管理你的图片与账号数据</span>
-          </div>
-          <div class="account-actions">
-            <button class="secondary-btn" id="auth-open-button" type="button">登录 / 注册</button>
-            <button class="secondary-btn" id="auth-logout-button" type="button" hidden>退出</button>
-          </div>
-        </section>
-      </header>
+        <div class="sidebar-footer">
+          <div class="account-menu-wrap sidebar-account-wrap" data-account-wrap>
+            <button class="account-trigger sidebar-account-trigger" type="button" data-account-trigger aria-haspopup="menu" aria-expanded="false">
+              <span class="account-avatar" data-account-avatar>W</span>
+              <span class="account-trigger-copy">
+                <strong data-auth-user-name>未登录</strong>
+                <span data-auth-user-meta>点击登录 / 注册</span>
+              </span>
+              <span class="account-trigger-caret" aria-hidden="true"></span>
+            </button>
 
-      <main>
-        <section class="view" id="welcome" hidden>
+            <div class="account-menu sidebar-account-menu" data-account-menu role="menu" hidden>
+              <div class="account-menu-head">
+                <strong data-account-menu-name>未登录</strong>
+                <span data-account-menu-email>登录后再管理你的词书与图片</span>
+              </div>
+
+              <div class="account-menu-actions">
+                <button class="account-menu-item" type="button" role="menuitem" data-auth-open-button>
+                  登录 / 注册
+                </button>
+                <button class="account-menu-item danger" type="button" role="menuitem" data-auth-logout-button hidden>
+                  退出登录
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button class="sidebar-dock-toggle" id="sidebar-dock-toggle" type="button" hidden>
+            <span class="sidebar-dock-toggle-icon" aria-hidden="true"></span>
+            <span>收起</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="app-main">
+        <header class="dockbar">
+          <div class="dockbar-start">
+            <button
+              class="sidebar-open-btn"
+              id="sidebar-open-button"
+              type="button"
+              aria-controls="app-sidebar"
+              aria-expanded="false"
+              hidden
+            >
+              <span class="sidebar-open-btn-icon" aria-hidden="true"></span>
+              <span class="sidebar-open-btn-label">Menu</span>
+            </button>
+
+            <div class="dockbar-copy">
+              <h2 id="dockbar-title">学习卡片</h2>
+            </div>
+          </div>
+
+          <div class="dockbar-end">
+            <div class="account-menu-wrap" id="account-menu-wrap" data-account-wrap>
+              <button
+                class="account-trigger"
+                id="account-trigger"
+                data-account-trigger
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <span class="account-avatar" id="account-avatar" data-account-avatar>W</span>
+                <span class="account-trigger-copy">
+                  <strong id="auth-user-name" data-auth-user-name>未登录</strong>
+                  <span id="auth-user-meta" data-auth-user-meta>点击登录 / 注册</span>
+                </span>
+                <span class="account-trigger-caret" aria-hidden="true"></span>
+              </button>
+
+              <div class="account-menu" id="account-menu" data-account-menu role="menu" hidden>
+                <div class="account-menu-head">
+                  <strong id="account-menu-name" data-account-menu-name>未登录</strong>
+                  <span id="account-menu-email" data-account-menu-email>登录后再管理你的词书与图片</span>
+                </div>
+
+                <div class="account-menu-actions">
+                  <button class="account-menu-item" id="auth-open-button" type="button" role="menuitem" data-auth-open-button>
+                    登录 / 注册
+                  </button>
+                  <button
+                    class="account-menu-item danger"
+                    id="auth-logout-button"
+                    type="button"
+                    role="menuitem"
+                    data-auth-logout-button
+                    hidden
+                  >
+                    退出登录
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="app-stage">
+          <section class="view" id="welcome" hidden>
           <div class="hero">
             <div class="hero-copy card soft-card">
               <p class="eyebrow">面向初高中生的视觉化单词学习</p>
@@ -456,7 +533,7 @@
               <div class="summary-list" id="word-status-list"></div>
             </section>
           </div>
-        </section>
+          </section>
 
         <section class="view auth-view active" id="auth">
           <div class="auth-page-shell">
@@ -503,6 +580,7 @@
             </section>
           </div>
         </section>
+        </div>
       </main>
     </div>
     <script src="app.js" defer></script>

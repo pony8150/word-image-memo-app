@@ -293,7 +293,9 @@ const state = {
   imageChoices: [],
   imageLastCorrect: false,
   imageSelectedIndex: null,
-  sidebarOpen: false,
+  sidebarCollapsed: false,
+  sidebarDrawerOpen: false,
+  accountMenuOpen: false,
   authToken: loadAuthToken(),
   authUser: loadStoredAuthUser(),
   authPending: false,
@@ -313,6 +315,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   cacheElements();
   hydrateAudioButtons();
   bindEvents();
+  state.sidebarCollapsed = false;
+  state.sidebarDrawerOpen = false;
   const hasSession = await initializeAuthState();
   await refreshDeckFromServer({ silent: true });
 
@@ -322,6 +326,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function renderAllViews() {
+  renderDockbar();
   prepareImageQuestion();
   renderWelcome();
   renderLearn();
@@ -438,9 +443,28 @@ function cacheElements() {
   elements.sidebarOpenButton = document.getElementById("sidebar-open-button");
   elements.sidebarCloseButton = document.getElementById("sidebar-close-button");
   elements.sidebarBackdrop = document.getElementById("sidebar-backdrop");
+  elements.sidebarDockToggle = document.getElementById("sidebar-dock-toggle");
+  elements.dockbarTitle = document.getElementById("dockbar-title");
+  elements.dockbarSubtitle = document.getElementById("dockbar-subtitle");
   elements.views = [...document.querySelectorAll(".view")];
   elements.targetButtons = [...document.querySelectorAll("[data-target]")];
   elements.navPills = [...document.querySelectorAll(".nav-pill")];
+  elements.accountMenuWraps = [...document.querySelectorAll("[data-account-wrap]")];
+  elements.accountTriggers = [...document.querySelectorAll("[data-account-trigger]")];
+  elements.accountAvatars = [...document.querySelectorAll("[data-account-avatar]")];
+  elements.accountMenus = [...document.querySelectorAll("[data-account-menu]")];
+  elements.accountMenuNames = [...document.querySelectorAll("[data-account-menu-name]")];
+  elements.accountMenuEmails = [...document.querySelectorAll("[data-account-menu-email]")];
+  elements.authUserNames = [...document.querySelectorAll("[data-auth-user-name]")];
+  elements.authUserMetas = [...document.querySelectorAll("[data-auth-user-meta]")];
+  elements.authOpenButtons = [...document.querySelectorAll("[data-auth-open-button]")];
+  elements.authLogoutButtons = [...document.querySelectorAll("[data-auth-logout-button]")];
+  elements.accountMenuWrap = document.getElementById("account-menu-wrap");
+  elements.accountTrigger = document.getElementById("account-trigger");
+  elements.accountAvatar = document.getElementById("account-avatar");
+  elements.accountMenu = document.getElementById("account-menu");
+  elements.accountMenuName = document.getElementById("account-menu-name");
+  elements.accountMenuEmail = document.getElementById("account-menu-email");
   elements.authUserName = document.getElementById("auth-user-name");
   elements.authUserMeta = document.getElementById("auth-user-meta");
   elements.authOpenButton = document.getElementById("auth-open-button");
@@ -546,16 +570,20 @@ function hydrateAudioButtons() {
 }
 
 function bindEvents() {
-  if (elements.authOpenButton) {
-    elements.authOpenButton.addEventListener("click", () => {
+  elements.authOpenButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setAccountMenuOpen(false);
       setAuthMode("login");
       switchView("auth");
     });
-  }
+  });
 
-  if (elements.authLogoutButton) {
-    elements.authLogoutButton.addEventListener("click", handleLogout);
-  }
+  elements.authLogoutButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setAccountMenuOpen(false);
+      handleLogout();
+    });
+  });
 
   if (elements.authModeLogin) {
     elements.authModeLogin.addEventListener("click", () => {
@@ -583,32 +611,61 @@ function bindEvents() {
 
   if (elements.sidebarOpenButton) {
     elements.sidebarOpenButton.addEventListener("click", () => {
-      setSidebarOpen(true);
+      toggleSidebarFromDock();
     });
   }
 
   if (elements.sidebarCloseButton) {
     elements.sidebarCloseButton.addEventListener("click", () => {
-      setSidebarOpen(false);
+      setSidebarDrawerOpen(false);
     });
   }
 
   if (elements.sidebarBackdrop) {
     elements.sidebarBackdrop.addEventListener("click", () => {
-      setSidebarOpen(false);
+      setSidebarDrawerOpen(false);
     });
   }
 
-  window.addEventListener("resize", syncSidebarVisibility);
+  if (elements.sidebarDockToggle) {
+    elements.sidebarDockToggle.addEventListener("click", () => {
+      setSidebarCollapsed(!state.sidebarCollapsed);
+    });
+  }
 
+  elements.accountTriggers.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
 
+      if (isCompactSidebarLayout() && state.sidebarDrawerOpen) {
+        state.sidebarDrawerOpen = false;
+        syncSidebarVisibility();
+      }
+
+      setAccountMenuOpen(!state.accountMenuOpen);
+    });
+  });
+
+  window.addEventListener("resize", handleSidebarViewportChange);
+
+  document.addEventListener("click", (event) => {
+    if (!state.accountMenuOpen || elements.accountMenuWraps.length === 0) {
+      return;
+    }
+
+    if (!elements.accountMenuWraps.some((wrap) => wrap.contains(event.target))) {
+      setAccountMenuOpen(false);
+    }
+  });
 
   elements.targetButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const target = button.dataset.target;
       if (target) {
         switchView(target);
-        setSidebarOpen(false);
+        if (isCompactSidebarLayout()) {
+          setSidebarDrawerOpen(false);
+        }
       }
     });
   });
@@ -860,6 +917,10 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (state.accountMenuOpen) {
+        setAccountMenuOpen(false);
+        return;
+      }
 
       if (state.learnSearchOpen) {
         closeLearnSearchModal();
@@ -881,10 +942,49 @@ function bindEvents() {
         return;
       }
 
-      if (state.sidebarOpen) {
-        setSidebarOpen(false);
+      if (isCompactSidebarLayout()) {
+        if (state.sidebarDrawerOpen) {
+          setSidebarDrawerOpen(false);
+        }
+        return;
+      }
+
+      if (!state.sidebarCollapsed) {
+        setSidebarCollapsed(true);
       }
     }
+  });
+}
+
+function renderDockbar() {
+  const isAuthView = state.currentView === "auth" || !state.authUser;
+
+  if (elements.dockbarTitle) {
+    elements.dockbarTitle.textContent = isAuthView ? "登录 / 注册" : "学习卡片";
+  }
+
+  if (elements.dockbarSubtitle) {
+    elements.dockbarSubtitle.textContent = isAuthView
+      ? "管理你的账号、词书和图片"
+      : "Words and images";
+  }
+
+  syncAccountMenu();
+}
+
+function setAccountMenuOpen(isOpen) {
+  state.accountMenuOpen = Boolean(isOpen);
+  syncAccountMenu();
+}
+
+function syncAccountMenu() {
+  elements.accountTriggers.forEach((trigger) => {
+    trigger.setAttribute("aria-expanded", String(state.accountMenuOpen));
+    trigger.classList.toggle("is-open", state.accountMenuOpen);
+  });
+
+  elements.accountMenus.forEach((menu) => {
+    menu.hidden = !state.accountMenuOpen;
   });
 }
 
@@ -892,34 +992,69 @@ function isCompactSidebarLayout() {
   return window.matchMedia(SIDEBAR_COLLAPSE_MEDIA_QUERY).matches;
 }
 
+function handleSidebarViewportChange() {
+  if (!isCompactSidebarLayout()) {
+    state.sidebarDrawerOpen = false;
+  }
+
+  syncSidebarVisibility();
+}
+
+function toggleSidebarFromDock() {
+  setAccountMenuOpen(false);
+
+  if (isCompactSidebarLayout()) {
+    setSidebarDrawerOpen(!state.sidebarDrawerOpen);
+    return;
+  }
+
+  setSidebarCollapsed(!state.sidebarCollapsed);
+}
+
 function syncSidebarVisibility() {
   const isCompact = isCompactSidebarLayout();
-  const shouldShowSidebar = isCompact && state.sidebarOpen;
+  const isDrawerOpen = isCompact && state.sidebarDrawerOpen;
+  const isDesktopCollapsed = !isCompact && state.sidebarCollapsed;
 
   if (elements.appShell) {
-    elements.appShell.classList.toggle("sidebar-open", shouldShowSidebar);
+    elements.appShell.classList.toggle("sidebar-open", isDrawerOpen);
+    elements.appShell.classList.toggle("sidebar-collapsed", isDesktopCollapsed);
   }
 
   if (elements.sidebarOpenButton) {
-    elements.sidebarOpenButton.hidden = !isCompact || shouldShowSidebar;
-    elements.sidebarOpenButton.setAttribute("aria-expanded", String(shouldShowSidebar));
+    const isExpanded = isCompact ? state.sidebarDrawerOpen : !state.sidebarCollapsed;
+    elements.sidebarOpenButton.hidden = !isCompact;
+    elements.sidebarOpenButton.setAttribute("aria-expanded", String(isExpanded));
+    elements.sidebarOpenButton.setAttribute("aria-label", isExpanded ? "收起目录" : "展开目录");
+    elements.sidebarOpenButton.classList.toggle("is-active", isExpanded);
   }
 
   if (elements.sidebarCloseButton) {
-    elements.sidebarCloseButton.hidden = !isCompact;
-    elements.sidebarCloseButton.setAttribute("aria-expanded", String(shouldShowSidebar));
+    elements.sidebarCloseButton.hidden = !isCompact || !state.sidebarDrawerOpen;
+    elements.sidebarCloseButton.setAttribute("aria-expanded", String(state.sidebarDrawerOpen));
   }
 
   if (elements.sidebarBackdrop) {
-    elements.sidebarBackdrop.hidden = !shouldShowSidebar;
-    elements.sidebarBackdrop.setAttribute("aria-hidden", String(!shouldShowSidebar));
+    elements.sidebarBackdrop.hidden = !isDrawerOpen;
+    elements.sidebarBackdrop.setAttribute("aria-hidden", String(!isDrawerOpen));
   }
 
-  document.body.classList.toggle("sidebar-open", shouldShowSidebar);
+  if (elements.sidebarDockToggle) {
+    elements.sidebarDockToggle.hidden = isCompact;
+    elements.sidebarDockToggle.classList.toggle("is-collapsed", isDesktopCollapsed);
+    elements.sidebarDockToggle.setAttribute("aria-label", isDesktopCollapsed ? "展开目录" : "收起目录");
+  }
+
+  document.body.classList.toggle("sidebar-open", isDrawerOpen);
 }
 
-function setSidebarOpen(isOpen) {
-  state.sidebarOpen = Boolean(isOpen);
+function setSidebarCollapsed(isCollapsed) {
+  state.sidebarCollapsed = Boolean(isCollapsed);
+  syncSidebarVisibility();
+}
+
+function setSidebarDrawerOpen(isOpen) {
+  state.sidebarDrawerOpen = Boolean(isOpen);
   syncSidebarVisibility();
 }
 
@@ -986,20 +1121,37 @@ function renderAuth() {
   const isSignedIn = Boolean(state.authUser);
   const isRegisterMode = state.authMode === "register";
   const cooldownSeconds = getAuthCodeCooldownSeconds();
+  const accountDisplayName = isSignedIn
+    ? state.authUser.displayName || state.authUser.email
+    : "未登录";
+  const accountTriggerMeta = isSignedIn ? "已登录" : "点击登录 / 注册";
+  const accountMenuMeta = isSignedIn
+    ? state.authUser.email
+    : "登录后再管理你的词书与图片";
 
-  if (elements.authUserName) {
-    elements.authUserName.textContent = isSignedIn ? state.authUser.email : "\u672a\u767b\u5f55";
-  }
+  elements.authUserNames.forEach((element) => {
+    element.textContent = accountDisplayName;
+  });
 
-  if (elements.authUserMeta) {
-    elements.authUserMeta.textContent = isSignedIn
-      ? `${state.authUser.email} | \u5df2\u767b\u5f55`
-      : "\u767b\u5f55\u540e\u53ef\u4ee5\u540c\u6b65\u4f60\u7684\u8bcd\u4e66\u3001\u4e2a\u4eba\u56fe\u7247\u548c\u5220\u56fe\u8bb0\u5f55\u3002";
-  }
+  elements.authUserMetas.forEach((element) => {
+    element.textContent = accountTriggerMeta;
+  });
 
-  if (elements.authOpenButton) {
-    elements.authOpenButton.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
-  }
+  elements.accountMenuNames.forEach((element) => {
+    element.textContent = accountDisplayName;
+  });
+
+  elements.accountMenuEmails.forEach((element) => {
+    element.textContent = accountMenuMeta;
+  });
+
+  elements.accountAvatars.forEach((element) => {
+    element.textContent = getAccountAvatarText(isSignedIn ? state.authUser.displayName || state.authUser.email : "W");
+  });
+
+  elements.authOpenButtons.forEach((button) => {
+    button.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
+  });
 
   elements.navPills.forEach((button) => {
     const isLearnButton = button.dataset.target === "learn";
@@ -1007,10 +1159,10 @@ function renderAuth() {
     button.disabled = false;
   });
 
-  if (elements.authLogoutButton) {
-    elements.authLogoutButton.hidden = !isSignedIn;
-    elements.authLogoutButton.disabled = state.authPending;
-  }
+  elements.authLogoutButtons.forEach((button) => {
+    button.hidden = !isSignedIn;
+    button.disabled = state.authPending;
+  });
 
   if (elements.authModeLogin) {
     elements.authModeLogin.classList.toggle("active", !isRegisterMode);
@@ -1233,11 +1385,13 @@ function switchView(viewId) {
   const nextView = !state.authUser && requestedView === "learn" ? "auth" : requestedView;
 
   if (isCompactSidebarLayout()) {
-    state.sidebarOpen = false;
+    state.sidebarDrawerOpen = false;
     syncSidebarVisibility();
   }
 
   state.currentView = nextView;
+  setAccountMenuOpen(false);
+  renderDockbar();
 
   if (nextView !== "learn" && state.learnListOpen) {
     setLearnDrawer(false);
@@ -1294,6 +1448,16 @@ function resetAuthInputs() {
   if (elements.authConfirmPassword) {
     elements.authConfirmPassword.value = "";
   }
+}
+
+function getAccountAvatarText(value) {
+  const normalizedValue = String(value || "").trim();
+
+  if (!normalizedValue) {
+    return "W";
+  }
+
+  return normalizedValue.slice(0, 2).toUpperCase();
 }
 
 function renderWelcome() {
