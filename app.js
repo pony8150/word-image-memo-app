@@ -264,6 +264,7 @@ const state = {
   learnIndex: 0,
   learnImageIndex: 0,
   learnListOpen: false,
+  learnListQuery: "",
   learnDeleteMenuOpen: false,
   learnSearchOpen: false,
   learnSearchPending: false,
@@ -493,9 +494,11 @@ function cacheElements() {
   elements.bookSelect = document.getElementById("book-select");
   elements.learnProgress = document.getElementById("learn-progress");
   elements.learnListToggle = document.getElementById("learn-list-toggle");
+  elements.learnListToggleLabel = document.getElementById("learn-list-toggle-label");
   elements.learnDrawer = document.getElementById("learn-drawer");
   elements.learnDrawerBackdrop = document.getElementById("learn-drawer-backdrop");
   elements.learnListClose = document.getElementById("learn-list-close");
+  elements.learnListSearch = document.getElementById("learn-list-search");
   elements.learnWordPanel = document.getElementById("learn-word-panel");
   elements.learnMedia = document.getElementById("learn-media");
   elements.learnImage = document.getElementById("learn-image");
@@ -691,6 +694,13 @@ function bindEvents() {
   elements.learnListClose.addEventListener("click", () => {
     setLearnDrawer(false);
   });
+
+  if (elements.learnListSearch) {
+    elements.learnListSearch.addEventListener("input", (event) => {
+      state.learnListQuery = event.target.value;
+      renderWordList();
+    });
+  }
 
 
 
@@ -1150,7 +1160,9 @@ function renderAuth() {
   });
 
   elements.authOpenButtons.forEach((button) => {
-    button.textContent = isSignedIn ? "\u5207\u6362\u8d26\u53f7" : "\u767b\u5f55 / \u6ce8\u518c";
+    button.textContent = "\u767b\u5f55 / \u6ce8\u518c";
+    button.hidden = isSignedIn;
+    button.disabled = state.authPending;
   });
 
   elements.navPills.forEach((button) => {
@@ -1497,6 +1509,7 @@ function renderWelcome() {
 
 function renderLearn() {
   syncBookSelector();
+  syncLearnListSearch();
 
   if (!hasDeckWords()) {
     const placeholderImage = buildEmptyImagePlaceholder({
@@ -1504,7 +1517,8 @@ function renderLearn() {
       english: state.authUser ? "No words" : "Sign in"
     });
 
-    elements.learnProgress.textContent = state.authUser ? "当前词书暂无单词" : "请先登录后查看词书";
+    elements.learnProgress.textContent = state.authUser ? "暂无单词" : "请先登录";
+    elements.learnListToggle.disabled = true;
     elements.learnImage.src = placeholderImage.url;
     elements.learnImage.alt = state.authUser ? "当前词书暂无单词" : "请先登录";
     elements.learnMedia.classList.remove("is-switchable", "is-manage-open");
@@ -1519,7 +1533,7 @@ function renderLearn() {
     elements.learnPrev.disabled = true;
     elements.learnNext.disabled = true;
     elements.learnNext.textContent = state.authUser ? "暂无内容" : "请先登录";
-    elements.wordList.innerHTML = "";
+    renderWordList();
     syncLearnListVisibility();
     renderWelcome();
     return;
@@ -1529,7 +1543,8 @@ function renderLearn() {
   const images = getWordImages(word);
   const activeImage = images[Math.min(state.learnImageIndex, images.length - 1)];
 
-  elements.learnProgress.textContent = `学习进度 ${state.learnIndex + 1} / ${words.length}`;
+  elements.learnProgress.textContent = `${state.learnIndex + 1} / ${words.length}`;
+  elements.learnListToggle.disabled = false;
   elements.learnImage.src = activeImage.url;
   elements.learnImage.alt = `${word.english} 的真实图片`;
   elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !state.learnDeleteMenuOpen);
@@ -1543,20 +1558,7 @@ function renderLearn() {
   elements.learnNext.disabled = false;
   elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "回到第一张" : "下一张";
 
-  elements.wordList.innerHTML = words
-    .map(
-      (item, index) => `
-        <button class="word-chip ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
-          <span>
-            <strong>${String(index + 1).padStart(2, "0")} ${item.english}</strong>
-            <small>${item.chinese}</small>
-          </span>
-          <small>${state.reviewRatingsByWord[index] ? ratingLabel(state.reviewRatingsByWord[index]) : "未复习"}</small>
-        </button>
-      `
-    )
-    .join("");
-
+  renderWordList();
   syncLearnListVisibility();
   renderWelcome();
 }
@@ -1599,13 +1601,70 @@ function syncLearnListVisibility() {
   const isOpen = state.learnListOpen;
   elements.learnDrawer.classList.toggle("is-open", isOpen);
   elements.learnDrawer.setAttribute("aria-hidden", String(!isOpen));
-  elements.learnListToggle.textContent = isOpen ? "收起单词列表" : "显示单词列表";
   elements.learnListToggle.setAttribute("aria-expanded", String(isOpen));
+  if (elements.learnListToggleLabel) {
+    elements.learnListToggleLabel.textContent = isOpen ? "收起单词列表" : "单词列表";
+  }
   document.body.classList.toggle("drawer-open", isOpen);
+}
+
+function syncLearnListSearch() {
+  if (!elements.learnListSearch) {
+    return;
+  }
+
+  elements.learnListSearch.value = state.learnListQuery;
+  elements.learnListSearch.disabled = !hasDeckWords();
+}
+
+function renderWordList() {
+  if (!elements.wordList) {
+    return;
+  }
+
+  if (!hasDeckWords()) {
+    elements.wordList.innerHTML = "";
+    return;
+  }
+
+  const query = state.learnListQuery.trim().toLowerCase();
+  const filteredWords = words
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => {
+      if (!query) {
+        return true;
+      }
+
+      return `${item.english} ${item.chinese}`.toLowerCase().includes(query);
+    });
+
+  if (filteredWords.length === 0) {
+    elements.wordList.innerHTML = '<div class="word-list-empty">没有匹配的单词</div>';
+    return;
+  }
+
+  elements.wordList.innerHTML = filteredWords
+    .map(
+      ({ item, index }) => `
+        <button class="word-chip ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
+          <span>
+            <strong>${String(index + 1).padStart(2, "0")} ${escapeHtml(item.english)}</strong>
+            <small>${escapeHtml(item.chinese)}</small>
+          </span>
+          <small>${escapeHtml(state.reviewRatingsByWord[index] ? ratingLabel(state.reviewRatingsByWord[index]) : "未复习")}</small>
+        </button>
+      `
+    )
+    .join("");
 }
 
 function setLearnDrawer(isOpen) {
   state.learnListOpen = isOpen;
+  if (!isOpen && state.learnListQuery) {
+    state.learnListQuery = "";
+    syncLearnListSearch();
+    renderWordList();
+  }
   syncLearnListVisibility();
 }
 

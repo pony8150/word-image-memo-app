@@ -272,9 +272,9 @@
                 aria-expanded="false"
                 aria-controls="learn-drawer"
               >
-                显示单词列表
+                <span class="list-toggle-label" id="learn-list-toggle-label">单词列表</span>
+                <span class="list-toggle-meta" id="learn-progress">0 / 0</span>
               </button>
-<div class="progress-pill" id="learn-progress"></div>
             </div>
           </div>
 
@@ -328,6 +328,16 @@
                   <h3 id="learn-word-title">单词列表</h3>
                 </div>
                 <button class="secondary-btn drawer-close" id="learn-list-close">收起</button>
+              </div>
+              <div class="drawer-search">
+                <input
+                  class="drawer-search-input"
+                  id="learn-list-search"
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="搜索单词或中文"
+                />
               </div>
               <div class="word-list" id="word-list"></div>
             </aside>
