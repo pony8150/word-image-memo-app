@@ -261,6 +261,14 @@ const state = {
   books: [],
   activeBookCode: "",
   currentView: "learn",
+  communityFeed: [],
+  communityFeedLoaded: false,
+  communityFeedPending: false,
+  communityPostId: null,
+  communityPostDetail: null,
+  communityPostPending: false,
+  communityCommentPending: false,
+  communityPublishPending: false,
   learnIndex: 0,
   learnImageIndex: 0,
   learnListOpen: false,
@@ -320,6 +328,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   state.sidebarDrawerOpen = false;
   const hasSession = await initializeAuthState();
   await refreshDeckFromServer({ silent: true });
+  if (hasSession) {
+    await ensureCommunityFeedLoaded(true);
+  }
 
   renderAllViews();
   switchView(hasSession ? "learn" : "auth");
@@ -331,6 +342,8 @@ function renderAllViews() {
   prepareImageQuestion();
   renderWelcome();
   renderLearn();
+  renderCommunityFeed();
+  renderCommunityPostDetail();
   renderReview();
   renderImage();
   renderStats();
@@ -503,6 +516,7 @@ function cacheElements() {
   elements.learnMedia = document.getElementById("learn-media");
   elements.learnImage = document.getElementById("learn-image");
   elements.learnImageMenu = document.getElementById("learn-image-menu");
+  elements.learnImagePublish = document.getElementById("learn-image-publish");
   elements.learnImageSearch = document.getElementById("learn-image-search");
   elements.learnImageUpload = document.getElementById("learn-image-upload");
   elements.learnImageDelete = document.getElementById("learn-image-delete");
@@ -525,6 +539,29 @@ function cacheElements() {
   elements.wordList = document.getElementById("word-list");
   elements.learnPrev = document.getElementById("learn-prev");
   elements.learnNext = document.getElementById("learn-next");
+
+  elements.communityFeed = document.getElementById("community-feed");
+  elements.communityBackButton = document.getElementById("community-back-button");
+  elements.communityPostImage = document.getElementById("community-post-image");
+  elements.communityPostAvatar = document.getElementById("community-post-avatar");
+  elements.communityPostAuthorName = document.getElementById("community-post-author-name");
+  elements.communityPostCreatedAt = document.getElementById("community-post-created-at");
+  elements.communityPostTitle = document.getElementById("community-post-title");
+  elements.communityPostSubtitle = document.getElementById("community-post-subtitle");
+  elements.communityPostDescription = document.getElementById("community-post-description");
+  elements.communityPostWordMeta = document.getElementById("community-post-word-meta");
+  elements.communityPostLike = document.getElementById("community-post-like");
+  elements.communityPostFavorite = document.getElementById("community-post-favorite");
+  elements.communityPostShare = document.getElementById("community-post-share");
+  elements.communityPostCommentTrigger = document.getElementById("community-post-comment-trigger");
+  elements.communityPostLikeCount = document.getElementById("community-post-like-count");
+  elements.communityPostFavoriteCount = document.getElementById("community-post-favorite-count");
+  elements.communityPostShareCount = document.getElementById("community-post-share-count");
+  elements.communityPostCommentCount = document.getElementById("community-post-comment-count");
+  elements.communityCommentForm = document.getElementById("community-comment-form");
+  elements.communityCommentInput = document.getElementById("community-comment-input");
+  elements.communityCommentSubmit = document.getElementById("community-comment-submit");
+  elements.communityCommentList = document.getElementById("community-comment-list");
 
   elements.reviewProgress = document.getElementById("review-progress");
   elements.reviewImage = document.getElementById("review-image");
@@ -758,6 +795,12 @@ function bindEvents() {
     });
   }
 
+  if (elements.learnImagePublish) {
+    elements.learnImagePublish.addEventListener("click", () => {
+      publishCurrentLearnImageToCommunity();
+    });
+  }
+
   if (elements.learnImageUpload) {
     elements.learnImageUpload.addEventListener("click", () => {
       openLearnUploadModal();
@@ -843,6 +886,69 @@ function bindEvents() {
 
     jumpToWord(Number(button.dataset.wordIndex));
   });
+
+  if (elements.communityFeed) {
+    elements.communityFeed.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-community-post-id]");
+
+      if (!card) {
+        return;
+      }
+
+      openCommunityPostDetail(Number(card.dataset.communityPostId));
+    });
+  }
+
+  if (elements.communityBackButton) {
+    elements.communityBackButton.addEventListener("click", () => {
+      switchView("community");
+    });
+  }
+
+  if (elements.communityPostLike) {
+    elements.communityPostLike.addEventListener("click", () => {
+      toggleCommunityPostLike();
+    });
+  }
+
+  if (elements.communityPostFavorite) {
+    elements.communityPostFavorite.addEventListener("click", () => {
+      toggleCommunityPostFavorite();
+    });
+  }
+
+  if (elements.communityPostShare) {
+    elements.communityPostShare.addEventListener("click", () => {
+      shareCommunityPost();
+    });
+  }
+
+  if (elements.communityPostCommentTrigger) {
+    elements.communityPostCommentTrigger.addEventListener("click", () => {
+      if (elements.communityCommentInput) {
+        elements.communityCommentInput.focus({ preventScroll: false });
+      }
+    });
+  }
+
+  if (elements.communityCommentForm) {
+    elements.communityCommentForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitCommunityComment();
+    });
+  }
+
+  if (elements.communityCommentList) {
+    elements.communityCommentList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-community-comment-id]");
+
+      if (!button) {
+        return;
+      }
+
+      toggleCommunityCommentLike(Number(button.dataset.communityCommentId));
+    });
+  }
 
   elements.learnPrev.addEventListener("click", () => {
     if (!hasDeckWords()) {
@@ -968,9 +1074,19 @@ function bindEvents() {
 
 function renderDockbar() {
   const isAuthView = state.currentView === "auth" || !state.authUser;
+  const dockbarTitles = {
+    learn: "学习卡片",
+    community: "单词社区",
+    "community-post": "帖子详情",
+    review: "复习模式",
+    image: "看图猜词",
+    stats: "学习统计",
+    welcome: "欢迎页",
+    auth: "登录 / 注册"
+  };
 
   if (elements.dockbarTitle) {
-    elements.dockbarTitle.textContent = isAuthView ? "登录 / 注册" : "学习卡片";
+    elements.dockbarTitle.textContent = isAuthView ? "登录 / 注册" : dockbarTitles[state.currentView] || "学习卡片";
   }
 
   if (elements.dockbarSubtitle) {
@@ -1166,8 +1282,9 @@ function renderAuth() {
   });
 
   elements.navPills.forEach((button) => {
-    const isLearnButton = button.dataset.target === "learn";
-    button.hidden = !isLearnButton;
+    const target = button.dataset.target;
+    const isVisibleTarget = target === "learn" || target === "community";
+    button.hidden = !isVisibleTarget;
     button.disabled = false;
   });
 
@@ -1360,6 +1477,7 @@ async function applyAuthSuccess(payload) {
   resetAuthInputs();
 
   await refreshDeckFromServer({ preserveWordId: words[state.learnIndex]?.id || null, silent: true });
+  await ensureCommunityFeedLoaded(true);
   renderAllViews();
   switchView("learn");
 }
@@ -1380,6 +1498,10 @@ async function handleLogout() {
     state.authPending = false;
     resetAuthInputs();
     await refreshDeckFromServer({ preserveWordId: currentWordId, silent: true });
+    state.communityFeed = [];
+    state.communityFeedLoaded = false;
+    state.communityPostId = null;
+    state.communityPostDetail = null;
     renderAllViews();
     switchView("auth");
   }
@@ -1393,8 +1515,10 @@ function clearAuthSessionState() {
 }
 
 function switchView(viewId) {
-  const requestedView = viewId === "auth" ? "auth" : "learn";
-  const nextView = !state.authUser && requestedView === "learn" ? "auth" : requestedView;
+  const allowedViews = new Set(["auth", "learn", "community", "community-post", "review", "image", "stats", "welcome"]);
+  const requestedView = allowedViews.has(viewId) ? viewId : "learn";
+  const requiresAuth = requestedView !== "auth";
+  const nextView = !state.authUser && requiresAuth ? "auth" : requestedView;
 
   if (isCompactSidebarLayout()) {
     state.sidebarDrawerOpen = false;
@@ -1425,6 +1549,15 @@ function switchView(viewId) {
 
   if (nextView === "learn") {
     renderLearn();
+  }
+
+  if (nextView === "community") {
+    renderCommunityFeed();
+    ensureCommunityFeedLoaded();
+  }
+
+  if (nextView === "community-post") {
+    renderCommunityPostDetail();
   }
 
   if (nextView === "review") {
@@ -1472,6 +1605,49 @@ function getAccountAvatarText(value) {
   return normalizedValue.slice(0, 2).toUpperCase();
 }
 
+function buildCommunityPostText(word) {
+  return [word.english, word.chinese, word.example].filter(Boolean).join(" · ");
+}
+
+function formatCount(value) {
+  const count = Number(value || 0);
+
+  if (count >= 10000) {
+    return `${(count / 10000).toFixed(count >= 100000 ? 0 : 1)}w`;
+  }
+
+  return String(count);
+}
+
+function formatCommunityDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function normalizeCommunityPost(post) {
+  if (!post) {
+    return null;
+  }
+
+  return {
+    ...post,
+    imageUrl: resolveRuntimeUrl(post.imageUrl || "")
+  };
+}
+
+function normalizeCommunityFeed(posts) {
+  if (!Array.isArray(posts)) {
+    return [];
+  }
+
+  return posts.map((post) => normalizeCommunityPost(post)).filter(Boolean);
+}
+
 function renderWelcome() {
   elements.heroWordCount.textContent = String(words.length);
 
@@ -1505,6 +1681,161 @@ function renderWelcome() {
       `
     )
     .join("");
+}
+
+function renderCommunityFeed() {
+  if (!elements.communityFeed) {
+    return;
+  }
+
+  if (!state.authUser) {
+    elements.communityFeed.innerHTML = `
+      <article class="card community-empty-card">
+        <h3>请先登录</h3>
+        <p>登录后才能查看单词社区、发布图片和参与评论。</p>
+      </article>
+    `;
+    return;
+  }
+
+  if (state.communityFeedPending && state.communityFeed.length === 0) {
+    elements.communityFeed.innerHTML = `
+      <article class="card community-empty-card">
+        <h3>社区加载中</h3>
+        <p>正在同步最新帖子。</p>
+      </article>
+    `;
+    return;
+  }
+
+  if (!Array.isArray(state.communityFeed) || state.communityFeed.length === 0) {
+    elements.communityFeed.innerHTML = `
+      <article class="card community-empty-card">
+        <h3>社区还没有内容</h3>
+        <p>从学习页长按图片，再点“发到社区”，就能发出第一条单词帖子。</p>
+      </article>
+    `;
+    return;
+  }
+
+  elements.communityFeed.innerHTML = state.communityFeed
+    .map(
+      (post) => `
+        <article class="community-card" data-community-post-id="${post.id}">
+          <div class="community-card-media">
+            <img src="${escapeHtml(post.imageUrl)}" alt="${escapeHtml(post.title)}" />
+          </div>
+          <div class="community-card-body">
+            <h3>${escapeHtml(post.title)}</h3>
+            <p>${escapeHtml(post.body || "")}</p>
+            <div class="community-card-meta">
+              <div class="community-card-author">
+                <span class="community-avatar small">${escapeHtml(post.author.avatarText)}</span>
+                <span>${escapeHtml(post.author.displayName || post.author.email)}</span>
+              </div>
+              <span class="community-card-like">♡ ${formatCount(post.likeCount)}</span>
+            </div>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderCommunityPostDetail() {
+  if (!elements.communityPostTitle) {
+    return;
+  }
+
+  const post = state.communityPostDetail;
+
+  if (!post) {
+    elements.communityPostImage.src = "";
+    elements.communityPostImage.alt = "";
+    elements.communityPostAvatar.textContent = "W";
+    elements.communityPostAuthorName.textContent = "";
+    elements.communityPostCreatedAt.textContent = "";
+    elements.communityPostTitle.textContent = state.communityPostPending ? "加载中..." : "";
+    elements.communityPostSubtitle.textContent = "";
+    elements.communityPostDescription.textContent = "";
+    elements.communityPostWordMeta.textContent = "";
+    elements.communityPostLikeCount.textContent = "0";
+    elements.communityPostFavoriteCount.textContent = "0";
+    elements.communityPostShareCount.textContent = "0";
+    elements.communityPostCommentCount.textContent = "0";
+    elements.communityPostLike.classList.remove("is-active");
+    elements.communityPostFavorite.classList.remove("is-active");
+    elements.communityPostLike.disabled = true;
+    elements.communityPostFavorite.disabled = true;
+    elements.communityPostShare.disabled = true;
+    elements.communityCommentSubmit.disabled = true;
+    elements.communityCommentSubmit.textContent = "发表评论";
+    if (elements.communityCommentInput) {
+      elements.communityCommentInput.value = "";
+    }
+    if (elements.communityCommentList) {
+      elements.communityCommentList.innerHTML = state.communityPostPending
+        ? '<div class="community-empty-inline">正在加载帖子详情...</div>'
+        : "";
+    }
+    return;
+  }
+
+  elements.communityPostImage.src = post.imageUrl;
+  elements.communityPostImage.alt = post.title;
+  elements.communityPostAvatar.textContent = post.author.avatarText;
+  elements.communityPostAuthorName.textContent = post.author.displayName || post.author.email;
+  elements.communityPostCreatedAt.textContent = formatCommunityDate(post.createdAt);
+  elements.communityPostTitle.textContent = post.title;
+  elements.communityPostSubtitle.textContent = `${post.word.english} · ${post.word.chinese}`;
+  elements.communityPostDescription.textContent = post.body || "";
+  elements.communityPostWordMeta.textContent = [
+    post.word.example,
+    post.word.exampleChinese,
+    post.word.imageReason
+  ]
+    .filter(Boolean)
+    .join(" ");
+  elements.communityPostLikeCount.textContent = formatCount(post.likeCount);
+  elements.communityPostFavoriteCount.textContent = formatCount(post.favoriteCount);
+  elements.communityPostShareCount.textContent = formatCount(post.shareCount);
+  elements.communityPostCommentCount.textContent = formatCount(post.commentCount);
+  elements.communityPostLike.classList.toggle("is-active", Boolean(post.viewer?.liked));
+  elements.communityPostFavorite.classList.toggle("is-active", Boolean(post.viewer?.favorited));
+  elements.communityPostLike.disabled = state.communityPostPending;
+  elements.communityPostFavorite.disabled = state.communityPostPending;
+  elements.communityPostShare.disabled = state.communityPostPending;
+  elements.communityCommentSubmit.disabled = state.communityCommentPending;
+  elements.communityCommentSubmit.textContent = state.communityCommentPending ? "发送中..." : "发表评论";
+
+  elements.communityCommentList.innerHTML =
+    Array.isArray(post.comments) && post.comments.length > 0
+      ? post.comments
+          .map(
+            (comment) => `
+              <article class="community-comment-item">
+                <div class="community-comment-head">
+                  <div class="community-card-author">
+                    <span class="community-avatar small">${escapeHtml(comment.author.avatarText)}</span>
+                    <span>${escapeHtml(comment.author.displayName || comment.author.email)}</span>
+                  </div>
+                  <span class="community-comment-time">${formatCommunityDate(comment.createdAt)}</span>
+                </div>
+                <p class="community-comment-content">${escapeHtml(comment.content)}</p>
+                <div class="community-comment-foot">
+                  <button
+                    class="text-link community-comment-like ${comment.viewer?.liked ? "is-active" : ""}"
+                    type="button"
+                    data-community-comment-id="${comment.id}"
+                  >
+                    点赞 ${formatCount(comment.likeCount)}
+                  </button>
+                </div>
+              </article>
+            `
+          )
+          .join("")
+      : '<div class="community-empty-inline">还没有评论，来做第一个回复的人。</div>';
 }
 
 function renderLearn() {
@@ -1930,6 +2261,248 @@ function jumpToWord(index) {
   switchView("learn");
   renderLearn();
   renderStats();
+}
+
+async function ensureCommunityFeedLoaded(force = false) {
+  if (!state.authUser || !state.authToken) {
+    state.communityFeed = [];
+    state.communityFeedLoaded = false;
+    renderCommunityFeed();
+    return;
+  }
+
+  if (state.communityFeedPending || (state.communityFeedLoaded && !force)) {
+    return;
+  }
+
+  state.communityFeedPending = true;
+  renderCommunityFeed();
+
+  try {
+    const payload = await fetchCommunityFeedApi();
+    state.communityFeed = normalizeCommunityFeed(payload.posts);
+    state.communityFeedLoaded = true;
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "加载社区失败"));
+  } finally {
+    state.communityFeedPending = false;
+    renderCommunityFeed();
+  }
+}
+
+async function openCommunityPostDetail(postId) {
+  if (!postId || !requireSignedInForAction("请先登录后再进入社区。")) {
+    return;
+  }
+
+  state.communityPostPending = true;
+  state.communityPostId = postId;
+  state.communityPostDetail = null;
+  switchView("community-post");
+
+  try {
+    const payload = await fetchCommunityPostDetailApi(postId);
+    state.communityPostDetail = normalizeCommunityPost(payload.post || null);
+    renderCommunityPostDetail();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "加载帖子详情失败"));
+    state.communityPostId = null;
+    state.communityPostDetail = null;
+    switchView("community");
+  } finally {
+    state.communityPostPending = false;
+    renderCommunityPostDetail();
+  }
+}
+
+async function publishCurrentLearnImageToCommunity() {
+  if (!requireSignedInForAction("请先登录后再发到社区。")) {
+    return;
+  }
+
+  if (!hasDeckWords()) {
+    return;
+  }
+
+  const currentWord = words[state.learnIndex];
+  const currentImage = getWordImages(currentWord)[Math.min(state.learnImageIndex, getWordImages(currentWord).length - 1)];
+
+  if (!currentImage || typeof currentImage.id !== "number") {
+    window.alert("这张图片还不能发布到社区，请先使用当前词卡里的真实图片记录。");
+    return;
+  }
+
+  state.communityPublishPending = true;
+  if (elements.learnImagePublish) {
+    elements.learnImagePublish.disabled = true;
+    elements.learnImagePublish.textContent = "发布中...";
+  }
+
+  try {
+    const payload = await publishCommunityPostApi({
+      wordId: currentWord.id,
+      wordImageId: currentImage.id,
+      body: buildCommunityPostText(currentWord)
+    });
+    await ensureCommunityFeedLoaded(true);
+    state.communityPostDetail = normalizeCommunityPost(payload.post || null);
+    state.communityPostId = payload.post?.id || null;
+    setLearnDeleteMenu(false);
+    switchView("community-post");
+    renderCommunityPostDetail();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "发布到社区失败"));
+  } finally {
+    state.communityPublishPending = false;
+    if (elements.learnImagePublish) {
+      elements.learnImagePublish.disabled = false;
+      elements.learnImagePublish.textContent = "发到社区";
+    }
+  }
+}
+
+async function toggleCommunityPostLike() {
+  if (!state.communityPostDetail?.id || state.communityPostPending) {
+    return;
+  }
+
+  state.communityPostPending = true;
+  renderCommunityPostDetail();
+
+  try {
+    const payload = await toggleCommunityPostLikeApi(state.communityPostDetail.id);
+    state.communityPostDetail = normalizeCommunityPost(payload.post || state.communityPostDetail);
+    syncCommunityFeedPost(state.communityPostDetail);
+    renderCommunityFeed();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "点赞失败"));
+  } finally {
+    state.communityPostPending = false;
+    renderCommunityPostDetail();
+  }
+}
+
+async function toggleCommunityPostFavorite() {
+  if (!state.communityPostDetail?.id || state.communityPostPending) {
+    return;
+  }
+
+  state.communityPostPending = true;
+  renderCommunityPostDetail();
+
+  try {
+    const payload = await toggleCommunityPostFavoriteApi(state.communityPostDetail.id);
+    state.communityPostDetail = normalizeCommunityPost(payload.post || state.communityPostDetail);
+    syncCommunityFeedPost(state.communityPostDetail);
+    renderCommunityFeed();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "收藏失败"));
+  } finally {
+    state.communityPostPending = false;
+    renderCommunityPostDetail();
+  }
+}
+
+async function shareCommunityPost() {
+  if (!state.communityPostDetail?.id || state.communityPostPending) {
+    return;
+  }
+
+  state.communityPostPending = true;
+  renderCommunityPostDetail();
+
+  try {
+    const payload = await shareCommunityPostApi(state.communityPostDetail.id);
+    state.communityPostDetail.shareCount = Number(payload.shareCount || 0);
+    syncCommunityFeedPost(state.communityPostDetail);
+    renderCommunityFeed();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "转发失败"));
+  } finally {
+    state.communityPostPending = false;
+    renderCommunityPostDetail();
+  }
+}
+
+async function submitCommunityComment() {
+  if (!state.communityPostDetail?.id || state.communityCommentPending || !elements.communityCommentInput) {
+    return;
+  }
+
+  const content = String(elements.communityCommentInput.value || "").trim();
+
+  if (!content) {
+    return;
+  }
+
+  state.communityCommentPending = true;
+  renderCommunityPostDetail();
+
+  try {
+    const payload = await createCommunityCommentApi(state.communityPostDetail.id, { content });
+    state.communityPostDetail = normalizeCommunityPost(payload.post || state.communityPostDetail);
+    syncCommunityFeedPost(state.communityPostDetail);
+    elements.communityCommentInput.value = "";
+    renderCommunityFeed();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "评论失败"));
+  } finally {
+    state.communityCommentPending = false;
+    renderCommunityPostDetail();
+  }
+}
+
+async function toggleCommunityCommentLike(commentId) {
+  if (!commentId || state.communityCommentPending || !state.communityPostDetail) {
+    return;
+  }
+
+  try {
+    const payload = await toggleCommunityCommentLikeApi(commentId);
+    const nextComment = payload.comment;
+
+    state.communityPostDetail.comments = state.communityPostDetail.comments.map((comment) =>
+      comment.id === nextComment.id ? nextComment : comment
+    );
+    renderCommunityPostDetail();
+  } catch (error) {
+    handlePossibleAuthError(error);
+    console.error(error);
+    window.alert(getErrorMessage(error, "评论点赞失败"));
+  }
+}
+
+function syncCommunityFeedPost(postDetail) {
+  if (!postDetail || !Array.isArray(state.communityFeed)) {
+    return;
+  }
+
+  state.communityFeed = state.communityFeed.map((post) =>
+    post.id === postDetail.id
+      ? {
+          ...post,
+          likeCount: postDetail.likeCount,
+          favoriteCount: postDetail.favoriteCount,
+          commentCount: postDetail.commentCount,
+          shareCount: postDetail.shareCount,
+          viewer: { ...postDetail.viewer }
+        }
+      : post
+  );
 }
 
 function buildReviewSuggestion(counts) {
@@ -2726,6 +3299,128 @@ async function fetchLearningDeck(bookCode = "") {
 
   if (!response.ok) {
     throw new Error(await extractApiErrorMessage(response, "Failed to load learning deck"));
+  }
+
+  return response.json();
+}
+
+async function fetchCommunityFeedApi() {
+  const response = await fetch(`${API_BASE_URL}/community/feed`, {
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "加载社区失败"));
+  }
+
+  return response.json();
+}
+
+async function fetchCommunityPostDetailApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}`, {
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "加载帖子详情失败"));
+  }
+
+  return response.json();
+}
+
+async function publishCommunityPostApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/community/posts`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    }),
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "发布到社区失败"));
+  }
+
+  return response.json();
+}
+
+async function createCommunityCommentApi(postId, payload) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/comments`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    }),
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "评论失败"));
+  }
+
+  return response.json();
+}
+
+async function toggleCommunityPostLikeApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/toggle-like`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "点赞失败"));
+  }
+
+  return response.json();
+}
+
+async function toggleCommunityPostFavoriteApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/toggle-favorite`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "收藏失败"));
+  }
+
+  return response.json();
+}
+
+async function shareCommunityPostApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/share`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "转发失败"));
+  }
+
+  return response.json();
+}
+
+async function toggleCommunityCommentLikeApi(commentId) {
+  const response = await fetch(`${API_BASE_URL}/community/comments/${commentId}/toggle-like`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "评论点赞失败"));
   }
 
   return response.json();

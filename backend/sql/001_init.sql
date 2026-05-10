@@ -163,3 +163,89 @@ CREATE TABLE IF NOT EXISTS image_operation_logs (
   PRIMARY KEY (id),
   KEY idx_image_operation_logs_word_id_created_at (word_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS community_posts (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  word_id VARCHAR(191) NOT NULL,
+  word_image_id BIGINT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  body TEXT NULL,
+  status ENUM('active', 'deleted') NOT NULL DEFAULT 'active',
+  like_count INT NOT NULL DEFAULT 0,
+  favorite_count INT NOT NULL DEFAULT 0,
+  comment_count INT NOT NULL DEFAULT 0,
+  share_count INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_community_posts_status_created_at (status, created_at),
+  KEY idx_community_posts_user_id_created_at (user_id, created_at),
+  KEY idx_community_posts_word_id_created_at (word_id, created_at),
+  CONSTRAINT fk_community_posts_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_posts_word
+    FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_posts_word_image
+    FOREIGN KEY (word_image_id) REFERENCES word_images(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS community_post_likes (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_community_post_likes_post_user (post_id, user_id),
+  KEY idx_community_post_likes_user_id_created_at (user_id, created_at),
+  CONSTRAINT fk_community_post_likes_post
+    FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_post_likes_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS community_post_favorites (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_community_post_favorites_post_user (post_id, user_id),
+  KEY idx_community_post_favorites_user_id_created_at (user_id, created_at),
+  CONSTRAINT fk_community_post_favorites_post
+    FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_post_favorites_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS community_comments (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content TEXT NOT NULL,
+  status ENUM('active', 'deleted') NOT NULL DEFAULT 'active',
+  like_count INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_community_comments_post_status_created_at (post_id, status, created_at),
+  KEY idx_community_comments_user_id_created_at (user_id, created_at),
+  CONSTRAINT fk_community_comments_post
+    FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_comments_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS community_comment_likes (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  comment_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_community_comment_likes_comment_user (comment_id, user_id),
+  KEY idx_community_comment_likes_user_id_created_at (user_id, created_at),
+  CONSTRAINT fk_community_comment_likes_comment
+    FOREIGN KEY (comment_id) REFERENCES community_comments(id) ON DELETE CASCADE,
+  CONSTRAINT fk_community_comment_likes_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

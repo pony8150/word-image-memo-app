@@ -35,6 +35,13 @@
               <small>Words and images</small>
             </span>
           </button>
+          <button class="nav-pill" data-target="community" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>单词社区</strong>
+              <small>Word moments</small>
+            </span>
+          </button>
           <button class="nav-pill" data-target="welcome" hidden>
             <span class="nav-pill-icon" aria-hidden="true"></span>
             <span class="nav-pill-copy">
@@ -284,6 +291,7 @@
                 <img id="learn-image" src="" alt="" />
                 <div class="learn-image-menu" id="learn-image-menu" aria-hidden="true" hidden>
                   <div class="learn-image-menu-card">
+                    <button class="primary-btn" id="learn-image-publish" type="button">发到社区</button>
                     <button class="secondary-btn" id="learn-image-search" type="button">上网搜索</button>
                     <button class="secondary-btn" id="learn-image-upload" type="button">上传</button>
                     <button class="danger-btn" id="learn-image-delete" type="button">删除</button>
@@ -381,6 +389,79 @@
             <div class="learn-search-results" id="learn-search-results"></div>
           </div>
         </div>
+
+        <section class="view" id="community" hidden>
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Community</p>
+              <h2>单词社区</h2>
+            </div>
+          </div>
+
+          <div class="community-feed" id="community-feed"></div>
+        </section>
+
+        <section class="view" id="community-post" hidden>
+          <article class="community-post-shell">
+            <section class="card community-post-card">
+              <div class="community-post-media">
+                <img id="community-post-image" src="" alt="" />
+              </div>
+
+              <div class="community-post-body">
+                <div class="community-post-head">
+                  <div class="community-post-author">
+                    <span class="community-avatar" id="community-post-avatar">W</span>
+                    <div class="community-post-author-copy">
+                      <strong id="community-post-author-name"></strong>
+                      <span id="community-post-created-at"></span>
+                    </div>
+                  </div>
+                  <button class="secondary-btn community-back-btn" id="community-back-button" type="button">返回社区</button>
+                </div>
+
+                <div class="community-post-copy">
+                  <h3 id="community-post-title"></h3>
+                  <p class="community-post-subtitle" id="community-post-subtitle"></p>
+                  <p class="community-post-description" id="community-post-description"></p>
+                </div>
+
+                <div class="detail-box community-word-box">
+                  <h4>单词信息</h4>
+                  <p id="community-post-word-meta"></p>
+                </div>
+
+                <div class="community-post-actions">
+                  <button class="secondary-btn community-action-btn" id="community-post-like" type="button">点赞 <span id="community-post-like-count">0</span></button>
+                  <button class="secondary-btn community-action-btn" id="community-post-favorite" type="button">收藏 <span id="community-post-favorite-count">0</span></button>
+                  <button class="secondary-btn community-action-btn" id="community-post-share" type="button">转发 <span id="community-post-share-count">0</span></button>
+                  <button class="secondary-btn community-action-btn" id="community-post-comment-trigger" type="button">评论 <span id="community-post-comment-count">0</span></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="card community-comments-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Replies</p>
+                  <h3>评论区</h3>
+                </div>
+              </div>
+
+              <form class="community-comment-form" id="community-comment-form">
+                <textarea
+                  class="community-comment-input"
+                  id="community-comment-input"
+                  rows="3"
+                  placeholder="写点你对这个单词或图片的理解"
+                ></textarea>
+                <button class="primary-btn community-comment-submit" id="community-comment-submit" type="submit">发表评论</button>
+              </form>
+
+              <div class="community-comment-list" id="community-comment-list"></div>
+            </section>
+          </article>
+        </section>
 
         <section class="view" id="review" hidden>
           <div class="section-header">

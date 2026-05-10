@@ -58,10 +58,20 @@ export class ImagesCleanupService {
 
         const assetReferenceCountResult = await client.query<{ count: number | string }>(
           `
-            SELECT COUNT(*) AS count
-            FROM word_images
-            WHERE image_asset_id = $1
-              AND id <> $2
+            SELECT SUM(reference_count) AS count
+            FROM (
+              SELECT COUNT(*) AS reference_count
+              FROM word_images
+              WHERE image_asset_id = $1
+                AND id <> $2
+
+              UNION ALL
+
+              SELECT COUNT(*) AS reference_count
+              FROM community_posts
+              WHERE word_image_id = $2
+                AND status = 'active'
+            ) references_union
           `,
           [Number(lockedRow.image_asset_id), Number(lockedRow.id)]
         );
