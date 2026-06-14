@@ -74,13 +74,22 @@ export class CommunityController {
     return this.communityService.togglePostLike(postId, user.id);
   }
 
-  @Post("posts/:id/toggle-favorite")
-  async togglePostFavorite(
+  @Post("posts/:id/favorite")
+  async favoritePost(
     @Param("id", ParseIntPipe) postId: number,
     @Headers("authorization") authorization?: string
   ) {
     const user = await this.authService.requireUserFromAuthorization(authorization);
-    return this.communityService.togglePostFavorite(postId, user.id);
+    return this.communityService.favoritePost(postId, user);
+  }
+
+  @Post("posts/:id/toggle-favorite")
+  async favoritePostLegacy(
+    @Param("id", ParseIntPipe) postId: number,
+    @Headers("authorization") authorization?: string
+  ) {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+    return this.communityService.favoritePost(postId, user);
   }
 
   @Post("posts/:id/share")

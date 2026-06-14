@@ -7,7 +7,6 @@ import { promisify } from "node:util";
 import { getRequiredDatabaseUrl } from "../config/env";
 import { createDatabasePool, executeQuery } from "../database/mysql";
 import { StorageService } from "../storage/storage.service";
-import { generateWordCardSvg, buildWordCardSourceCredit } from "./generate-word-card";
 import { OpenverseImageResult, searchOpenverseImages } from "./openverse-search";
 
 interface TargetWordRow {
@@ -52,13 +51,16 @@ interface DownloadedReplacement {
 
 const execFileAsync = promisify(execFile);
 
-const BOOK_CODE = "junior-high";
-const BATCH_LIMIT = 2000;
+const DEFAULT_BOOK_CODE = "junior-high";
+const SUPPORTED_BOOK_CODES = new Set(["junior-high", "senior-high", "postgraduate-redbook"]);
+const BATCH_LIMIT = 10000;
+const WORD_PROCESS_CONCURRENCY = 4;
 const OPENVERSE_PAGE_SIZE = 12;
 const REMOTE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 const SOURCE_CREDIT_MAX_LENGTH = 255;
 const HTML_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
+let shouldUseCurlFallback = false;
 
 const SPECIAL_SEARCH_QUERIES: Record<string, string[]> = {
   without: ["empty hand icon", "without symbol"],
@@ -277,6 +279,7 @@ const DIRECT_REPLACEMENTS: Record<string, DirectReplacementSource[]> = {
 };
 
 async function main() {
+  const bookCode = resolveBookCodeFromArgs();
   const pool = createDatabasePool(getRequiredDatabaseUrl());
   const storage = new StorageService();
   await storage.onModuleInit();
@@ -289,106 +292,95 @@ async function main() {
   let openverseCount = 0;
   let openverseMissCount = 0;
   let queryFailureCount = 0;
-
   try {
-    const words = await listTargetWords(pool);
+    const words = await listTargetWords(pool, bookCode);
 
     if (words.length === 0) {
-      console.log("No missing or Generated default images need processing.");
+      console.log(`No missing or Generated default images need processing for "${bookCode}".`);
       return;
     }
 
-    for (const word of words) {
-      const hasExistingGenerated = Number(word.existing_word_image_id || 0) > 0;
+    console.log(`Processing "${bookCode}" with ${words.length} word(s).`);
 
-      try {
-        const searchQueries = buildSearchQueries(word);
-        const replacement = await resolveReplacementForWord(word, searchQueries, {
-          onQueryFailure: () => {
-            queryFailureCount += 1;
-          }
-        });
+    let nextWordIndex = 0;
+    const workers = Array.from({ length: Math.min(WORD_PROCESS_CONCURRENCY, words.length) }, async () => {
+      while (true) {
+        const currentIndex = nextWordIndex;
+        nextWordIndex += 1;
 
-        if (!replacement) {
-          openverseMissCount += 1;
+        const word = words[currentIndex];
 
-          if (hasExistingGenerated) {
-            retainedGeneratedCount += 1;
-            console.log(`Kept Generated fallback for ${word.id} after no usable replacement`);
+        if (!word) {
+          return;
+        }
+
+        const hasExistingGenerated = Number(word.existing_word_image_id || 0) > 0;
+
+        try {
+          const searchQueries = buildSearchQueries(word);
+          const replacement = await resolveReplacementForWord(word, searchQueries, {
+            onQueryFailure: () => {
+              queryFailureCount += 1;
+            }
+          });
+
+          if (!replacement) {
+            openverseMissCount += 1;
+            console.log(`Skipped ${word.id} after no usable replacement`);
             continue;
           }
 
-          await importGeneratedFallback(storage, pool, word);
-          insertedCount += 1;
-          generatedCount += 1;
-          console.log(`Generated fallback image for ${word.id} after replacement miss`);
-          continue;
-        }
+          const asset = await resolveOrCreateLocalAsset(
+            storage,
+            pool,
+            replacement.content,
+            replacement.mimeType,
+            replacement.sourceUrl
+          );
 
-        const asset = await resolveOrCreateLocalAsset(
-          storage,
-          pool,
-          replacement.content,
-          replacement.mimeType,
-          replacement.sourceUrl
-        );
+          if (replacement.sourceLabel === "Openverse") {
+            openverseCount += 1;
+          } else {
+            curatedCount += 1;
+          }
 
-        if (replacement.sourceLabel === "Openverse") {
-          openverseCount += 1;
-        } else {
-          curatedCount += 1;
-        }
+          if (hasExistingGenerated) {
+            await replaceDefaultWordImage(storage, pool, {
+              wordImageId: Number(word.existing_word_image_id),
+              wordId: word.id,
+              previousImageAssetId: toOptionalNumber(word.existing_image_asset_id),
+              nextImageAssetId: asset.id,
+              sourceLabel: replacement.sourceLabel,
+              sourceCredit: replacement.sourceCredit
+            });
 
-        if (hasExistingGenerated) {
-          await replaceDefaultWordImage(storage, pool, {
-            wordImageId: Number(word.existing_word_image_id),
+            replacedCount += 1;
+            console.log(`Replaced Generated fallback for ${word.id}`);
+            continue;
+          }
+
+          await insertDefaultWordImage(pool, {
             wordId: word.id,
-            previousImageAssetId: toOptionalNumber(word.existing_image_asset_id),
-            nextImageAssetId: asset.id,
+            imageAssetId: asset.id,
             sourceLabel: replacement.sourceLabel,
             sourceCredit: replacement.sourceCredit
           });
 
-          replacedCount += 1;
-          console.log(`Replaced Generated fallback for ${word.id}`);
-          continue;
-        }
-
-        await insertDefaultWordImage(pool, {
-          wordId: word.id,
-          imageAssetId: asset.id,
-          sourceLabel: replacement.sourceLabel,
-          sourceCredit: replacement.sourceCredit
-        });
-
-        insertedCount += 1;
-        console.log(`Inserted ${replacement.sourceLabel} image for ${word.id}`);
-      } catch (error) {
-        console.warn(`Failed for ${word.id}: ${error instanceof Error ? error.message : String(error)}`);
-
-        if (hasExistingGenerated) {
-          retainedGeneratedCount += 1;
-          console.log(`Kept Generated fallback for ${word.id} after error`);
-          continue;
-        }
-
-        try {
-          await importGeneratedFallback(storage, pool, word);
           insertedCount += 1;
-          generatedCount += 1;
-          console.log(`Generated fallback image for ${word.id} after error`);
-        } catch (fallbackError) {
-          console.warn(
-            `Fallback also failed for ${word.id}: ${
-              fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
-            }`
-          );
+          console.log(`Inserted ${replacement.sourceLabel} image for ${word.id}`);
+        } catch (error) {
+          console.warn(`Failed for ${word.id}: ${error instanceof Error ? error.message : String(error)}`);
+          if (hasExistingGenerated) {
+            retainedGeneratedCount += 1;
+          }
         }
       }
-    }
+    });
+
+    await Promise.all(workers);
 
     console.log(
-      `Finished. Inserted ${insertedCount} default image(s), replaced ${replacedCount} Generated fallback(s), generated ${generatedCount} fallback card(s), kept ${retainedGeneratedCount} existing Generated fallback(s), curated replacements ${curatedCount}, Openverse replacements ${openverseCount}, replacement misses ${openverseMissCount}, query failures ${queryFailureCount}.`
+      `Finished "${bookCode}". Inserted ${insertedCount} default image(s), replaced ${replacedCount} Generated fallback(s), generated ${generatedCount} fallback card(s), kept ${retainedGeneratedCount} unresolved Generated fallback(s), curated replacements ${curatedCount}, Openverse replacements ${openverseCount}, replacement misses ${openverseMissCount}, query failures ${queryFailureCount}.`
     );
   } finally {
     await pool.end();
@@ -396,7 +388,8 @@ async function main() {
 }
 
 async function listTargetWords(
-  pool: ReturnType<typeof createDatabasePool>
+  pool: ReturnType<typeof createDatabasePool>,
+  bookCode: string
 ): Promise<TargetWordRow[]> {
   const result = await executeQuery<TargetWordRow>(
     pool,
@@ -440,10 +433,26 @@ async function listTargetWords(
       ORDER BY bw.sort_order ASC, bw.id ASC
       LIMIT ${BATCH_LIMIT}
     `,
-    [BOOK_CODE]
+    [bookCode]
   );
 
   return result.rows;
+}
+
+function resolveBookCodeFromArgs(): string {
+  const requestedBookCode = String(process.argv[2] || DEFAULT_BOOK_CODE)
+    .trim()
+    .toLowerCase();
+
+  if (!SUPPORTED_BOOK_CODES.has(requestedBookCode)) {
+    throw new Error(
+      `Unsupported book code "${requestedBookCode}". Supported values: ${Array.from(
+        SUPPORTED_BOOK_CODES
+      ).join(", ")}.`
+    );
+  }
+
+  return requestedBookCode;
 }
 
 async function resolveReplacementForWord(
@@ -517,6 +526,8 @@ async function findOpenverseCandidates(
 ): Promise<BestImageCandidate[]> {
   const candidates: BestImageCandidate[] = [];
   const seenUrls = new Set<string>();
+  const acceptedScore = minimumAcceptableScore(word);
+  const earlyStopScore = Math.max(acceptedScore + 16, 30);
 
   for (const query of searchQueries) {
     try {
@@ -533,6 +544,18 @@ async function findOpenverseCandidates(
         seenUrls.add(url);
         candidates.push(candidate);
       }
+
+      const bestCandidate = candidates.reduce<BestImageCandidate | null>((best, current) => {
+        if (!best || current.score > best.score) {
+          return current;
+        }
+
+        return best;
+      }, null);
+
+      if (bestCandidate && bestCandidate.score >= earlyStopScore) {
+        break;
+      }
     } catch (error) {
       options.onQueryFailure();
       console.warn(
@@ -544,7 +567,7 @@ async function findOpenverseCandidates(
   }
 
   return candidates
-    .filter((candidate) => candidate.score >= minimumAcceptableScore(word))
+    .filter((candidate) => candidate.score >= acceptedScore)
     .sort((left, right) => right.score - left.score)
     .slice(0, 8);
 }
@@ -864,6 +887,66 @@ function isConceptLikeWord(english: string): boolean {
 async function downloadBinaryImage(
   sourceUrl: string
 ): Promise<{ content: Buffer; mimeType: string }> {
+  if (shouldUseCurlFallback) {
+    return downloadBinaryImageViaCurl(sourceUrl);
+  }
+
+  try {
+    const response = await fetch(sourceUrl, {
+      headers: {
+        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "User-Agent": HTML_USER_AGENT
+      },
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Image ${sourceUrl} responded with ${response.status} ${response.statusText}.`);
+    }
+
+    const contentTypeHeader = (response.headers.get("content-type") || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+
+    if (contentTypeHeader === "text/html") {
+      throw new Error(`Image ${sourceUrl} returned HTML instead of an image.`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const content = Buffer.from(arrayBuffer);
+
+    if (content.byteLength === 0) {
+      throw new Error(`Image ${sourceUrl} downloaded as an empty file.`);
+    }
+
+    if (content.byteLength > REMOTE_IMAGE_MAX_BYTES) {
+      throw new Error(`Image ${sourceUrl} exceeded ${REMOTE_IMAGE_MAX_BYTES} bytes after download.`);
+    }
+
+    const prefixText = content.slice(0, 256).toString("utf8").trimStart().toLowerCase();
+
+    if (prefixText.startsWith("<!doctype html") || prefixText.startsWith("<html")) {
+      throw new Error(`Image ${sourceUrl} returned HTML instead of an image.`);
+    }
+
+    return {
+      content,
+      mimeType: contentTypeHeader || detectMimeType(content, sourceUrl)
+    };
+  } catch (error) {
+    if (!shouldFallbackToCurl(error)) {
+      throw error;
+    }
+
+    shouldUseCurlFallback = true;
+    return downloadBinaryImageViaCurl(sourceUrl);
+  }
+}
+
+async function downloadBinaryImageViaCurl(
+  sourceUrl: string
+): Promise<{ content: Buffer; mimeType: string }> {
   const tempDirectoryPath = await mkdtemp(path.join(tmpdir(), "word-image-fill-"));
   const tempFilePath = path.join(tempDirectoryPath, "asset.bin");
 
@@ -919,26 +1002,9 @@ async function downloadBinaryImage(
   }
 }
 
-async function importGeneratedFallback(
-  storage: StorageService,
-  pool: ReturnType<typeof createDatabasePool>,
-  word: TargetWordRow
-): Promise<void> {
-  const content = generateWordCardSvg({
-    english: word.english,
-    chinese: word.chinese
-  });
-
-  const asset = await resolveOrCreateLocalAsset(storage, pool, content, "image/svg+xml", `${word.id}.svg`);
-  await insertDefaultWordImage(pool, {
-    wordId: word.id,
-    imageAssetId: asset.id,
-    sourceLabel: "Generated",
-    sourceCredit: buildWordCardSourceCredit({
-      english: word.english,
-      chinese: word.chinese
-    })
-  });
+function shouldFallbackToCurl(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|network|tls|certificate|socket/i.test(message);
 }
 
 async function insertDefaultWordImage(

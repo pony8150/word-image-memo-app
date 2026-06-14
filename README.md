@@ -1,102 +1,40 @@
-# Word Image Memo App
+# 图个单词
 
-一个以“先看图，再记词”为核心的英语单词学习原型。
+一个以“先看图，再记词”为核心的英语单词学习项目。当前仓库已经不是单纯静态 demo，而是一个可本地运行的前后端一体原型：
 
-当前版本已经不是纯静态 Demo，而是一个可本地运行的前后端项目：
-
-- 前端：`index.html` + `styles.css` + `app.js`
+- 前端：原生 `index.html` + `styles.css` + `app.js`
 - 后端：NestJS
-- 数据库：MySQL
-- 认证：邮箱验证码注册 / 邮箱密码登录
-- 图片存储：本地文件 + `image_assets` 去重
+- 数据库：MySQL（默认通过 Docker 启动）
+- 认证：当前前端默认开放名字注册 / 名字登录
+- 图片：默认图、私有图、搜索导入图、本地上传图
+- 社区：发帖、评论、点赞、收藏、转发
 
-## 当前版本要点
+## 当前状态
 
-### 访问规则
+这版代码已经具备完整主链路：
 
-- 当前 `GET /api/learning-deck` 需要登录。
-- 未登录时，前端应停留在认证页，不再展示学习卡片内容。
-- 登录后先选择词书，再查看该词书下的单词与图片。
+- 登录后按词书加载 `learning-deck`
+- 学习卡片、复习模式、看图猜词
+- 图片搜索导入、本地上传、隐藏默认图、软删除私有图
+- 社区 feed、帖子详情、评论与互动
+- 后端启动时自动执行 `sql/*.sql`，保证 schema 尽量和代码同步
 
-### 词书模型
+同时也保留了一些明显的工程现实：
 
-- `words` 存全局单词。
-- `books` 存词书列表。
-- `book_words` 负责把单词映射到不同词书。
-- 当前内置词书：
-  - `junior-high`
-  - `senior-high`
-  - `college`
-
-### 图片归属模型
-
-- 冷启动图片是共享默认图。
-- 用户上传图、搜索导入图是用户私有图。
-- 同一个用户删除自己的私有图，不影响其他用户。
-- 用户隐藏默认图，只对自己生效，不会删掉共享图。
-
-### 存储模型
-
-- 二进制文件统一落到 `image_assets`。
-- 本地文件和后续 OSS 文件都通过 `image_assets` 管理。
-- 本地图片按内容哈希去重，避免同一张二进制文件重复存储。
-- `word_images.scope = 'default'` 表示共享默认图。
-- `word_images.scope = 'private'` 表示用户私有图关系。
-- `user_hidden_word_images` 记录“这个用户隐藏了哪张默认图”。
-
-## 旧库升级说明
-
-如果你之前已经跑过旧版本数据库，不要只看当前代码直接 `seed`。
-
-现在仓库里已经补了兼容旧库的迁移脚本：
-
-- `backend/sql/001_init.sql`：当前主 schema
-- `backend/sql/002_upgrade_legacy_schema.sql`：把旧 `word_images` 结构迁到新模型
-
-建议顺序：
-
-```powershell
-cd backend
-npm.cmd run db:init
-npm.cmd run download:demo-images
-npm.cmd run seed:demo
-```
-
-说明：
-
-- `db:init` 现在会自动执行全部 `sql/*.sql`
-- 如果旧库里还保留老版 `word_images`，`002` 会补新列并迁移到 `image_assets`
-- `seed:demo` 现在会跳过缺失的本地 demo 图，不再因为单张缺图整批失败
+- 前端仍是单文件应用，`app.js` 体量较大
+- 图片搜索仍依赖 Bing 页面解析，不是官方 API
+- 本地文件仍是主要存储方式，尚未切到正式 OSS / S3 / R2
 
 ## 本地运行
 
-### 1. 启动数据库
-
-在 `backend/` 目录：
-
-```powershell
-docker compose up -d
-docker compose ps
-```
-
-默认连接：
-
-- Host：`localhost`
-- Port：`3307`
-- User：`root`
-- Password：见 `backend/.env`
-- Database：`word_image_memo`
-
-### 2. 配置后端环境变量
-
-建议先复制示例文件：
+### 1. 准备后端环境变量
 
 ```powershell
 cd backend
 Copy-Item .env.example .env
 ```
 
-核心变量：
+核心配置如下：
 
 ```env
 PORT=3000
@@ -111,10 +49,32 @@ SMTP_SECURE=true
 SMTP_USER=your-email@qq.com
 SMTP_PASS=your-smtp-app-password
 SMTP_FROM_EMAIL=your-email@qq.com
-SMTP_FROM_NAME=Word Image Memo
+SMTP_FROM_NAME=图个单词
 ```
 
-### 3. 初始化后端
+说明：
+
+- 当前默认数据库名仍是 `word_image_memo`，这是为了兼容已有库和脚本
+- 若不配置 SMTP，开发模式下邮箱注册接口仍会返回 `devCode`
+- 当前前端默认隐藏邮箱注册 / 登录入口，只开放“名字 + 密码”注册登录；名字需全局唯一
+
+### 2. 启动 MySQL
+
+```powershell
+cd backend
+docker compose up -d
+docker compose ps
+```
+
+默认连接信息：
+
+- Host：`localhost`
+- Port：`3307`
+- User：`root`
+- Password：见 `backend/.env`
+- Database：`word_image_memo`
+
+### 3. 安装依赖并初始化数据库
 
 ```powershell
 cd backend
@@ -122,10 +82,23 @@ npm.cmd install
 npm.cmd run db:init
 npm.cmd run download:demo-images
 npm.cmd run seed:demo
+```
+
+说明：
+
+- `db:init` 会执行全部 `backend/sql/*.sql`
+- 后端启动时也会自动跑 schema 检查；首次初始化仍建议手动跑一次
+- `download:demo-images` 会把示例图片下载到 `backend/uploads/`
+- `seed:demo` 会跳过缺失图片，不会因为单张失败中断整批
+
+### 4. 启动后端
+
+```powershell
+cd backend
 npm.cmd run start:dev
 ```
 
-后端接口启动后可检查：
+可直接检查：
 
 ```text
 http://localhost:3000/api/auth/me
@@ -134,10 +107,10 @@ http://localhost:3000/api/learning-deck
 
 注意：
 
-- `http://localhost:3000/` 返回 `Cannot GET /` 属于正常现象，后端只提供 API 和本地上传文件访问。
-- 若未配置 SMTP，注册接口仍可在开发模式下工作，后端会返回 `devCode`，前端会自动填入。
+- `http://localhost:3000/` 返回 `Cannot GET /` 是正常现象
+- `GET /api/auth/me` 在未登录时返回 `401`，这也说明 API 本身已启动
 
-### 4. 启动前端静态服务
+### 5. 启动前端
 
 在仓库根目录：
 
@@ -157,72 +130,105 @@ http://localhost:8000/
 - `3000`：后端 API / 本地图片访问
 - `3307`：Docker MySQL 映射端口
 
-## 当前主流程
+## 常用脚本
 
-### 认证
+`backend/package.json` 当前保留的常用命令：
 
-- 邮箱验证码注册
-- 邮箱密码登录
-- 本地持久化 Bearer Session
-- Session 失效后前端回到认证页
+- `npm.cmd run build`：构建后端
+- `npm.cmd run start:dev`：开发模式启动后端
+- `npm.cmd run db:init`：执行全部 SQL 初始化 / 迁移脚本
+- `npm.cmd run seed:demo`：写入示例词卡数据
+- `npm.cmd run download:demo-images`：下载示例图片到本地
+- `npm.cmd run purge:images`：清理到期私有图片
+- `npm.cmd run fill:junior-high:default-images`：补全初中词书默认图
+- `npm.cmd run fill:senior-high:default-images`：补全高中词书默认图
+- `npm.cmd run fill:postgraduate-redbook:default-images`：补全考研词书默认图
+- `npm.cmd run remove:generated:default-images`：删除默认图里错误生成的单词卡面图
+- `npm.cmd run import:wordlists`：导入词书数据
 
-### 学习卡片
+此外，根目录还保留了两个数据清洗脚本：
 
-- 登录后按词书拉取 `learning-deck`
-- 查看当前单词的大图、中文、例句、例句翻译
-- 单词朗读和例句朗读
-- 点击切换同词多图
-- 左侧栏 / 移动端抽屉切换词书与内容
+- `scripts/fetch-school-words.mjs`
+- `scripts/clean-school-words.mjs`
 
-### 图片管理
-
-- Bing 搜图导入
-- 本地上传图片
-- 隐藏默认图
-- 软删除私有图
-- 恢复已删除私有图
-
-## 关键目录
+## 目录结构
 
 ```text
-word-image-memo-app/
+repo-root/
 ├─ README.md
 ├─ index.html
 ├─ styles.css
 ├─ app.js
 ├─ assets/
-├─ backend/
-│  ├─ .env.example
-│  ├─ docker-compose.yml
-│  ├─ sql/
-│  ├─ seeds/
-│  ├─ src/
-│  └─ uploads/
+│  └─ speaker.svg
+├─ data/
+│  ├─ raw/
+│  └─ wordlists/
 ├─ scripts/
-└─ data/
+│  ├─ fetch-school-words.mjs
+│  └─ clean-school-words.mjs
+└─ backend/
+   ├─ .env.example
+   ├─ docker-compose.yml
+   ├─ package.json
+   ├─ seeds/
+   ├─ sql/
+   ├─ src/
+   │  ├─ auth/
+   │  ├─ common/
+   │  ├─ community/
+   │  ├─ config/
+   │  ├─ database/
+   │  ├─ images/
+   │  ├─ scripts/
+   │  ├─ storage/
+   │  └─ words/
+   └─ uploads/
 ```
 
-重点文件：
+目录约定：
 
-- `backend/sql/001_init.sql`
-- `backend/sql/002_upgrade_legacy_schema.sql`
-- `backend/src/auth/auth.service.ts`
-- `backend/src/images/images.service.ts`
-- `backend/src/words/words.service.ts`
-- `backend/src/scripts/seed-demo.ts`
-- `backend/src/scripts/download-demo-images.ts`
+- `backend/src/scripts/` 放可执行脚本
+- `backend/src/images/` 放图片业务逻辑与图片相关工具
+- `backend/uploads/` 是运行时文件目录，不应作为业务源码来编辑
+- `data/` 是词书原始资料与整理结果，不是运行时输出目录
+
+## 数据与图片模型
+
+### 词书
+
+- `words`：全局单词
+- `books`：词书列表
+- `book_words`：单词与词书关系
+
+当前内置词书：
+
+- `junior-high`
+- `senior-high`
+- `college`
+
+### 图片归属
+
+- `word_images.scope = 'default'`：共享默认图
+- `word_images.scope = 'private'`：用户私有图
+- `user_hidden_word_images`：用户隐藏了哪些默认图
+
+### 存储
+
+- 二进制资源统一进入 `image_assets`
+- 本地文件按哈希去重，避免同文件重复落盘
+- 默认图和私有图都通过 `image_assets` 关联
 
 ## 当前限制
 
-- Bing 搜索依赖页面解析，不是官方 API
-- 第三方图片源可能拒绝下载
-- 当前还没有权限分级和正式后台
-- 目前仍使用本地文件存储，尚未切正式 OSS
-- demo 图片如果本地文件缺失，会被 `seed:demo` 跳过；不影响启动，但会减少可用示例图数量
+- Bing 搜索结果依赖页面解析，稳定性不如官方 API
+- 第三方图片源可能拒绝下载或返回防盗链
+- 当前没有权限分级与正式后台
+- 前端仍集中在一个 `app.js` 中，继续迭代时最好按功能拆分
 
 ## 后续建议
 
-- 把 demo 图片源信息独立保存，避免本地文件缺失后无法重新拉取
-- 增加微信登录或更多登录方式
-- 增加权限分级与管理后台
-- 把本地文件存储切到正式 OSS / S3 / R2
+- 拆分前端大文件，优先按 `auth / learn / community / api` 分块
+- 为图片搜索与导入补测试或至少增加更明确的失败兜底
+- 给 `backend/uploads/` 建立更清晰的运行时与发布策略
+- 如果继续做产品化，优先补权限模型、对象存储和后台管理

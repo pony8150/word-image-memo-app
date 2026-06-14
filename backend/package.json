@@ -1,5 +1,5 @@
 {
-  "name": "word-image-memo-api",
+  "name": "tuge-danci-api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,10 +9,14 @@
     "db:init": "ts-node -r tsconfig-paths/register src/scripts/init-db.ts",
     "download:demo-images": "ts-node -r tsconfig-paths/register src/scripts/download-demo-images.ts",
     "fill:junior-high:default-images": "ts-node -r tsconfig-paths/register src/scripts/fill-junior-high-default-images.ts",
+    "fill:senior-high:default-images": "ts-node -r tsconfig-paths/register src/scripts/fill-junior-high-default-images.ts senior-high",
+    "fill:postgraduate-redbook:default-images": "ts-node -r tsconfig-paths/register src/scripts/fill-junior-high-default-images.ts postgraduate-redbook",
+    "remove:generated:default-images": "ts-node -r tsconfig-paths/register src/scripts/remove-generated-default-images.ts",
     "import:openverse:junior-high:11-20": "ts-node -r tsconfig-paths/register src/scripts/import-openverse-junior-high-11-20.ts",
     "import:pexels:junior-high:first10": "ts-node -r tsconfig-paths/register src/scripts/import-pexels-junior-high-first10.ts",
     "import:pexels:junior-high:11-20:private": "ts-node -r tsconfig-paths/register src/scripts/import-pexels-junior-high-11-20-private.ts",
     "import:wordlists": "ts-node -r tsconfig-paths/register src/scripts/import-wordlists.ts",
+    "audit:missing-examples": "ts-node -r tsconfig-paths/register src/scripts/audit-missing-examples.ts",
     "optimize:pexels:junior-high:1-20": "ts-node -r tsconfig-paths/register src/scripts/optimize-pexels-junior-high-1-20.ts",
     "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/seed-demo.ts",
     "purge:images": "ts-node -r tsconfig-paths/register src/scripts/purge-images.ts"

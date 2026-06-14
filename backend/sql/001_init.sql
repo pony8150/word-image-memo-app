@@ -46,9 +46,10 @@ CREATE TABLE IF NOT EXISTS book_words (
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT NOT NULL AUTO_INCREMENT,
   email VARCHAR(255) NOT NULL,
+  username VARCHAR(64) NULL,
   display_name VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NULL,
-  auth_provider ENUM('email', 'wechat') NOT NULL DEFAULT 'email',
+  auth_provider ENUM('email', 'wechat', 'username') NOT NULL DEFAULT 'email',
   wechat_open_id VARCHAR(191) NULL,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   avatar_url TEXT NULL,
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_login_at DATETIME NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_email (email),
+  UNIQUE KEY uq_users_username (username),
   UNIQUE KEY uq_users_wechat_open_id (wechat_open_id),
   KEY idx_users_auth_provider (auth_provider)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

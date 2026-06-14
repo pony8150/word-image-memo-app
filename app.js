@@ -241,16 +241,28 @@ const defaultWords = [
   }
 ];
 
+// Read legacy keys during the rename so existing sessions and local cache still work.
+const STORAGE_KEY_NAMESPACE = "tuge-danci";
+const LEGACY_STORAGE_KEY_NAMESPACE = "word-image-memo";
+const STORAGE_KEYS = {
+  imageRemovals: `${STORAGE_KEY_NAMESPACE}.removed-images.v1`,
+  apiDeckCache: `${STORAGE_KEY_NAMESPACE}.api-deck.v1`,
+  authSessionToken: `${STORAGE_KEY_NAMESPACE}.auth-token.v1`,
+  authUser: `${STORAGE_KEY_NAMESPACE}.auth-user.v1`
+};
+const LEGACY_STORAGE_KEYS = {
+  imageRemovals: `${LEGACY_STORAGE_KEY_NAMESPACE}.removed-images.v1`,
+  apiDeckCache: `${LEGACY_STORAGE_KEY_NAMESPACE}.api-deck.v1`,
+  authSessionToken: `${LEGACY_STORAGE_KEY_NAMESPACE}.auth-token.v1`,
+  authUser: `${LEGACY_STORAGE_KEY_NAMESPACE}.auth-user.v1`
+};
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 const API_BASE_URL = resolveApiBaseUrl();
 const API_ORIGIN = resolveApiOrigin(API_BASE_URL);
-const IMAGE_REMOVALS_STORAGE_KEY = "word-image-memo.removed-images.v1";
-const API_DECK_CACHE_STORAGE_KEY = "word-image-memo.api-deck.v1";
-const AUTH_SESSION_TOKEN_STORAGE_KEY = "word-image-memo.auth-token.v1";
-const AUTH_USER_STORAGE_KEY = "word-image-memo.auth-user.v1";
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
 const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
+const COMMUNITY_PUBLISH_DEFAULT_STATUS = "写一句短评、联想或记忆提示后再发布。";
 const LEARN_LONG_PRESS_MS = 650;
 const SIDEBAR_COLLAPSE_MEDIA_QUERY = "(max-width: 1024px)";
 
@@ -262,6 +274,7 @@ const state = {
   activeBookCode: "",
   currentView: "learn",
   communityFeed: [],
+  communityFeedMode: "hall",
   communityFeedLoaded: false,
   communityFeedPending: false,
   communityPostId: null,
@@ -269,6 +282,13 @@ const state = {
   communityPostPending: false,
   communityCommentPending: false,
   communityPublishPending: false,
+  communityPublishOpen: false,
+  communityPublishWordId: "",
+  communityPublishImageId: null,
+  communityPublishWordLabel: "",
+  communityPublishDraft: "",
+  communityPublishStatus: COMMUNITY_PUBLISH_DEFAULT_STATUS,
+  communityPublishStatusTone: "info",
   learnIndex: 0,
   learnImageIndex: 0,
   learnListOpen: false,
@@ -308,6 +328,7 @@ const state = {
   authToken: loadAuthToken(),
   authUser: loadStoredAuthUser(),
   authPending: false,
+  authChannel: "username",
   authMode: "login",
   authStatus: "",
   authStatusTone: "info",
@@ -342,6 +363,7 @@ function renderAllViews() {
   prepareImageQuestion();
   renderWelcome();
   renderLearn();
+  syncCommunityPublishModal();
   renderCommunityFeed();
   renderCommunityPostDetail();
   renderReview();
@@ -366,7 +388,7 @@ async function refreshDeckFromServer({ preserveWordId = null, silent = false } =
       state.activeBookCode =
         payload.activeBookCode || state.activeBookCode || state.books[0]?.code || "";
       persistApiDeckCache({
-        ownerEmail: state.authUser?.email || null,
+        ownerKey: buildAuthCacheOwnerKey(state.authUser),
         books: state.books,
         activeBookCode: state.activeBookCode,
         words: payload.words
@@ -392,9 +414,8 @@ async function refreshDeckFromServer({ preserveWordId = null, silent = false } =
   if (
     cachedDeck &&
     Array.isArray(cachedDeck.words) &&
-    cachedDeck.ownerEmail &&
-    state.authUser?.email &&
-    cachedDeck.ownerEmail === state.authUser.email
+    cachedDeck.ownerKey &&
+    cachedDeck.ownerKey === buildAuthCacheOwnerKey(state.authUser)
   ) {
     state.books = Array.isArray(cachedDeck.books) ? cachedDeck.books : [];
     state.activeBookCode =
@@ -430,6 +451,14 @@ function applyDeckWords(nextWords, dataSource, preserveWordId = null) {
   state.learnUploadDragging = false;
   state.learnUploadPending = false;
   state.learnUploadStatus = LEARN_UPLOAD_DEFAULT_STATUS;
+  state.communityPublishOpen = false;
+  state.communityPublishPending = false;
+  state.communityPublishWordId = "";
+  state.communityPublishImageId = null;
+  state.communityPublishWordLabel = "";
+  state.communityPublishDraft = "";
+  state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+  state.communityPublishStatusTone = "info";
   state.learnLongPressTriggered = false;
   state.learnLongPressTimer = null;
   state.learnedSet = words.length > 0 ? new Set([state.learnIndex]) : new Set();
@@ -485,15 +514,20 @@ function cacheElements() {
   elements.authLogoutButton = document.getElementById("auth-logout-button");
   elements.authView = document.getElementById("auth");
   elements.welcomeAuthButton = document.getElementById("welcome-auth-button");
+  elements.authChannelEmail = document.getElementById("auth-page-channel-email");
+  elements.authChannelUsername = document.getElementById("auth-page-channel-username");
   elements.authModeLogin = document.getElementById("auth-page-mode-login");
   elements.authModeRegister = document.getElementById("auth-page-mode-register");
   elements.authForm = document.getElementById("auth-page-form");
   elements.authFormHeading = document.getElementById("auth-page-form-heading");
   elements.authFormCopy = document.getElementById("auth-page-form-copy");
+  elements.authEmailField = document.getElementById("auth-page-email-field");
   elements.authCodeField = document.getElementById("auth-page-code-field");
   elements.authVerificationCode = document.getElementById("auth-page-verification-code");
   elements.authSendCode = document.getElementById("auth-page-send-code");
   elements.authEmail = document.getElementById("auth-page-email");
+  elements.authUsernameField = document.getElementById("auth-page-username-field");
+  elements.authUsername = document.getElementById("auth-page-username");
   elements.authPassword = document.getElementById("auth-page-password");
   elements.authConfirmPasswordField = document.getElementById("auth-page-confirm-password-field");
   elements.authConfirmPassword = document.getElementById("auth-page-confirm-password");
@@ -539,7 +573,15 @@ function cacheElements() {
   elements.wordList = document.getElementById("word-list");
   elements.learnPrev = document.getElementById("learn-prev");
   elements.learnNext = document.getElementById("learn-next");
+  elements.communityPublishModal = document.getElementById("community-publish-modal");
+  elements.communityPublishCancel = document.getElementById("community-publish-cancel");
+  elements.communityPublishCopy = document.getElementById("community-publish-copy");
+  elements.communityPublishInput = document.getElementById("community-publish-input");
+  elements.communityPublishStatus = document.getElementById("community-publish-status");
+  elements.communityPublishSubmit = document.getElementById("community-publish-submit");
 
+  elements.communityFeedNote = document.getElementById("community-feed-note");
+  elements.communityFeedModes = [...document.querySelectorAll("[data-community-feed-mode]")];
   elements.communityFeed = document.getElementById("community-feed");
   elements.communityBackButton = document.getElementById("community-back-button");
   elements.communityPostImage = document.getElementById("community-post-image");
@@ -549,14 +591,14 @@ function cacheElements() {
   elements.communityPostTitle = document.getElementById("community-post-title");
   elements.communityPostSubtitle = document.getElementById("community-post-subtitle");
   elements.communityPostDescription = document.getElementById("community-post-description");
+  elements.communityPostWordPanel = document.getElementById("community-post-word-panel");
   elements.communityPostWordMeta = document.getElementById("community-post-word-meta");
   elements.communityPostLike = document.getElementById("community-post-like");
   elements.communityPostFavorite = document.getElementById("community-post-favorite");
-  elements.communityPostShare = document.getElementById("community-post-share");
+  elements.communityPostFavoriteLabel = document.getElementById("community-post-favorite-label");
   elements.communityPostCommentTrigger = document.getElementById("community-post-comment-trigger");
   elements.communityPostLikeCount = document.getElementById("community-post-like-count");
   elements.communityPostFavoriteCount = document.getElementById("community-post-favorite-count");
-  elements.communityPostShareCount = document.getElementById("community-post-share-count");
   elements.communityPostCommentCount = document.getElementById("community-post-comment-count");
   elements.communityCommentForm = document.getElementById("community-comment-form");
   elements.communityCommentInput = document.getElementById("community-comment-input");
@@ -609,6 +651,17 @@ function hydrateAudioButtons() {
   }
 }
 
+function hasExampleText(word) {
+  return Boolean(word?.example && String(word.example).trim());
+}
+
+function getExampleFallbackCopy() {
+  return {
+    example: "该单词暂未补充例句。",
+    exampleChinese: "后续补齐词库后，这里会显示对应的英文例句和中文翻译。"
+  };
+}
+
 function bindEvents() {
   elements.authOpenButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -628,6 +681,18 @@ function bindEvents() {
   if (elements.authModeLogin) {
     elements.authModeLogin.addEventListener("click", () => {
       setAuthMode("login");
+    });
+  }
+
+  if (elements.authChannelEmail) {
+    elements.authChannelEmail.addEventListener("click", () => {
+      setAuthChannel("email");
+    });
+  }
+
+  if (elements.authChannelUsername) {
+    elements.authChannelUsername.addEventListener("click", () => {
+      setAuthChannel("username");
     });
   }
 
@@ -755,7 +820,13 @@ function bindEvents() {
       return;
     }
 
-    speakEnglish(words[state.learnIndex].example);
+    const currentWord = words[state.learnIndex];
+
+    if (!hasExampleText(currentWord)) {
+      return;
+    }
+
+    speakEnglish(currentWord.example);
   });
 
   elements.learnMedia.addEventListener("pointerdown", handleLearnMediaPointerDown);
@@ -797,7 +868,7 @@ function bindEvents() {
 
   if (elements.learnImagePublish) {
     elements.learnImagePublish.addEventListener("click", () => {
-      publishCurrentLearnImageToCommunity();
+      openCommunityPublishModal();
     });
   }
 
@@ -825,6 +896,38 @@ function bindEvents() {
     elements.learnUploadModal.addEventListener("click", (event) => {
       if (event.target === elements.learnUploadModal) {
         closeLearnUploadModal();
+      }
+    });
+  }
+
+  if (elements.communityPublishModal) {
+    elements.communityPublishModal.addEventListener("click", (event) => {
+      if (event.target === elements.communityPublishModal) {
+        closeCommunityPublishModal();
+      }
+    });
+  }
+
+  if (elements.communityPublishCancel) {
+    elements.communityPublishCancel.addEventListener("click", () => {
+      closeCommunityPublishModal();
+    });
+  }
+
+  if (elements.communityPublishSubmit) {
+    elements.communityPublishSubmit.addEventListener("click", () => {
+      submitCommunityPublish();
+    });
+  }
+
+  if (elements.communityPublishInput) {
+    elements.communityPublishInput.addEventListener("input", (event) => {
+      state.communityPublishDraft = String(event.target.value || "");
+      state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+      state.communityPublishStatusTone = "info";
+      if (elements.communityPublishStatus) {
+        elements.communityPublishStatus.textContent = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+        elements.communityPublishStatus.classList.remove("error", "success");
       }
     });
   }
@@ -899,6 +1002,12 @@ function bindEvents() {
     });
   }
 
+  elements.communityFeedModes.forEach((button) => {
+    button.addEventListener("click", () => {
+      setCommunityFeedMode(button.dataset.communityFeedMode);
+    });
+  });
+
   if (elements.communityBackButton) {
     elements.communityBackButton.addEventListener("click", () => {
       switchView("community");
@@ -913,13 +1022,7 @@ function bindEvents() {
 
   if (elements.communityPostFavorite) {
     elements.communityPostFavorite.addEventListener("click", () => {
-      toggleCommunityPostFavorite();
-    });
-  }
-
-  if (elements.communityPostShare) {
-    elements.communityPostShare.addEventListener("click", () => {
-      shareCommunityPost();
+      favoriteCommunityPost();
     });
   }
 
@@ -1038,6 +1141,11 @@ function bindEvents() {
         return;
       }
 
+      if (state.communityPublishOpen) {
+        closeCommunityPublishModal();
+        return;
+      }
+
       if (state.learnSearchOpen) {
         closeLearnSearchModal();
         return;
@@ -1076,7 +1184,7 @@ function renderDockbar() {
   const isAuthView = state.currentView === "auth" || !state.authUser;
   const dockbarTitles = {
     learn: "学习卡片",
-    community: "单词社区",
+    community: "社区",
     "community-post": "帖子详情",
     review: "复习模式",
     image: "看图猜词",
@@ -1218,7 +1326,7 @@ function setAuthMode(mode) {
   state.authStatusTone = "info";
   state.authDevHint = "";
 
-  if (mode !== "register") {
+  if (mode !== "register" || state.authChannel !== "email") {
     state.authCodeCooldownUntil = 0;
   }
 
@@ -1243,16 +1351,30 @@ function setAuthMode(mode) {
   renderAuth();
 }
 
+function setAuthChannel(channel) {
+  state.authChannel = channel === "username" ? "username" : "email";
+  state.authStatus = "";
+  state.authStatusTone = "info";
+  state.authDevHint = "";
+  state.authCodeCooldownUntil = 0;
+
+  if (state.authChannel !== "email" && elements.authVerificationCode) {
+    elements.authVerificationCode.value = "";
+  }
+
+  renderAuth();
+}
+
 function renderAuth() {
   const isSignedIn = Boolean(state.authUser);
+  const isUsernameChannel = state.authChannel === "username";
   const isRegisterMode = state.authMode === "register";
+  const shouldShowCode = isRegisterMode && !isUsernameChannel;
   const cooldownSeconds = getAuthCodeCooldownSeconds();
-  const accountDisplayName = isSignedIn
-    ? state.authUser.displayName || state.authUser.email
-    : "未登录";
+  const accountDisplayName = isSignedIn ? getAuthUserDisplayName(state.authUser) : "未登录";
   const accountTriggerMeta = isSignedIn ? "已登录" : "点击登录 / 注册";
   const accountMenuMeta = isSignedIn
-    ? state.authUser.email
+    ? getAuthUserAccountMeta(state.authUser)
     : "登录后再管理你的词书与图片";
 
   elements.authUserNames.forEach((element) => {
@@ -1272,7 +1394,7 @@ function renderAuth() {
   });
 
   elements.accountAvatars.forEach((element) => {
-    element.textContent = getAccountAvatarText(isSignedIn ? state.authUser.displayName || state.authUser.email : "W");
+    element.textContent = getAccountAvatarText(isSignedIn ? accountDisplayName : "W");
   });
 
   elements.authOpenButtons.forEach((button) => {
@@ -1293,6 +1415,14 @@ function renderAuth() {
     button.disabled = state.authPending;
   });
 
+  if (elements.authChannelEmail) {
+    elements.authChannelEmail.classList.toggle("active", !isUsernameChannel);
+  }
+
+  if (elements.authChannelUsername) {
+    elements.authChannelUsername.classList.toggle("active", isUsernameChannel);
+  }
+
   if (elements.authModeLogin) {
     elements.authModeLogin.classList.toggle("active", !isRegisterMode);
   }
@@ -1301,14 +1431,34 @@ function renderAuth() {
     elements.authModeRegister.classList.toggle("active", isRegisterMode);
   }
 
+  if (elements.authEmailField) {
+    elements.authEmailField.hidden = isUsernameChannel;
+    elements.authEmailField.style.display = isUsernameChannel ? "none" : "";
+  }
+
+  if (elements.authEmail) {
+    elements.authEmail.required = !isUsernameChannel;
+    elements.authEmail.disabled = isUsernameChannel || state.authPending;
+  }
+
+  if (elements.authUsernameField) {
+    elements.authUsernameField.hidden = !isUsernameChannel;
+    elements.authUsernameField.style.display = isUsernameChannel ? "" : "none";
+  }
+
+  if (elements.authUsername) {
+    elements.authUsername.required = isUsernameChannel;
+    elements.authUsername.disabled = !isUsernameChannel || state.authPending;
+  }
+
   if (elements.authCodeField) {
-    elements.authCodeField.hidden = !isRegisterMode;
-    elements.authCodeField.style.display = isRegisterMode ? "" : "none";
+    elements.authCodeField.hidden = !shouldShowCode;
+    elements.authCodeField.style.display = shouldShowCode ? "" : "none";
   }
 
   if (elements.authVerificationCode) {
-    elements.authVerificationCode.required = isRegisterMode;
-    elements.authVerificationCode.disabled = !isRegisterMode || state.authPending;
+    elements.authVerificationCode.required = shouldShowCode;
+    elements.authVerificationCode.disabled = !shouldShowCode || state.authPending;
   }
 
   if (elements.authConfirmPasswordField) {
@@ -1322,13 +1472,23 @@ function renderAuth() {
   }
 
   if (elements.authFormHeading) {
-    elements.authFormHeading.textContent = isRegisterMode ? "\u90ae\u7bb1\u6ce8\u518c" : "\u90ae\u7bb1\u767b\u5f55";
+    elements.authFormHeading.textContent = isUsernameChannel
+      ? isRegisterMode
+        ? "\u540d\u5b57\u6ce8\u518c"
+        : "\u540d\u5b57\u767b\u5f55"
+      : isRegisterMode
+        ? "\u90ae\u7bb1\u6ce8\u518c"
+        : "\u90ae\u7bb1\u767b\u5f55";
   }
 
   if (elements.authFormCopy) {
-    elements.authFormCopy.textContent = isRegisterMode
-      ? "\u5148\u53d1\u9001\u90ae\u7bb1\u9a8c\u8bc1\u7801\uff0c\u518d\u7528\u90ae\u7bb1\u3001\u9a8c\u8bc1\u7801\u548c\u5bc6\u7801\u5b8c\u6210\u6ce8\u518c\u3002"
-      : "\u4f7f\u7528\u90ae\u7bb1\u548c\u5bc6\u7801\u76f4\u63a5\u767b\u5f55\u3002";
+    elements.authFormCopy.textContent = isUsernameChannel
+      ? isRegisterMode
+        ? "\u76f4\u63a5\u7528\u540d\u5b57\u548c\u5bc6\u7801\u521b\u5efa\u8d26\u53f7\uff0c\u4e0d\u9700\u90ae\u7bb1\u9a8c\u8bc1\u3002"
+        : "\u8f93\u5165\u4f60\u6ce8\u518c\u65f6\u7684\u540d\u5b57\u548c\u5bc6\u7801\u5373\u53ef\u767b\u5f55\u3002"
+      : isRegisterMode
+        ? "\u5148\u53d1\u9001\u90ae\u7bb1\u9a8c\u8bc1\u7801\uff0c\u518d\u7528\u90ae\u7bb1\u3001\u9a8c\u8bc1\u7801\u548c\u5bc6\u7801\u5b8c\u6210\u6ce8\u518c\u3002"
+        : "\u4f7f\u7528\u90ae\u7bb1\u548c\u5bc6\u7801\u76f4\u63a5\u767b\u5f55\u3002";
   }
 
   if (elements.authSubmit) {
@@ -1343,9 +1503,9 @@ function renderAuth() {
   }
 
   if (elements.authSendCode) {
-    elements.authSendCode.hidden = !isRegisterMode;
+    elements.authSendCode.hidden = !shouldShowCode;
     elements.authSendCode.disabled =
-      !isRegisterMode || state.authCodePending || state.authPending || cooldownSeconds > 0;
+      !shouldShowCode || state.authCodePending || state.authPending || cooldownSeconds > 0;
     elements.authSendCode.textContent =
       cooldownSeconds > 0
         ? `${cooldownSeconds}s \u540e\u91cd\u53d1`
@@ -1384,6 +1544,10 @@ function requireSignedInForAction(message) {
 }
 
 async function handleSendRegisterCode() {
+  if (state.authChannel !== "email" || state.authMode !== "register") {
+    return;
+  }
+
   const email = elements.authEmail?.value?.trim() || "";
 
   state.authCodePending = true;
@@ -1417,12 +1581,28 @@ async function handleAuthSubmit(event) {
   event.preventDefault();
 
   const email = elements.authEmail?.value?.trim() || "";
+  const username = elements.authUsername?.value?.trim() || "";
   const password = elements.authPassword?.value || "";
   const verificationCode = elements.authVerificationCode?.value?.trim() || "";
   const confirmPassword = elements.authConfirmPassword?.value || "";
+  const isUsernameChannel = state.authChannel === "username";
   const isRegisterMode = state.authMode === "register";
 
-  if (isRegisterMode && !verificationCode) {
+  if (isUsernameChannel && !username) {
+    state.authStatus = "\u8bf7\u5148\u8f93\u5165\u4f60\u7684\u540d\u5b57\u3002";
+    state.authStatusTone = "error";
+    renderAuth();
+    return;
+  }
+
+  if (!isUsernameChannel && !email) {
+    state.authStatus = "\u8bf7\u5148\u8f93\u5165\u90ae\u7bb1\u3002";
+    state.authStatusTone = "error";
+    renderAuth();
+    return;
+  }
+
+  if (isRegisterMode && !isUsernameChannel && !verificationCode) {
     state.authStatus = "\u8bf7\u5148\u8f93\u5165\u90ae\u7bb1\u9a8c\u8bc1\u7801\u3002";
     state.authStatusTone = "error";
     renderAuth();
@@ -1449,9 +1629,17 @@ async function handleAuthSubmit(event) {
   renderAuth();
 
   try {
-    const payload = isRegisterMode
-      ? await registerWithEmailApi({ email, password, verificationCode })
-      : await loginWithEmailApi({ email, password });
+    let payload;
+
+    if (isUsernameChannel) {
+      payload = isRegisterMode
+        ? await registerWithUsernameApi({ username, password })
+        : await loginWithUsernameApi({ username, password });
+    } else {
+      payload = isRegisterMode
+        ? await registerWithEmailApi({ email, password, verificationCode })
+        : await loginWithEmailApi({ email, password });
+    }
 
     await applyAuthSuccess(payload);
   } catch (error) {
@@ -1511,6 +1699,15 @@ function clearAuthSessionState() {
   state.authToken = null;
   state.authUser = null;
   state.authDevHint = "";
+  state.communityFeedMode = "hall";
+  state.communityPublishOpen = false;
+  state.communityPublishPending = false;
+  state.communityPublishWordId = "";
+  state.communityPublishImageId = null;
+  state.communityPublishWordLabel = "";
+  state.communityPublishDraft = "";
+  state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+  state.communityPublishStatusTone = "info";
   clearStoredAuthSession();
 }
 
@@ -1531,6 +1728,10 @@ function switchView(viewId) {
 
   if (nextView !== "learn" && state.learnListOpen) {
     setLearnDrawer(false);
+  }
+
+  if (nextView !== "learn" && state.communityPublishOpen) {
+    closeCommunityPublishModal();
   }
 
   elements.views.forEach((view) => {
@@ -1582,6 +1783,10 @@ function getAuthCodeCooldownSeconds() {
 }
 
 function resetAuthInputs() {
+  if (elements.authUsername) {
+    elements.authUsername.value = "";
+  }
+
   if (elements.authPassword) {
     elements.authPassword.value = "";
   }
@@ -1599,14 +1804,10 @@ function getAccountAvatarText(value) {
   const normalizedValue = String(value || "").trim();
 
   if (!normalizedValue) {
-    return "W";
+    return "图";
   }
 
   return normalizedValue.slice(0, 2).toUpperCase();
-}
-
-function buildCommunityPostText(word) {
-  return [word.english, word.chinese, word.example].filter(Boolean).join(" · ");
 }
 
 function formatCount(value) {
@@ -1646,6 +1847,137 @@ function normalizeCommunityFeed(posts) {
   }
 
   return posts.map((post) => normalizeCommunityPost(post)).filter(Boolean);
+}
+
+function getCommunityFeedModeMeta() {
+  if (state.communityFeedMode === "ranking") {
+    return {
+      title: "排行榜",
+      note: "当前先按点赞、收藏、评论的热度排序，后面再接更细的推荐策略。"
+    };
+  }
+
+  if (state.communityFeedMode === "mine") {
+    return {
+      title: "我的发布",
+      note: "这里只看你自己发到社区的图片和短评。"
+    };
+  }
+
+  return {
+    title: "大厅",
+    note: "当前先按发布时间浏览，后续这里会接推荐算法。"
+  };
+}
+
+function compareCommunityRanking(left, right) {
+  const likeDiff = Number(right.likeCount || 0) - Number(left.likeCount || 0);
+  if (likeDiff !== 0) {
+    return likeDiff;
+  }
+
+  const favoriteDiff = Number(right.favoriteCount || 0) - Number(left.favoriteCount || 0);
+  if (favoriteDiff !== 0) {
+    return favoriteDiff;
+  }
+
+  const commentDiff = Number(right.commentCount || 0) - Number(left.commentCount || 0);
+  if (commentDiff !== 0) {
+    return commentDiff;
+  }
+
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function isOwnCommunityPost(post) {
+  if (!post || !state.authUser) {
+    return false;
+  }
+
+  return Number(post.author?.id || 0) === Number(state.authUser.id || 0);
+}
+
+function getVisibleCommunityFeedPosts() {
+  if (!Array.isArray(state.communityFeed)) {
+    return [];
+  }
+
+  if (state.communityFeedMode === "ranking") {
+    return [...state.communityFeed].sort(compareCommunityRanking);
+  }
+
+  if (state.communityFeedMode === "mine") {
+    return state.communityFeed.filter((post) => isOwnCommunityPost(post));
+  }
+
+  return state.communityFeed;
+}
+
+function setCommunityFeedMode(mode) {
+  const allowedModes = new Set(["hall", "ranking", "mine"]);
+  const nextMode = allowedModes.has(mode) ? mode : "hall";
+
+  if (state.communityFeedMode === nextMode) {
+    renderCommunityFeed();
+    return;
+  }
+
+  state.communityFeedMode = nextMode;
+  renderCommunityFeed();
+}
+
+function syncCommunityFeedModeUi() {
+  const modeMeta = getCommunityFeedModeMeta();
+
+  elements.communityFeedModes.forEach((button) => {
+    const isActive = button.dataset.communityFeedMode === state.communityFeedMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  if (elements.communityFeedNote) {
+    elements.communityFeedNote.textContent = `${modeMeta.title}：${modeMeta.note}`;
+  }
+}
+
+function buildCommunityFeedEmptyState() {
+  if (state.communityFeedMode === "mine") {
+    return {
+      title: "你还没有发布内容",
+      copy: "从学习页长按图片，再点“发到社区”，就能把自己的词图和短评发出来。"
+    };
+  }
+
+  if (state.communityFeedMode === "ranking") {
+    return {
+      title: "排行榜暂时空着",
+      copy: "等大家开始点赞、收藏和评论后，这里就会出现热度更高的帖子。"
+    };
+  }
+
+  return {
+    title: "社区还没有内容",
+    copy: "从学习页长按图片，再点“发到社区”，就能发出第一条单词帖子。"
+  };
+}
+
+function buildCommunityWordMetaMarkup(post) {
+  const items = [
+    post.word?.example
+      ? `<article class="community-word-meta-item"><span>例句</span><p>${escapeHtml(post.word.example)}</p></article>`
+      : "",
+    post.word?.exampleChinese
+      ? `<article class="community-word-meta-item"><span>例句翻译</span><p>${escapeHtml(post.word.exampleChinese)}</p></article>`
+      : "",
+    post.word?.imageReason
+      ? `<article class="community-word-meta-item"><span>记忆点</span><p>${escapeHtml(post.word.imageReason)}</p></article>`
+      : "",
+    post.word?.scene
+      ? `<article class="community-word-meta-item"><span>联想场景</span><p>${escapeHtml(post.word.scene)}</p></article>`
+      : ""
+  ].filter(Boolean);
+
+  return items.join("");
 }
 
 function renderWelcome() {
@@ -1688,11 +2020,13 @@ function renderCommunityFeed() {
     return;
   }
 
+  syncCommunityFeedModeUi();
+
   if (!state.authUser) {
     elements.communityFeed.innerHTML = `
       <article class="card community-empty-card">
         <h3>请先登录</h3>
-        <p>登录后才能查看单词社区、发布图片和参与评论。</p>
+        <p>登录后才能查看社区、发布图片和参与评论。</p>
       </article>
     `;
     return;
@@ -1708,17 +2042,20 @@ function renderCommunityFeed() {
     return;
   }
 
-  if (!Array.isArray(state.communityFeed) || state.communityFeed.length === 0) {
+  const visiblePosts = getVisibleCommunityFeedPosts();
+
+  if (!Array.isArray(state.communityFeed) || state.communityFeed.length === 0 || visiblePosts.length === 0) {
+    const emptyState = buildCommunityFeedEmptyState();
     elements.communityFeed.innerHTML = `
       <article class="card community-empty-card">
-        <h3>社区还没有内容</h3>
-        <p>从学习页长按图片，再点“发到社区”，就能发出第一条单词帖子。</p>
+        <h3>${emptyState.title}</h3>
+        <p>${emptyState.copy}</p>
       </article>
     `;
     return;
   }
 
-  elements.communityFeed.innerHTML = state.communityFeed
+  elements.communityFeed.innerHTML = visiblePosts
     .map(
       (post) => `
         <article class="community-card" data-community-post-id="${post.id}">
@@ -1726,14 +2063,21 @@ function renderCommunityFeed() {
             <img src="${escapeHtml(post.imageUrl)}" alt="${escapeHtml(post.title)}" />
           </div>
           <div class="community-card-body">
-            <h3>${escapeHtml(post.title)}</h3>
-            <p>${escapeHtml(post.body || "")}</p>
             <div class="community-card-meta">
               <div class="community-card-author">
                 <span class="community-avatar small">${escapeHtml(post.author.avatarText)}</span>
                 <span>${escapeHtml(post.author.displayName || post.author.email)}</span>
               </div>
-              <span class="community-card-like">♡ ${formatCount(post.likeCount)}</span>
+              <span class="community-card-date">${formatCommunityDate(post.createdAt)}</span>
+            </div>
+            <div class="community-card-copy">
+              <h3>${escapeHtml(post.title)}</h3>
+              <p>${escapeHtml(post.body || "这条帖子还没有写短评。")}</p>
+            </div>
+            <div class="community-card-stats" aria-label="帖子互动数据">
+              <span class="community-card-stat"><span aria-hidden="true">❤</span> ${formatCount(post.likeCount)}</span>
+              <span class="community-card-stat"><span aria-hidden="true">★</span> ${formatCount(post.favoriteCount)}</span>
+              <span class="community-card-stat"><span aria-hidden="true">💬</span> ${formatCount(post.commentCount)}</span>
             </div>
           </div>
         </article>
@@ -1758,16 +2102,21 @@ function renderCommunityPostDetail() {
     elements.communityPostTitle.textContent = state.communityPostPending ? "加载中..." : "";
     elements.communityPostSubtitle.textContent = "";
     elements.communityPostDescription.textContent = "";
-    elements.communityPostWordMeta.textContent = "";
+    elements.communityPostDescription.classList.remove("is-empty");
+    if (elements.communityPostWordPanel) {
+      elements.communityPostWordPanel.hidden = true;
+    }
+    elements.communityPostWordMeta.innerHTML = "";
     elements.communityPostLikeCount.textContent = "0";
     elements.communityPostFavoriteCount.textContent = "0";
-    elements.communityPostShareCount.textContent = "0";
     elements.communityPostCommentCount.textContent = "0";
+    if (elements.communityPostFavoriteLabel) {
+      elements.communityPostFavoriteLabel.textContent = "☆";
+    }
     elements.communityPostLike.classList.remove("is-active");
     elements.communityPostFavorite.classList.remove("is-active");
     elements.communityPostLike.disabled = true;
     elements.communityPostFavorite.disabled = true;
-    elements.communityPostShare.disabled = true;
     elements.communityCommentSubmit.disabled = true;
     elements.communityCommentSubmit.textContent = "发表评论";
     if (elements.communityCommentInput) {
@@ -1788,23 +2137,29 @@ function renderCommunityPostDetail() {
   elements.communityPostCreatedAt.textContent = formatCommunityDate(post.createdAt);
   elements.communityPostTitle.textContent = post.title;
   elements.communityPostSubtitle.textContent = `${post.word.english} · ${post.word.chinese}`;
-  elements.communityPostDescription.textContent = post.body || "";
-  elements.communityPostWordMeta.textContent = [
-    post.word.example,
-    post.word.exampleChinese,
-    post.word.imageReason
-  ]
-    .filter(Boolean)
-    .join(" ");
+  elements.communityPostDescription.textContent = post.body || "这条帖子还没有写短评。";
+  elements.communityPostDescription.classList.toggle("is-empty", !post.body);
+  const wordMetaMarkup = buildCommunityWordMetaMarkup(post);
+  if (elements.communityPostWordPanel) {
+    elements.communityPostWordPanel.hidden = !wordMetaMarkup;
+  }
+  elements.communityPostWordMeta.innerHTML = wordMetaMarkup;
   elements.communityPostLikeCount.textContent = formatCount(post.likeCount);
   elements.communityPostFavoriteCount.textContent = formatCount(post.favoriteCount);
-  elements.communityPostShareCount.textContent = formatCount(post.shareCount);
   elements.communityPostCommentCount.textContent = formatCount(post.commentCount);
   elements.communityPostLike.classList.toggle("is-active", Boolean(post.viewer?.liked));
   elements.communityPostFavorite.classList.toggle("is-active", Boolean(post.viewer?.favorited));
+  const isOwnPost = isOwnCommunityPost(post);
+  const isFavorited = Boolean(post.viewer?.favorited);
+  if (elements.communityPostFavoriteLabel) {
+    elements.communityPostFavoriteLabel.textContent = isFavorited ? "★" : "☆";
+  }
   elements.communityPostLike.disabled = state.communityPostPending;
-  elements.communityPostFavorite.disabled = state.communityPostPending;
-  elements.communityPostShare.disabled = state.communityPostPending;
+  elements.communityPostFavorite.disabled = state.communityPostPending || isOwnPost || isFavorited;
+  elements.communityPostFavorite.setAttribute(
+    "aria-label",
+    isFavorited ? "已收藏到我的词图" : "收藏到我的词图"
+  );
   elements.communityCommentSubmit.disabled = state.communityCommentPending;
   elements.communityCommentSubmit.textContent = state.communityCommentPending ? "发送中..." : "发表评论";
 
@@ -1873,6 +2228,13 @@ function renderLearn() {
   const word = words[state.learnIndex];
   const images = getWordImages(word);
   const activeImage = images[Math.min(state.learnImageIndex, images.length - 1)];
+  const hasExample = hasExampleText(word);
+  const exampleCopy = hasExample
+    ? {
+        example: word.example,
+        exampleChinese: word.exampleChinese || ""
+      }
+    : getExampleFallbackCopy();
 
   elements.learnProgress.textContent = `${state.learnIndex + 1} / ${words.length}`;
   elements.learnListToggle.disabled = false;
@@ -1882,8 +2244,15 @@ function renderLearn() {
   elements.learnMedia.classList.toggle("is-manage-open", state.learnDeleteMenuOpen);
   elements.learnWord.textContent = word.english;
   elements.learnTranslation.textContent = word.chinese;
-  elements.learnExample.textContent = word.example;
-  elements.learnExampleTranslation.textContent = word.exampleChinese || "";
+  elements.learnExample.textContent = exampleCopy.example;
+  elements.learnExampleTranslation.textContent = exampleCopy.exampleChinese;
+  elements.learnExample.classList.toggle("is-empty", !hasExample);
+  elements.learnExampleTranslation.classList.toggle("is-empty", !hasExample);
+  elements.learnExampleAudio.disabled = !hasExample;
+  elements.learnExampleAudio.setAttribute(
+    "aria-label",
+    hasExample ? "朗读例句" : "当前单词暂无例句可朗读"
+  );
 
   elements.learnPrev.disabled = state.learnIndex === 0;
   elements.learnNext.disabled = false;
@@ -2319,7 +2688,7 @@ async function openCommunityPostDetail(postId) {
   }
 }
 
-async function publishCurrentLearnImageToCommunity() {
+function openCommunityPublishModal() {
   if (!requireSignedInForAction("请先登录后再发到社区。")) {
     return;
   }
@@ -2336,34 +2705,137 @@ async function publishCurrentLearnImageToCommunity() {
     return;
   }
 
+  if (state.learnSearchOpen) {
+    closeLearnSearchModal();
+  }
+
+  if (state.learnUploadOpen) {
+    closeLearnUploadModal();
+  }
+
+  setLearnDeleteMenu(false);
+  state.communityPublishOpen = true;
+  state.communityPublishPending = false;
+  state.communityPublishWordId = currentWord.id;
+  state.communityPublishImageId = currentImage.id;
+  state.communityPublishWordLabel = `${currentWord.english} · ${currentWord.chinese}`;
+  state.communityPublishDraft = "";
+  state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+  state.communityPublishStatusTone = "info";
+  syncCommunityPublishModal();
+
+  window.requestAnimationFrame(() => {
+    if (elements.communityPublishInput) {
+      elements.communityPublishInput.focus({ preventScroll: true });
+    }
+  });
+}
+
+function closeCommunityPublishModal() {
+  if (state.communityPublishPending) {
+    return;
+  }
+
+  state.communityPublishOpen = false;
+  state.communityPublishWordId = "";
+  state.communityPublishImageId = null;
+  state.communityPublishWordLabel = "";
+  state.communityPublishDraft = "";
+  state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
+  state.communityPublishStatusTone = "info";
+  syncCommunityPublishModal();
+}
+
+function syncCommunityPublishModal() {
+  if (
+    !elements.communityPublishModal ||
+    !elements.communityPublishCopy ||
+    !elements.communityPublishInput ||
+    !elements.communityPublishStatus ||
+    !elements.communityPublishSubmit
+  ) {
+    return;
+  }
+
+  const submitLabel = state.communityPublishPending ? "发布中..." : "发布到社区";
+
+  elements.communityPublishModal.hidden = !state.communityPublishOpen;
+  elements.communityPublishModal.setAttribute("aria-hidden", String(!state.communityPublishOpen));
+  elements.communityPublishCopy.textContent = state.communityPublishWordLabel
+    ? `给 ${state.communityPublishWordLabel} 这张图配一句短评、联想或记忆提示。`
+    : "给这张图配一句短评、联想或记忆提示。";
+  elements.communityPublishInput.value = state.communityPublishDraft;
+  elements.communityPublishInput.disabled = state.communityPublishPending;
+  elements.communityPublishStatus.textContent = state.communityPublishStatus;
+  elements.communityPublishStatus.classList.toggle("error", state.communityPublishStatusTone === "error");
+  elements.communityPublishStatus.classList.toggle("success", state.communityPublishStatusTone === "success");
+  elements.communityPublishSubmit.disabled = state.communityPublishPending;
+  elements.communityPublishSubmit.textContent = submitLabel;
+
+  if (elements.communityPublishCancel) {
+    elements.communityPublishCancel.disabled = state.communityPublishPending;
+  }
+}
+
+async function submitCommunityPublish() {
+  const body = String(state.communityPublishDraft || "").trim();
+
+  if (!state.communityPublishOpen || state.communityPublishPending) {
+    return;
+  }
+
+  if (!state.communityPublishWordId || typeof state.communityPublishImageId !== "number") {
+    state.communityPublishStatus = "当前图片状态已变化，请重新长按后发布。";
+    state.communityPublishStatusTone = "error";
+    syncCommunityPublishModal();
+    return;
+  }
+
+  if (!body) {
+    state.communityPublishStatus = "先写一句评价、短语联想或记忆提示。";
+    state.communityPublishStatusTone = "error";
+    syncCommunityPublishModal();
+    if (elements.communityPublishInput) {
+      elements.communityPublishInput.focus({ preventScroll: true });
+    }
+    return;
+  }
+
   state.communityPublishPending = true;
+  state.communityPublishStatus = "正在发布到社区...";
+  state.communityPublishStatusTone = "info";
   if (elements.learnImagePublish) {
     elements.learnImagePublish.disabled = true;
     elements.learnImagePublish.textContent = "发布中...";
   }
+  syncCommunityPublishModal();
 
   try {
     const payload = await publishCommunityPostApi({
-      wordId: currentWord.id,
-      wordImageId: currentImage.id,
-      body: buildCommunityPostText(currentWord)
+      wordId: state.communityPublishWordId,
+      wordImageId: state.communityPublishImageId,
+      body
     });
     await ensureCommunityFeedLoaded(true);
     state.communityPostDetail = normalizeCommunityPost(payload.post || null);
     state.communityPostId = payload.post?.id || null;
-    setLearnDeleteMenu(false);
+    state.communityPublishPending = false;
+    closeCommunityPublishModal();
     switchView("community-post");
     renderCommunityPostDetail();
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "发布到社区失败"));
+    state.communityPublishStatus = getErrorMessage(error, "发布到社区失败");
+    state.communityPublishStatusTone = "error";
+    syncCommunityPublishModal();
   } finally {
     state.communityPublishPending = false;
     if (elements.learnImagePublish) {
       elements.learnImagePublish.disabled = false;
       elements.learnImagePublish.textContent = "发到社区";
     }
+    syncCommunityPublishModal();
   }
 }
 
@@ -2390,8 +2862,24 @@ async function toggleCommunityPostLike() {
   }
 }
 
-async function toggleCommunityPostFavorite() {
+async function favoriteCommunityPost() {
   if (!state.communityPostDetail?.id || state.communityPostPending) {
+    return;
+  }
+
+  if (isOwnCommunityPost(state.communityPostDetail)) {
+    return;
+  }
+
+  if (state.communityPostDetail.viewer?.favorited) {
+    window.alert("这张图已经收藏到你的词图里了。");
+    return;
+  }
+
+  const wordLabel = state.communityPostDetail.word?.english || state.communityPostDetail.title || "这个单词";
+  const shouldContinue = window.confirm(`收藏后，这张图会加入你自己的「${wordLabel}」图片库。确定继续吗？`);
+
+  if (!shouldContinue) {
     return;
   }
 
@@ -2399,37 +2887,17 @@ async function toggleCommunityPostFavorite() {
   renderCommunityPostDetail();
 
   try {
-    const payload = await toggleCommunityPostFavoriteApi(state.communityPostDetail.id);
+    const payload = await favoriteCommunityPostApi(state.communityPostDetail.id);
     state.communityPostDetail = normalizeCommunityPost(payload.post || state.communityPostDetail);
+    if (payload.word) {
+      updateWordInDeck(payload.word);
+    }
     syncCommunityFeedPost(state.communityPostDetail);
     renderCommunityFeed();
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
     window.alert(getErrorMessage(error, "收藏失败"));
-  } finally {
-    state.communityPostPending = false;
-    renderCommunityPostDetail();
-  }
-}
-
-async function shareCommunityPost() {
-  if (!state.communityPostDetail?.id || state.communityPostPending) {
-    return;
-  }
-
-  state.communityPostPending = true;
-  renderCommunityPostDetail();
-
-  try {
-    const payload = await shareCommunityPostApi(state.communityPostDetail.id);
-    state.communityPostDetail.shareCount = Number(payload.shareCount || 0);
-    syncCommunityFeedPost(state.communityPostDetail);
-    renderCommunityFeed();
-  } catch (error) {
-    handlePossibleAuthError(error);
-    console.error(error);
-    window.alert(getErrorMessage(error, "转发失败"));
   } finally {
     state.communityPostPending = false;
     renderCommunityPostDetail();
@@ -3113,7 +3581,7 @@ function shuffle(items) {
 
 function loadRemovedImagesByWord() {
   try {
-    const rawValue = window.localStorage.getItem(IMAGE_REMOVALS_STORAGE_KEY);
+    const rawValue = readStorageValue(STORAGE_KEYS.imageRemovals, [LEGACY_STORAGE_KEYS.imageRemovals]);
 
     if (!rawValue) {
       return {};
@@ -3128,7 +3596,11 @@ function loadRemovedImagesByWord() {
 
 function persistRemovedImagesByWord() {
   try {
-    window.localStorage.setItem(IMAGE_REMOVALS_STORAGE_KEY, JSON.stringify(state.removedImagesByWord));
+    writeStorageValue(
+      STORAGE_KEYS.imageRemovals,
+      JSON.stringify(state.removedImagesByWord),
+      [LEGACY_STORAGE_KEYS.imageRemovals]
+    );
   } catch (error) {
     return;
   }
@@ -3136,7 +3608,7 @@ function persistRemovedImagesByWord() {
 
 function loadCachedApiDeck() {
   try {
-    const rawValue = window.localStorage.getItem(API_DECK_CACHE_STORAGE_KEY);
+    const rawValue = readStorageValue(STORAGE_KEYS.apiDeckCache, [LEGACY_STORAGE_KEYS.apiDeckCache]);
 
     if (!rawValue) {
       return null;
@@ -3146,7 +3618,7 @@ function loadCachedApiDeck() {
 
     if (Array.isArray(parsedValue)) {
       return {
-        ownerEmail: null,
+        ownerKey: null,
         books: [],
         activeBookCode: "",
         words: parsedValue
@@ -3154,7 +3626,15 @@ function loadCachedApiDeck() {
     }
 
     if (parsedValue && typeof parsedValue === "object" && Array.isArray(parsedValue.words)) {
-      return parsedValue;
+      return {
+        ...parsedValue,
+        ownerKey:
+          typeof parsedValue.ownerKey === "string" && parsedValue.ownerKey
+            ? parsedValue.ownerKey
+            : parsedValue.ownerEmail
+              ? `email:${String(parsedValue.ownerEmail).trim().toLowerCase()}`
+              : null
+      };
     }
 
     return null;
@@ -3165,7 +3645,11 @@ function loadCachedApiDeck() {
 
 function persistApiDeckCache(deckPayload) {
   try {
-    window.localStorage.setItem(API_DECK_CACHE_STORAGE_KEY, JSON.stringify(deckPayload));
+    writeStorageValue(
+      STORAGE_KEYS.apiDeckCache,
+      JSON.stringify(deckPayload),
+      [LEGACY_STORAGE_KEYS.apiDeckCache]
+    );
   } catch (error) {
     return;
   }
@@ -3173,7 +3657,9 @@ function persistApiDeckCache(deckPayload) {
 
 function loadAuthToken() {
   try {
-    return window.localStorage.getItem(AUTH_SESSION_TOKEN_STORAGE_KEY);
+    return (
+      readStorageValue(STORAGE_KEYS.authSessionToken, [LEGACY_STORAGE_KEYS.authSessionToken]) || null
+    );
   } catch (error) {
     return null;
   }
@@ -3181,7 +3667,7 @@ function loadAuthToken() {
 
 function loadStoredAuthUser() {
   try {
-    const rawValue = window.localStorage.getItem(AUTH_USER_STORAGE_KEY);
+    const rawValue = readStorageValue(STORAGE_KEYS.authUser, [LEGACY_STORAGE_KEYS.authUser]);
 
     if (!rawValue) {
       return null;
@@ -3196,20 +3682,90 @@ function loadStoredAuthUser() {
 
 function persistAuthSession(token, user) {
   try {
-    window.localStorage.setItem(AUTH_SESSION_TOKEN_STORAGE_KEY, token);
-    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+    writeStorageValue(STORAGE_KEYS.authSessionToken, token, [LEGACY_STORAGE_KEYS.authSessionToken]);
+    writeStorageValue(STORAGE_KEYS.authUser, JSON.stringify(user), [LEGACY_STORAGE_KEYS.authUser]);
   } catch (error) {
     return;
   }
 }
 
+function buildAuthCacheOwnerKey(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  if (typeof user.username === "string" && user.username.trim()) {
+    return `username:${user.username.trim()}`;
+  }
+
+  if (typeof user.email === "string" && user.email.trim()) {
+    return `email:${user.email.trim().toLowerCase()}`;
+  }
+
+  if ("id" in user && user.id != null) {
+    return `id:${String(user.id)}`;
+  }
+
+  return "";
+}
+
+function getAuthUserDisplayName(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  return user.displayName || user.username || user.email || "";
+}
+
+function getAuthUserAccountMeta(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  if (user.authProvider === "username" || user.username) {
+    return `名字账号：${user.username || user.displayName || ""}`;
+  }
+
+  return user.email || "";
+}
+
 function clearStoredAuthSession() {
   try {
-    window.localStorage.removeItem(AUTH_SESSION_TOKEN_STORAGE_KEY);
-    window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    removeStorageValue(STORAGE_KEYS.authSessionToken, [LEGACY_STORAGE_KEYS.authSessionToken]);
+    removeStorageValue(STORAGE_KEYS.authUser, [LEGACY_STORAGE_KEYS.authUser]);
   } catch (error) {
     return;
   }
+}
+
+function readStorageValue(primaryKey, legacyKeys = []) {
+  const storageKeys = [primaryKey, ...legacyKeys];
+
+  for (const storageKey of storageKeys) {
+    const rawValue = window.localStorage.getItem(storageKey);
+
+    if (rawValue !== null) {
+      return rawValue;
+    }
+  }
+
+  return null;
+}
+
+function writeStorageValue(primaryKey, rawValue, legacyKeys = []) {
+  window.localStorage.setItem(primaryKey, rawValue);
+
+  legacyKeys.forEach((legacyKey) => {
+    if (legacyKey !== primaryKey) {
+      window.localStorage.removeItem(legacyKey);
+    }
+  });
+}
+
+function removeStorageValue(primaryKey, legacyKeys = []) {
+  [primaryKey, ...legacyKeys].forEach((storageKey) => {
+    window.localStorage.removeItem(storageKey);
+  });
 }
 
 function cloneWords(sourceWords) {
@@ -3220,8 +3776,7 @@ function cloneWords(sourceWords) {
 }
 
 function resolveApiBaseUrl() {
-  const explicitBaseUrl =
-    typeof window.WORD_IMAGE_MEMO_API_BASE === "string" ? window.WORD_IMAGE_MEMO_API_BASE.trim() : "";
+  const explicitBaseUrl = readOptionalGlobalString("TUGE_DANCI_API_BASE", ["WORD_IMAGE_MEMO_API_BASE"]);
 
   if (explicitBaseUrl) {
     return explicitBaseUrl.replace(/\/$/, "");
@@ -3238,6 +3793,20 @@ function resolveApiOrigin(apiBaseUrl) {
   } catch (error) {
     return "";
   }
+}
+
+function readOptionalGlobalString(primaryKey, legacyKeys = []) {
+  const globalKeys = [primaryKey, ...legacyKeys];
+
+  for (const globalKey of globalKeys) {
+    const rawValue = typeof window[globalKey] === "string" ? window[globalKey].trim() : "";
+
+    if (rawValue) {
+      return rawValue;
+    }
+  }
+
+  return "";
 }
 
 function resolveRuntimeUrl(rawUrl) {
@@ -3381,8 +3950,8 @@ async function toggleCommunityPostLikeApi(postId) {
   return response.json();
 }
 
-async function toggleCommunityPostFavoriteApi(postId) {
-  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/toggle-favorite`, {
+async function favoriteCommunityPostApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/favorite`, {
     method: "POST",
     headers: buildApiHeaders({
       Accept: "application/json"
@@ -3391,21 +3960,6 @@ async function toggleCommunityPostFavoriteApi(postId) {
 
   if (!response.ok) {
     throw new Error(await extractApiErrorMessage(response, "收藏失败"));
-  }
-
-  return response.json();
-}
-
-async function shareCommunityPostApi(postId) {
-  const response = await fetch(`${API_BASE_URL}/community/posts/${postId}/share`, {
-    method: "POST",
-    headers: buildApiHeaders({
-      Accept: "application/json"
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "转发失败"));
   }
 
   return response.json();
@@ -3548,6 +4102,40 @@ async function registerWithEmailApi(payload) {
   return response.json();
 }
 
+async function loginWithUsernameApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/auth/login/username`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "登录失败"));
+  }
+
+  return response.json();
+}
+
+async function registerWithUsernameApi(payload) {
+  const response = await fetch(`${API_BASE_URL}/auth/register/username`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "注册失败"));
+  }
+
+  return response.json();
+}
+
 async function fetchCurrentUserApi() {
   const response = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: buildApiHeaders({
@@ -3623,7 +4211,7 @@ function updateWordInDeck(nextWord) {
 
   if (state.dataSource !== "local") {
     persistApiDeckCache({
-      ownerEmail: state.authUser?.email || null,
+      ownerKey: buildAuthCacheOwnerKey(state.authUser),
       books: state.books,
       activeBookCode: state.activeBookCode,
       words
@@ -3677,7 +4265,11 @@ function handlePossibleAuthError(error) {
     return false;
   }
 
-  if (/sign in|session|401|403|\u767b\u5f55|\u4f1a\u8bdd/i.test(message)) {
+  if (
+    /please sign in first|please sign in again|session is invalid|session has expired|\u8bf7\u5148\u767b\u5f55|\u91cd\u65b0\u767b\u5f55|\u4f1a\u8bdd.*(?:\u8fc7\u671f|\u5931\u6548)/i.test(
+      message
+    )
+  ) {
     clearAuthSessionState();
     openAuthView(message, "error");
     return true;

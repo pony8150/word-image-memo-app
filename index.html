@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Word Image Memo App</title>
+    <title>图个单词</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -16,10 +16,9 @@
       <aside class="topbar" id="app-sidebar">
         <div class="sidebar-head">
           <div class="brand">
-            <div class="brand-badge">W</div>
+            <div class="brand-badge">图</div>
             <div>
-              <p class="eyebrow">Word Image Memo</p>
-              <h1>看图记单词</h1>
+              <h1>图个单词</h1>
             </div>
           </div>
           <button class="sidebar-close-btn" id="sidebar-close-button" type="button" aria-label="关闭目录" hidden>
@@ -38,7 +37,7 @@
           <button class="nav-pill" data-target="community" hidden>
             <span class="nav-pill-icon" aria-hidden="true"></span>
             <span class="nav-pill-copy">
-              <strong>单词社区</strong>
+              <strong>社区</strong>
               <small>Word moments</small>
             </span>
           </button>
@@ -75,7 +74,7 @@
         <div class="sidebar-footer">
           <div class="account-menu-wrap sidebar-account-wrap" data-account-wrap>
             <button class="account-trigger sidebar-account-trigger" type="button" data-account-trigger aria-haspopup="menu" aria-expanded="false">
-              <span class="account-avatar" data-account-avatar>W</span>
+              <span class="account-avatar" data-account-avatar>图</span>
               <span class="account-trigger-copy">
                 <strong data-auth-user-name>未登录</strong>
                 <span data-auth-user-meta>点击登录 / 注册</span>
@@ -123,6 +122,7 @@
             </button>
 
             <div class="dockbar-copy">
+              <p class="eyebrow" id="dockbar-subtitle">Words and images</p>
               <h2 id="dockbar-title">学习卡片</h2>
             </div>
           </div>
@@ -137,7 +137,7 @@
                 aria-haspopup="menu"
                 aria-expanded="false"
               >
-                <span class="account-avatar" id="account-avatar" data-account-avatar>W</span>
+                <span class="account-avatar" id="account-avatar" data-account-avatar>图</span>
                 <span class="account-trigger-copy">
                   <strong id="auth-user-name" data-auth-user-name>未登录</strong>
                   <span id="auth-user-meta" data-auth-user-meta>点击登录 / 注册</span>
@@ -390,11 +390,46 @@
           </div>
         </div>
 
+        <div class="community-publish-modal" id="community-publish-modal" aria-hidden="true" hidden>
+          <div class="community-publish-card" role="dialog" aria-modal="true" aria-labelledby="community-publish-heading">
+            <div class="community-publish-head">
+              <div>
+                <p class="eyebrow">Post to Community</p>
+                <h3 class="community-publish-heading" id="community-publish-heading">发到社区</h3>
+              </div>
+              <button class="secondary-btn" id="community-publish-cancel" type="button">取消</button>
+            </div>
+
+            <p class="community-publish-copy" id="community-publish-copy">
+              给这张图配一句短评、联想或记忆提示。
+            </p>
+
+            <textarea
+              class="community-publish-input"
+              id="community-publish-input"
+              rows="4"
+              maxlength="160"
+              placeholder="比如：这张图一下就让我记住了这个词。"
+            ></textarea>
+
+            <div class="community-publish-foot">
+              <p class="community-publish-status" id="community-publish-status">写一句短评后再发布。</p>
+              <button class="primary-btn" id="community-publish-submit" type="button">发布到社区</button>
+            </div>
+          </div>
+        </div>
+
         <section class="view" id="community" hidden>
           <div class="section-header">
             <div>
               <p class="eyebrow">Community</p>
-              <h2>单词社区</h2>
+              <h2>社区</h2>
+              <p class="community-feed-note" id="community-feed-note">大厅：当前先按发布时间浏览，后续这里会接推荐算法。</p>
+            </div>
+            <div class="community-feed-modes" role="group" aria-label="社区内容筛选">
+              <button class="community-feed-mode active" data-community-feed-mode="hall" type="button" aria-pressed="true">大厅</button>
+              <button class="community-feed-mode" data-community-feed-mode="ranking" type="button" aria-pressed="false">排行榜</button>
+              <button class="community-feed-mode" data-community-feed-mode="mine" type="button" aria-pressed="false">我的发布</button>
             </div>
           </div>
 
@@ -402,6 +437,14 @@
         </section>
 
         <section class="view" id="community-post" hidden>
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Community Post</p>
+              <h2>社区</h2>
+            </div>
+            <button class="secondary-btn community-back-btn" id="community-back-button" type="button">返回大厅</button>
+          </div>
+
           <article class="community-post-shell">
             <section class="card community-post-card">
               <div class="community-post-media">
@@ -417,7 +460,6 @@
                       <span id="community-post-created-at"></span>
                     </div>
                   </div>
-                  <button class="secondary-btn community-back-btn" id="community-back-button" type="button">返回社区</button>
                 </div>
 
                 <div class="community-post-copy">
@@ -426,16 +468,24 @@
                   <p class="community-post-description" id="community-post-description"></p>
                 </div>
 
-                <div class="detail-box community-word-box">
-                  <h4>单词信息</h4>
-                  <p id="community-post-word-meta"></p>
+                <div class="community-word-box" id="community-post-word-panel" hidden>
+                  <p class="eyebrow">记忆线索</p>
+                  <div class="community-word-meta-list" id="community-post-word-meta"></div>
                 </div>
 
                 <div class="community-post-actions">
-                  <button class="secondary-btn community-action-btn" id="community-post-like" type="button">点赞 <span id="community-post-like-count">0</span></button>
-                  <button class="secondary-btn community-action-btn" id="community-post-favorite" type="button">收藏 <span id="community-post-favorite-count">0</span></button>
-                  <button class="secondary-btn community-action-btn" id="community-post-share" type="button">转发 <span id="community-post-share-count">0</span></button>
-                  <button class="secondary-btn community-action-btn" id="community-post-comment-trigger" type="button">评论 <span id="community-post-comment-count">0</span></button>
+                  <button class="secondary-btn community-action-btn" id="community-post-like" type="button" aria-label="点赞">
+                    <span class="community-action-icon" aria-hidden="true">❤</span>
+                    <span class="community-action-count" id="community-post-like-count">0</span>
+                  </button>
+                  <button class="secondary-btn community-action-btn" id="community-post-favorite" type="button" aria-label="收藏到我的词图">
+                    <span class="community-action-icon" id="community-post-favorite-label" aria-hidden="true">☆</span>
+                    <span class="community-action-count" id="community-post-favorite-count">0</span>
+                  </button>
+                  <button class="secondary-btn community-action-btn" id="community-post-comment-trigger" type="button" aria-label="评论">
+                    <span class="community-action-icon" aria-hidden="true">💬</span>
+                    <span class="community-action-count" id="community-post-comment-count">0</span>
+                  </button>
                 </div>
               </div>
             </section>
@@ -630,26 +680,19 @@
           <div class="auth-page-shell">
             <section class="auth-page-main">
               <section class="auth-panel card">
-                <div class="auth-mode-switch" aria-label="Email auth mode">
+                <div class="auth-mode-switch" aria-label="Account auth mode">
                   <button class="auth-mode-btn active" id="auth-page-mode-login" type="button">登录</button>
                   <button class="auth-mode-btn" id="auth-page-mode-register" type="button">注册</button>
                 </div>
 
                 <p class="eyebrow">Account Access</p>
-                <h3 class="auth-panel-title" id="auth-page-form-heading">邮箱登录</h3>
+                <h3 class="auth-panel-title" id="auth-page-form-heading">名字登录</h3>
+                <p class="auth-panel-copy" id="auth-page-form-copy">输入你注册时的名字和密码即可登录。</p>
 
                 <form class="auth-form" id="auth-page-form">
-                  <label class="auth-field">
-                    <span>邮箱</span>
-                    <input id="auth-page-email" type="email" autocomplete="email" placeholder="name@example.com" required />
-                  </label>
-
-                  <label class="auth-field auth-code-field" id="auth-page-code-field" hidden>
-                    <span>邮箱验证码</span>
-                    <div class="auth-code-row">
-                      <input id="auth-page-verification-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6 位验证码" />
-                      <button class="secondary-btn auth-code-send" id="auth-page-send-code" type="button">发送验证码</button>
-                    </div>
+                  <label class="auth-field" id="auth-page-username-field">
+                    <span>名字</span>
+                    <input id="auth-page-username" type="text" autocomplete="username" maxlength="20" placeholder="起一个不重复的名字" required />
                   </label>
 
                   <label class="auth-field">

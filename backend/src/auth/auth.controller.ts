@@ -5,14 +5,24 @@ interface SendRegisterCodeBody {
   email?: string;
 }
 
-interface RegisterBody {
+interface EmailRegisterBody {
   email?: string;
   password?: string;
   verificationCode?: string;
 }
 
-interface LoginBody {
+interface UsernameRegisterBody {
+  username?: string;
+  password?: string;
+}
+
+interface EmailLoginBody {
   email?: string;
+  password?: string;
+}
+
+interface UsernameLoginBody {
+  username?: string;
   password?: string;
 }
 
@@ -27,7 +37,7 @@ export class AuthController {
 
   @Post("register")
   async register(
-    @Body() body: RegisterBody,
+    @Body() body: EmailRegisterBody,
     @Headers("user-agent") userAgent?: string,
     @Headers("x-forwarded-for") forwardedFor?: string
   ) {
@@ -40,14 +50,42 @@ export class AuthController {
     );
   }
 
+  @Post("register/username")
+  async registerWithUsername(
+    @Body() body: UsernameRegisterBody,
+    @Headers("user-agent") userAgent?: string,
+    @Headers("x-forwarded-for") forwardedFor?: string
+  ) {
+    return this.authService.registerWithUsername(
+      body?.username || "",
+      body?.password || "",
+      userAgent,
+      forwardedFor
+    );
+  }
+
   @Post("login")
   async login(
-    @Body() body: LoginBody,
+    @Body() body: EmailLoginBody,
     @Headers("user-agent") userAgent?: string,
     @Headers("x-forwarded-for") forwardedFor?: string
   ) {
     return this.authService.loginWithEmail(
       body?.email || "",
+      body?.password || "",
+      userAgent,
+      forwardedFor
+    );
+  }
+
+  @Post("login/username")
+  async loginWithUsername(
+    @Body() body: UsernameLoginBody,
+    @Headers("user-agent") userAgent?: string,
+    @Headers("x-forwarded-for") forwardedFor?: string
+  ) {
+    return this.authService.loginWithUsername(
+      body?.username || "",
       body?.password || "",
       userAgent,
       forwardedFor

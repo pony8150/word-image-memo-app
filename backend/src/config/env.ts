@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import { APP_BRAND_NAME } from "./branding";
 
 loadEnvFile(path.resolve(process.cwd(), ".env"));
 
@@ -37,7 +38,7 @@ export const appEnv = {
   smtpUser,
   smtpPass,
   smtpFromEmail,
-  smtpFromName: process.env.SMTP_FROM_NAME || "Word Image Memo"
+  smtpFromName: process.env.SMTP_FROM_NAME || APP_BRAND_NAME
 };
 
 export function getRequiredDatabaseUrl(): string {

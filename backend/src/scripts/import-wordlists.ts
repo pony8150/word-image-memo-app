@@ -15,6 +15,8 @@ interface ParsedWordlistEntry {
   word: string;
   meaning: string;
   page: string | null;
+  example: string | null;
+  exampleChinese: string | null;
 }
 
 interface LooseWordlistRecord {
@@ -22,6 +24,8 @@ interface LooseWordlistRecord {
   word: string;
   meaning: string;
   page: string | null;
+  example: string | null;
+  exampleChinese: string | null;
 }
 
 const WORDLIST_DIRECTORY = path.resolve(process.cwd(), "..", "data", "wordlists");
@@ -84,7 +88,9 @@ async function main() {
           english: normalizeDisplayWord(entry.word),
           chinese: normalizeMeaning(entry.meaning),
           level: source.level,
-          theme: entry.page
+          theme: entry.page,
+          example: normalizeOptionalText(entry.example),
+          exampleChinese: normalizeOptionalText(entry.exampleChinese)
         });
 
         await executeQuery(
@@ -151,7 +157,9 @@ function parseLooseWordlist(fileContent: string): ParsedWordlistEntry[] {
         index: 0,
         word: "",
         meaning: "",
-        page: null
+        page: null,
+        example: null,
+        exampleChinese: null
       };
       continue;
     }
@@ -180,13 +188,25 @@ function parseLooseWordlist(fileContent: string): ParsedWordlistEntry[] {
       continue;
     }
 
+    if (line.startsWith("\"exampleChinese\"")) {
+      currentRecord.exampleChinese = parseLooseStringField(line);
+      continue;
+    }
+
+    if (line.startsWith("\"example\"")) {
+      currentRecord.example = parseLooseStringField(line);
+      continue;
+    }
+
     if (line.startsWith("}")) {
       if (currentRecord.word) {
         entries.push({
           index: currentRecord.index,
           word: currentRecord.word,
           meaning: currentRecord.meaning,
-          page: currentRecord.page
+          page: currentRecord.page,
+          example: currentRecord.example,
+          exampleChinese: currentRecord.exampleChinese
         });
       }
 
@@ -281,6 +301,15 @@ function normalizeMeaning(meaning: string): string {
   return String(meaning || "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized || null;
+}
+
 async function ensureBook(
   pool: ReturnType<typeof createDatabasePool>,
   source: WordlistSourceDefinition
@@ -324,6 +353,8 @@ async function upsertWord(
     chinese: string;
     level: string;
     theme: string | null;
+    example: string | null;
+    exampleChinese: string | null;
   }
 ): Promise<void> {
   await executeQuery(
@@ -341,15 +372,17 @@ async function upsertWord(
         image_reason,
         scene
       )
-      VALUES ($1, 0, $2, $3, $4, $5, NULL, NULL, NULL, NULL)
+      VALUES ($1, 0, $2, $3, $4, $5, $6, $7, NULL, NULL)
       ON DUPLICATE KEY UPDATE
         english = IF(words.english IS NULL OR words.english = '', VALUES(english), words.english),
         chinese = IF(words.chinese IS NULL OR words.chinese = '', VALUES(chinese), words.chinese),
         level = IF(words.level IS NULL OR words.level = '', VALUES(level), words.level),
         theme = IF(words.theme IS NULL OR words.theme = '', VALUES(theme), words.theme),
+        example_text = IF(words.example_text IS NULL OR words.example_text = '', VALUES(example_text), words.example_text),
+        example_translation = IF(words.example_translation IS NULL OR words.example_translation = '', VALUES(example_translation), words.example_translation),
         updated_at = NOW()
     `,
-    [input.id, input.english, input.chinese, input.level, input.theme]
+    [input.id, input.english, input.chinese, input.level, input.theme, input.example, input.exampleChinese]
   );
 }
 

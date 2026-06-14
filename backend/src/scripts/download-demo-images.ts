@@ -1,5 +1,6 @@
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
+import { APP_HTTP_USER_AGENT } from "../config/branding";
 import { appEnv } from "../config/env";
 
 interface DemoSeedImage {
@@ -64,7 +65,7 @@ async function main() {
 
       const response = await fetch(image.publicUrl, {
         headers: {
-          "User-Agent": "word-image-memo-app/0.1"
+          "User-Agent": APP_HTTP_USER_AGENT
         }
       });
 

@@ -4,6 +4,7 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { join } from "node:path";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
+import { APP_API_DISPLAY_NAME } from "./config/branding";
 import { appEnv, getRequiredDatabaseUrl } from "./config/env";
 import { ensureDatabaseSchemaReady } from "./database/schema";
 
@@ -26,7 +27,7 @@ async function bootstrap() {
   });
 
   await app.listen(appEnv.port);
-  console.log(`Word Image Memo API listening on ${appEnv.publicBaseUrl}`);
+  console.log(`${APP_API_DISPLAY_NAME} listening on ${appEnv.publicBaseUrl}`);
 }
 
 bootstrap().catch((error) => {

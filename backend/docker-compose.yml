@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: word-image-memo-mysql
+    container_name: tuge-danci-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: 8150

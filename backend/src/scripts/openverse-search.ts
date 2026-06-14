@@ -20,9 +20,52 @@ export interface OpenverseImageResult {
   filetype?: string | null;
 }
 
+interface OpenverseApiResponse {
+  results?: OpenverseImageResult[] | null;
+}
+
+const OPENVERSE_API_URL = "https://api.openverse.org/v1/images/";
+let shouldUsePowerShellFallback = false;
+
 export async function searchOpenverseImages(
   query: string,
   pageSize = 8
+): Promise<OpenverseImageResult[]> {
+  if (shouldUsePowerShellFallback) {
+    return searchOpenverseImagesViaPowerShell(query, pageSize);
+  }
+
+  const url = new URL(OPENVERSE_API_URL);
+  url.searchParams.set("q", query);
+  url.searchParams.set("page_size", String(pageSize));
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json"
+      },
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Openverse responded with ${response.status} ${response.statusText}`);
+    }
+
+    const payload = (await response.json()) as OpenverseApiResponse;
+    return Array.isArray(payload.results) ? payload.results : [];
+  } catch (error) {
+    if (!shouldFallbackToPowerShell(error)) {
+      throw error;
+    }
+
+    shouldUsePowerShellFallback = true;
+    return searchOpenverseImagesViaPowerShell(query, pageSize);
+  }
+}
+
+async function searchOpenverseImagesViaPowerShell(
+  query: string,
+  pageSize: number
 ): Promise<OpenverseImageResult[]> {
   const queryBase64 = Buffer.from(query, "utf8").toString("base64");
   const script = `
@@ -51,4 +94,9 @@ $result = Invoke-RestMethod -UseBasicParsing $url
 
   const parsed = JSON.parse(trimmedOutput) as OpenverseImageResult | OpenverseImageResult[];
   return Array.isArray(parsed) ? parsed : [parsed];
+}
+
+function shouldFallbackToPowerShell(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|network|tls|certificate|socket/i.test(message);
 }

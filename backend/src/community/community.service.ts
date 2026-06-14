@@ -8,6 +8,7 @@ import { DatabaseService } from "../database/database.service";
 import { DatabaseClient } from "../database/mysql";
 import { StorageService } from "../storage/storage.service";
 import { WordsService } from "../words/words.service";
+import { LearningDeckWord } from "../words/words.types";
 import {
   CommunityComment,
   CommunityFeedPost,
@@ -70,6 +71,15 @@ interface PublishImageRow {
   image_storage_type: string;
   image_storage_key: string | null;
   image_public_url: string | null;
+}
+
+interface FavoriteTargetRow {
+  post_id: number | string;
+  user_id: number | string;
+  word_id: string;
+  image_asset_id: number | string;
+  source_label: string | null;
+  source_credit: string | null;
 }
 
 @Injectable()
@@ -219,6 +229,10 @@ export class CommunityService {
       throw new BadRequestException("Word and image are required.");
     }
 
+    if (!body) {
+      throw new BadRequestException("Please write a short note before publishing.");
+    }
+
     const word = await this.wordsService.getWordByIdForUser(wordId, user.id);
 
     if (!word) {
@@ -239,7 +253,7 @@ export class CommunityService {
       }
 
       const title = word.english;
-      const normalizedBody = body || buildDefaultPostBody(word);
+      const normalizedBody = body;
 
       const insertResult = await client.query(
         `
@@ -344,10 +358,22 @@ export class CommunityService {
     return this.getPostDetail(postId, userId);
   }
 
-  async togglePostFavorite(postId: number, userId: number): Promise<{ post: CommunityPostDetail }> {
-    await this.database.transaction(async (client) => {
-      await this.ensureActivePost(client, postId);
-      const existing = await client.query<{ id: number | string }>(
+  async favoritePost(
+    postId: number,
+    user: AuthenticatedUser
+  ): Promise<{ post: CommunityPostDetail; word: LearningDeckWord | null }> {
+    const updatedWord = await this.database.transaction(async (client) => {
+      const target = await this.getFavoriteTarget(client, postId);
+
+      if (!target) {
+        throw new NotFoundException("Community post not found.");
+      }
+
+      if (Number(target.user_id || 0) === user.id) {
+        throw new BadRequestException("You cannot favorite your own community post.");
+      }
+
+      const existingFavorite = await client.query<{ id: number | string }>(
         `
           SELECT id
           FROM community_post_favorites
@@ -355,32 +381,36 @@ export class CommunityService {
             AND user_id = $2
           LIMIT 1
         `,
-        [postId, userId]
+        [postId, user.id]
       );
 
-      if (existing.rows[0]) {
-        await client.query(
-          `
-            DELETE FROM community_post_favorites
-            WHERE post_id = $1
-              AND user_id = $2
-          `,
-          [postId, userId]
-        );
-      } else {
+      if (!existingFavorite.rows[0]) {
         await client.query(
           `
             INSERT INTO community_post_favorites (post_id, user_id)
             VALUES ($1, $2)
           `,
-          [postId, userId]
+          [postId, user.id]
         );
       }
 
+      await this.ensureCollectedImageRelation(client, {
+        wordId: target.word_id,
+        imageAssetId: Number(target.image_asset_id),
+        user,
+        sourceLabel: target.source_label || "社区收藏",
+        sourceCredit: target.source_credit
+      });
+
       await this.refreshPostReactionCounts(client, postId);
+
+      return this.wordsService.getWordByIdForUser(target.word_id, user.id, client);
     });
 
-    return this.getPostDetail(postId, userId);
+    return {
+      post: (await this.getPostDetail(postId, user.id)).post,
+      word: updatedWord
+    };
   }
 
   async incrementPostShare(postId: number): Promise<{ shareCount: number }> {
@@ -589,6 +619,100 @@ export class CommunityService {
     );
   }
 
+  private async getFavoriteTarget(
+    client: DatabaseClient,
+    postId: number
+  ): Promise<FavoriteTargetRow | null> {
+    const result = await client.query<FavoriteTargetRow>(
+      `
+        SELECT
+          p.id AS post_id,
+          p.user_id,
+          p.word_id,
+          wi.image_asset_id,
+          wi.source_label,
+          wi.source_credit
+        FROM community_posts p
+        INNER JOIN word_images wi
+          ON wi.id = p.word_image_id
+        WHERE p.id = $1
+          AND p.status = 'active'
+        LIMIT 1
+      `,
+      [postId]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  private async ensureCollectedImageRelation(
+    client: DatabaseClient,
+    input: {
+      wordId: string;
+      imageAssetId: number;
+      user: AuthenticatedUser;
+      sourceLabel: string;
+      sourceCredit: string | null;
+    }
+  ): Promise<void> {
+    const existingRelationResult = await client.query<{ id: number | string }>(
+      `
+        SELECT id
+        FROM word_images
+        WHERE word_id = $1
+          AND image_asset_id = $2
+          AND scope = 'private'
+          AND owner_user_id = $3
+          AND status = 'active'
+        LIMIT 1
+      `,
+      [input.wordId, input.imageAssetId, input.user.id]
+    );
+
+    if (existingRelationResult.rows[0]) {
+      return;
+    }
+
+    const nextSortOrderResult = await client.query<{ next_sort_order: number | string }>(
+      `
+        SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_sort_order
+        FROM word_images
+        WHERE word_id = $1
+          AND scope = 'private'
+          AND owner_user_id = $2
+          AND status = 'active'
+      `,
+      [input.wordId, input.user.id]
+    );
+
+    const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
+
+    await client.query(
+      `
+        INSERT INTO word_images (
+          word_id,
+          image_asset_id,
+          scope,
+          owner_user_id,
+          source_label,
+          source_credit,
+          status,
+          sort_order,
+          created_by_user_id
+        )
+        VALUES ($1, $2, 'private', $3, $4, $5, 'active', $6, $3)
+      `,
+      [
+        input.wordId,
+        input.imageAssetId,
+        input.user.id,
+        input.sourceLabel,
+        input.sourceCredit,
+        nextSortOrder
+      ]
+    );
+  }
+
   private async getPublishableImage(
     client: DatabaseClient,
     wordImageId: number
@@ -664,25 +788,6 @@ export class CommunityService {
       }
     };
   }
-}
-
-function buildDefaultPostBody(word: {
-  english: string;
-  chinese: string;
-  example?: string | null;
-  exampleChinese?: string | null;
-}): string {
-  const parts = [`${word.english} · ${word.chinese}`];
-
-  if (word.example) {
-    parts.push(word.example);
-  }
-
-  if (word.exampleChinese) {
-    parts.push(word.exampleChinese);
-  }
-
-  return parts.join("\n");
 }
 
 function buildAvatarText(value: string): string {

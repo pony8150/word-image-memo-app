@@ -52,6 +52,15 @@ interface DownloadedImageCandidate {
   sourceDomain: string | null;
 }
 
+interface RemoteImageUrlCandidate {
+  label: string;
+  url: string;
+}
+
+interface RemoteImageRequestProfile {
+  refererUrl: string | null;
+}
+
 interface PersistedImageAsset {
   id: number;
   storageType: "external" | "local" | "oss";
@@ -756,52 +765,300 @@ export class ImagesService {
     }
   }
 
-  private async downloadRemoteImage(input: ImportSearchedImageInput): Promise<DownloadedImageCandidate> {
-    const mediaUrl = this.normalizeHttpUrl(input.mediaUrl);
+  private extractOrigin(value: string): string | null {
+    try {
+      return new URL(value).origin || null;
+    } catch (error) {
+      return null;
+    }
+  }
 
-    if (!mediaUrl) {
+  private async downloadRemoteImage(input: ImportSearchedImageInput): Promise<DownloadedImageCandidate> {
+    const sourcePageUrl = this.normalizeHttpUrl(input.sourcePageUrl);
+    const candidates = this.buildRemoteImageCandidates(input);
+
+    if (candidates.length === 0) {
       throw new BadRequestException("Image URL is invalid.");
     }
 
-    const response = await this.fetchWithGatewayHandling(mediaUrl, {
+    const failureMessages: string[] = [];
+
+    for (const candidate of candidates) {
+      const attempt = await this.downloadRemoteImageCandidate(candidate.url, sourcePageUrl);
+
+      if (attempt.downloadedImage) {
+        return {
+          ...attempt.downloadedImage,
+          sourceDomain: sourcePageUrl ? this.extractHostname(sourcePageUrl) : this.extractHostname(candidate.url)
+        };
+      }
+
+      if (attempt.errorMessage) {
+        failureMessages.push(`${candidate.label}：${attempt.errorMessage}`);
+      }
+    }
+
+    throw new BadGatewayException(this.buildRemoteDownloadFailureMessage(failureMessages));
+  }
+
+  private buildRemoteImageCandidates(input: ImportSearchedImageInput): RemoteImageUrlCandidate[] {
+    const mediaUrl = this.normalizeHttpUrl(input.mediaUrl);
+    const thumbnailUrl = this.normalizeHttpUrl(input.thumbnailUrl);
+    const candidates: RemoteImageUrlCandidate[] = [];
+    const seenUrls = new Set<string>();
+
+    [
+      mediaUrl ? { label: "原图", url: mediaUrl } : null,
+      thumbnailUrl ? { label: "预览图", url: thumbnailUrl } : null
+    ].forEach((candidate) => {
+      if (!candidate || seenUrls.has(candidate.url)) {
+        return;
+      }
+
+      seenUrls.add(candidate.url);
+      candidates.push(candidate);
+    });
+
+    return candidates;
+  }
+
+  private buildRemoteImageRequestProfiles(sourcePageUrl: string | null): RemoteImageRequestProfile[] {
+    const profiles = [
+      sourcePageUrl ? { refererUrl: sourcePageUrl } : null,
+      { refererUrl: "https://www.bing.com/" },
+      { refererUrl: null }
+    ].filter(Boolean) as RemoteImageRequestProfile[];
+
+    const dedupedProfiles: RemoteImageRequestProfile[] = [];
+    const seenReferers = new Set<string>();
+
+    profiles.forEach((profile) => {
+      const key = profile.refererUrl || "__direct__";
+
+      if (seenReferers.has(key)) {
+        return;
+      }
+
+      seenReferers.add(key);
+      dedupedProfiles.push(profile);
+    });
+
+    return dedupedProfiles;
+  }
+
+  private async downloadRemoteImageCandidate(
+    candidateUrl: string,
+    sourcePageUrl: string | null
+  ): Promise<{ downloadedImage?: DownloadedImageCandidate; errorMessage?: string }> {
+    const requestProfiles = this.buildRemoteImageRequestProfiles(sourcePageUrl);
+    let lastErrorMessage = "图片下载失败。";
+
+    for (const profile of requestProfiles) {
+      try {
+        return {
+          downloadedImage: await this.downloadRemoteImageOnce(candidateUrl, profile.refererUrl)
+        };
+      } catch (error) {
+        lastErrorMessage = this.getExceptionMessage(error);
+
+        if (/10MB/i.test(lastErrorMessage)) {
+          break;
+        }
+      }
+    }
+
+    return {
+      errorMessage: lastErrorMessage
+    };
+  }
+
+  private async downloadRemoteImageOnce(
+    imageUrl: string,
+    refererUrl: string | null
+  ): Promise<DownloadedImageCandidate> {
+    const response = await this.fetchWithGatewayHandling(imageUrl, {
       headers: {
-        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        Referer: "https://www.bing.com/",
+        ...this.buildRemoteImageHeaders(refererUrl),
         "User-Agent": BING_USER_AGENT
       },
       redirect: "follow",
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(20000)
     });
 
     if (!response.ok) {
-      throw new BadGatewayException(`Image download failed (${response.status}).`);
+      throw new BadGatewayException(`图片下载失败 (${response.status})。`);
     }
 
-    const contentType = this.normalizeContentType(response.headers.get("content-type"));
-
-    if (!contentType.startsWith("image/")) {
-      throw new BadGatewayException("Selected resource is not an image.");
-    }
+    const declaredContentType = this.normalizeContentType(response.headers.get("content-type"));
 
     const contentLength = Number(response.headers.get("content-length") || "0");
 
     if (contentLength > REMOTE_IMAGE_DOWNLOAD_MAX_BYTES) {
-      throw new BadRequestException("Selected image is larger than 10MB.");
+      throw new BadRequestException("所选图片超过 10MB。");
     }
 
     const content = await this.readResponseBufferWithLimit(response, REMOTE_IMAGE_DOWNLOAD_MAX_BYTES);
-    const sourcePageUrl = this.normalizeHttpUrl(input.sourcePageUrl);
+    const detectedContentType = this.detectImageMimeType(content);
+
+    if (content.byteLength === 0) {
+      throw new BadGatewayException("下载到的图片为空。");
+    }
+
+    if (this.looksLikeHtmlDocument(content)) {
+      throw new BadGatewayException("源站返回的是网页，不是图片。");
+    }
+
+    const resolvedContentType = this.resolveDownloadedImageContentType(
+      declaredContentType,
+      detectedContentType,
+      imageUrl
+    );
+
+    if (!resolvedContentType) {
+      throw new BadGatewayException("返回的内容不是可用图片。");
+    }
 
     return {
       content,
-      contentType,
-      fileExtension: resolveStoredImageExtension(contentType, mediaUrl),
-      sourceDomain: sourcePageUrl ? this.extractHostname(sourcePageUrl) : null
+      contentType: resolvedContentType,
+      fileExtension: resolveStoredImageExtension(resolvedContentType, imageUrl),
+      sourceDomain: null
     };
+  }
+
+  private buildRemoteImageHeaders(refererUrl: string | null): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
+    };
+
+    if (refererUrl) {
+      headers.Referer = refererUrl;
+      const origin = this.extractOrigin(refererUrl);
+
+      if (origin) {
+        headers.Origin = origin;
+      }
+    }
+
+    return headers;
   }
 
   private normalizeContentType(value: string | null): string {
     return value?.split(";")[0]?.trim().toLowerCase() || "";
+  }
+
+  private resolveDownloadedImageContentType(
+    declaredContentType: string,
+    detectedContentType: string | null,
+    imageUrl: string
+  ): string | null {
+    if (declaredContentType.startsWith("image/")) {
+      return declaredContentType;
+    }
+
+    if (detectedContentType) {
+      return detectedContentType;
+    }
+
+    return this.inferImageMimeTypeFromUrl(imageUrl);
+  }
+
+  private detectImageMimeType(content: Buffer): string | null {
+    if (content.byteLength >= 12) {
+      if (
+        content[0] === 0x89 &&
+        content[1] === 0x50 &&
+        content[2] === 0x4e &&
+        content[3] === 0x47
+      ) {
+        return "image/png";
+      }
+
+      if (content[0] === 0xff && content[1] === 0xd8 && content[2] === 0xff) {
+        return "image/jpeg";
+      }
+
+      if (
+        content[0] === 0x47 &&
+        content[1] === 0x49 &&
+        content[2] === 0x46 &&
+        content[3] === 0x38
+      ) {
+        return "image/gif";
+      }
+
+      if (
+        content[0] === 0x52 &&
+        content[1] === 0x49 &&
+        content[2] === 0x46 &&
+        content[3] === 0x46 &&
+        content[8] === 0x57 &&
+        content[9] === 0x45 &&
+        content[10] === 0x42 &&
+        content[11] === 0x50
+      ) {
+        return "image/webp";
+      }
+
+      if (
+        content[4] === 0x66 &&
+        content[5] === 0x74 &&
+        content[6] === 0x79 &&
+        content[7] === 0x70 &&
+        content[8] === 0x61 &&
+        content[9] === 0x76 &&
+        content[10] === 0x69 &&
+        (content[11] === 0x66 || content[11] === 0x73)
+      ) {
+        return "image/avif";
+      }
+    }
+
+    const prefixText = content.slice(0, 256).toString("utf8").trimStart().toLowerCase();
+
+    if (prefixText.startsWith("<?xml") || prefixText.startsWith("<svg")) {
+      return "image/svg+xml";
+    }
+
+    return null;
+  }
+
+  private looksLikeHtmlDocument(content: Buffer): boolean {
+    const prefixText = content.slice(0, 512).toString("utf8").trimStart().toLowerCase();
+    return (
+      prefixText.startsWith("<!doctype html") ||
+      prefixText.startsWith("<html") ||
+      prefixText.startsWith("<body")
+    );
+  }
+
+  private inferImageMimeTypeFromUrl(imageUrl: string): string | null {
+    let lowerExtension = "";
+
+    try {
+      lowerExtension = path.extname(new URL(imageUrl).pathname).toLowerCase();
+    } catch (error) {
+      lowerExtension = path.extname(imageUrl).toLowerCase();
+    }
+
+    switch (lowerExtension) {
+      case ".png":
+        return "image/png";
+      case ".webp":
+        return "image/webp";
+      case ".gif":
+        return "image/gif";
+      case ".svg":
+        return "image/svg+xml";
+      case ".avif":
+        return "image/avif";
+      case ".jpg":
+      case ".jpeg":
+        return "image/jpeg";
+      default:
+        return null;
+    }
   }
 
   private async readResponseBufferWithLimit(
@@ -812,7 +1069,7 @@ export class ImagesService {
       const fallbackBuffer = Buffer.from(await response.arrayBuffer());
 
       if (fallbackBuffer.byteLength > maxBytes) {
-        throw new BadRequestException("Selected image is larger than 10MB.");
+        throw new BadRequestException("所选图片超过 10MB。");
       }
 
       return fallbackBuffer;
@@ -837,13 +1094,57 @@ export class ImagesService {
 
       if (totalBytes > maxBytes) {
         await reader.cancel();
-        throw new BadRequestException("Selected image is larger than 10MB.");
+        throw new BadRequestException("所选图片超过 10MB。");
       }
 
       chunks.push(Buffer.from(value));
     }
 
     return Buffer.concat(chunks);
+  }
+
+  private getExceptionMessage(error: unknown): string {
+    if (error && typeof error === "object" && "getResponse" in error && typeof error.getResponse === "function") {
+      const response = error.getResponse();
+
+      if (typeof response === "string" && response.trim()) {
+        return response;
+      }
+
+      if (response && typeof response === "object" && "message" in response) {
+        const message = response.message;
+
+        if (Array.isArray(message) && message.length > 0) {
+          return String(message[0]);
+        }
+
+        if (typeof message === "string" && message.trim()) {
+          return message;
+        }
+      }
+    }
+
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return "图片下载失败。";
+  }
+
+  private buildRemoteDownloadFailureMessage(failureMessages: string[]): string {
+    if (failureMessages.length === 0) {
+      return "图片导入失败，请换一张试试。";
+    }
+
+    if (failureMessages.some((message) => /\(403\)/.test(message))) {
+      return `图片源站拒绝直接下载，系统也没拿到可用图片。${failureMessages.join("；")}`;
+    }
+
+    if (failureMessages.some((message) => /10MB/i.test(message))) {
+      return `这张图太大了，连可用预览图也没法导入。${failureMessages.join("；")}`;
+    }
+
+    return `图片导入失败，请换一张试试。${failureMessages.join("；")}`;
   }
 
   private async fetchWithGatewayHandling(
