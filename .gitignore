@@ -14,3 +14,9 @@ Thumbs.db
 
 # Python cache
 __pycache__/
+
+# Generated wordlist backups and legacy exports
+/data/wordlists/*.backup-before-examples-*.json
+/data/wordlists/*-common-words.txt
+/data/wordlists/school-common-words.json
+/data/wordlists/school-common-words.txt

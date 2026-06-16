@@ -137,14 +137,15 @@ http://localhost:8000/
 - `npm.cmd run build`：构建后端
 - `npm.cmd run start:dev`：开发模式启动后端
 - `npm.cmd run db:init`：执行全部 SQL 初始化 / 迁移脚本
+- `npm.cmd run import:wordlists`：导入词书数据
+- `npm.cmd run fill:missing-examples -- all`：为词书补全例句
+- `npm.cmd run audit:missing-examples`：检查还有哪些单词缺例句
+- `npm.cmd run sync:bing-url:junior-high`：同步初中词书单词主图 URL
+- `npm.cmd run sync:bing-url:senior-high`：同步高中词书单词主图 URL
+- `npm.cmd run sync:bing-url:postgraduate-redbook`：同步考研词书单词主图 URL
 - `npm.cmd run seed:demo`：写入示例词卡数据
 - `npm.cmd run download:demo-images`：下载示例图片到本地
 - `npm.cmd run purge:images`：清理到期私有图片
-- `npm.cmd run fill:junior-high:default-images`：补全初中词书默认图
-- `npm.cmd run fill:senior-high:default-images`：补全高中词书默认图
-- `npm.cmd run fill:postgraduate-redbook:default-images`：补全考研词书默认图
-- `npm.cmd run remove:generated:default-images`：删除默认图里错误生成的单词卡面图
-- `npm.cmd run import:wordlists`：导入词书数据
 
 此外，根目录还保留了两个数据清洗脚本：
 
