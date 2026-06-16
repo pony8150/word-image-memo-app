@@ -23,6 +23,9 @@ const smtpPort = toNumber(process.env.SMTP_PORT, 465);
 const smtpUser = process.env.SMTP_USER || "";
 const smtpPass = process.env.SMTP_PASS || "";
 const smtpFromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
+const openAiReasoningEffort = normalizeOpenAiReasoningEffort(
+  process.env.OPENAI_REASONING_EFFORT
+);
 
 export const appEnv = {
   port,
@@ -38,7 +41,11 @@ export const appEnv = {
   smtpUser,
   smtpPass,
   smtpFromEmail,
-  smtpFromName: process.env.SMTP_FROM_NAME || APP_BRAND_NAME
+  smtpFromName: process.env.SMTP_FROM_NAME || APP_BRAND_NAME,
+  openAiApiKey: process.env.OPENAI_API_KEY || "",
+  openAiBaseUrl: (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, ""),
+  openAiModel: process.env.OPENAI_MODEL || "",
+  openAiReasoningEffort
 };
 
 export function getRequiredDatabaseUrl(): string {
@@ -47,6 +54,22 @@ export function getRequiredDatabaseUrl(): string {
   }
 
   return appEnv.databaseUrl;
+}
+
+export function getRequiredOpenAiApiKey(): string {
+  if (!appEnv.openAiApiKey) {
+    throw new Error("Missing OPENAI_API_KEY. Copy backend/.env.example to backend/.env and fill it in.");
+  }
+
+  return appEnv.openAiApiKey;
+}
+
+export function getRequiredOpenAiModel(): string {
+  if (!appEnv.openAiModel) {
+    throw new Error("Missing OPENAI_MODEL. Set the model you want to use in backend/.env.");
+  }
+
+  return appEnv.openAiModel;
 }
 
 function loadEnvFile(filePath: string): void {
@@ -89,4 +112,17 @@ function stripWrappingQuotes(value: string): string {
   }
 
   return value;
+}
+
+function normalizeOpenAiReasoningEffort(
+  value: string | undefined
+): "low" | "medium" | "high" {
+  switch (String(value || "").trim().toLowerCase()) {
+    case "medium":
+      return "medium";
+    case "high":
+      return "high";
+    default:
+      return "low";
+  }
 }

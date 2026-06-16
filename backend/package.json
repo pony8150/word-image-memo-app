@@ -17,6 +17,7 @@
     "import:pexels:junior-high:11-20:private": "ts-node -r tsconfig-paths/register src/scripts/import-pexels-junior-high-11-20-private.ts",
     "import:wordlists": "ts-node -r tsconfig-paths/register src/scripts/import-wordlists.ts",
     "audit:missing-examples": "ts-node -r tsconfig-paths/register src/scripts/audit-missing-examples.ts",
+    "fill:missing-examples": "ts-node -r tsconfig-paths/register src/scripts/fill-missing-examples.ts",
     "optimize:pexels:junior-high:1-20": "ts-node -r tsconfig-paths/register src/scripts/optimize-pexels-junior-high-1-20.ts",
     "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/seed-demo.ts",
     "purge:images": "ts-node -r tsconfig-paths/register src/scripts/purge-images.ts"
