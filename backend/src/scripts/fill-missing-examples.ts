@@ -1,4 +1,4 @@
-import { appendFile, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 import { appEnv, getRequiredOpenAiApiKey, getRequiredOpenAiModel } from "../config/env";
 
@@ -116,7 +116,7 @@ async function fillMissingExamplesForSource(
   model: string,
   startedAt: string
 ) {
-  const filePath = path.resolve(WORDLIST_DIRECTORY, source.fileName);
+  const filePath = await resolveWordlistSourcePath(source);
   const logPath = path.resolve(LOG_DIRECTORY, `fill-missing-examples-${source.code}-${startedAt}.log`);
   const entries = JSON.parse(await readFile(filePath, "utf8")) as WordlistEntry[];
   const targets = entries
@@ -188,6 +188,38 @@ async function fillMissingExamplesForSource(
   }
 
   console.log(`Finished "${source.code}". Wrote ${processedCount} example pair(s), skipped ${skippedCount}.`);
+}
+
+async function resolveWordlistSourcePath(source: BookSourceDefinition): Promise<string> {
+  const fileNames = await readdir(WORDLIST_DIRECTORY);
+
+  switch (source.code) {
+    case "junior-high": {
+      const resolvedFileName = fileNames.find((fileName) => /初中词汇\.json$/u.test(fileName));
+      if (resolvedFileName) {
+        return path.resolve(WORDLIST_DIRECTORY, resolvedFileName);
+      }
+      break;
+    }
+    case "senior-high": {
+      const resolvedFileName = fileNames.find((fileName) => /高中词汇\.json$/u.test(fileName));
+      if (resolvedFileName) {
+        return path.resolve(WORDLIST_DIRECTORY, resolvedFileName);
+      }
+      break;
+    }
+    case "postgraduate-redbook": {
+      const resolvedFileName = fileNames.find((fileName) => /考研词汇\.json$/u.test(fileName));
+      if (resolvedFileName) {
+        return path.resolve(WORDLIST_DIRECTORY, resolvedFileName);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  return path.resolve(WORDLIST_DIRECTORY, source.fileName);
 }
 
 async function generateExamplesForBatch(
@@ -379,6 +411,8 @@ function buildSystemPrompt(): string {
     "You write study-friendly English example sentences and Simplified Chinese translations for a vocabulary app.",
     "Return JSON only and follow the schema exactly.",
     "Use the exact target word in the English sentence.",
+    "Keep the target word exactly as provided; do not change its tense, number, comparison, or derivation.",
+    "If the target word is a verb, prefer patterns like 'can WORD', 'will WORD', or 'to WORD' so the base form stays unchanged.",
     "Prefer the most common sense that matches the provided Chinese meaning.",
     "Keep the sentence concise, natural, concrete, and school-safe."
   ].join("\n");

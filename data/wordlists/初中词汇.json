@@ -9739,7 +9739,9 @@
   {
     "index": 1392,
     "word": "warn",
-    "meaning": "v. 警告，提醒"
+    "meaning": "v. 警告，提醒",
+    "example": "The teacher warned us not to run in the hall.",
+    "exampleChinese": "老师提醒我们不要在走廊里跑。"
   },
   {
     "index": 1393,
@@ -11970,192 +11972,268 @@
   {
     "index": 1711,
     "word": "thirtieth",
-    "meaning": "num. 第三十 n. 三十分之一"
+    "meaning": "num. 第三十 n. 三十分之一",
+    "example": "Her birthday is on the thirtieth of June.",
+    "exampleChinese": "她的生日在六月三十日。"
   },
   {
     "index": 1712,
     "word": "rural",
-    "meaning": "adj. 乡村的"
+    "meaning": "adj. 乡村的",
+    "example": "My grandparents live in a rural village.",
+    "exampleChinese": "我的祖父母住在一个乡村。"
   },
   {
     "index": 1713,
     "word": "leave",
-    "meaning": "v. 离开， 出发"
+    "meaning": "v. 离开， 出发",
+    "example": "We should leave home early for the train.",
+    "exampleChinese": "我们应该早点离家去赶火车。"
   },
   {
     "index": 1714,
     "word": "seventeenth",
-    "meaning": "num. 第十七 n. 十七分之一"
+    "meaning": "num. 第十七 n. 十七分之一",
+    "example": "The art room is on the seventeenth floor.",
+    "exampleChinese": "美术教室在第十七层。"
   },
   {
     "index": 1715,
     "word": "shelf",
-    "meaning": "n. 架子"
+    "meaning": "n. 架子",
+    "example": "Put the storybooks back on the shelf.",
+    "exampleChinese": "把故事书放回书架上。"
   },
   {
     "index": 1716,
     "word": "shell",
-    "meaning": "v. 剥…的壳 n. 壳，贝壳"
+    "meaning": "v. 剥…的壳 n. 壳，贝壳",
+    "example": "The child picked up a shell on the beach.",
+    "exampleChinese": "那个孩子在海滩上捡起了一个贝壳。"
   },
   {
     "index": 1717,
     "word": "therefore",
-    "meaning": "adv. 因此"
+    "meaning": "adv. 因此",
+    "example": "It was raining hard; therefore, we stayed inside.",
+    "exampleChinese": "雨下得很大，因此我们待在室内。"
   },
   {
     "index": 1718,
     "word": "exchange",
-    "meaning": "v. 调换， n. 交换，互换"
+    "meaning": "v. 调换， n. 交换，互换",
+    "example": "We exchange gifts at the New Year party.",
+    "exampleChinese": "我们在新年聚会上交换礼物。"
   },
   {
     "index": 1719,
     "word": "bored",
-    "meaning": "adj. 无聊的， 无趣的"
+    "meaning": "adj. 无聊的， 无趣的",
+    "example": "I felt bored during the long bus ride.",
+    "exampleChinese": "在漫长的公交车程中我感到很无聊。"
   },
   {
     "index": 1720,
     "word": "choose",
-    "meaning": "v. 选择"
+    "meaning": "v. 选择",
+    "example": "You can choose a book from this box.",
+    "exampleChinese": "你可以从这个箱子里选一本书。"
   },
   {
     "index": 1721,
     "word": "ride",
-    "meaning": "v. 骑"
+    "meaning": "v. 骑",
+    "example": "I ride my bike to the park on weekends.",
+    "exampleChinese": "我周末骑自行车去公园。"
   },
   {
     "index": 1722,
     "word": "behave",
-    "meaning": "v. 表现"
+    "meaning": "v. 表现",
+    "example": "Please behave well in the library.",
+    "exampleChinese": "请在图书馆里表现得规矩一些。"
   },
   {
     "index": 1723,
     "word": "medal",
-    "meaning": "n. 奖牌"
+    "meaning": "n. 奖牌",
+    "example": "She won a gold medal in the race.",
+    "exampleChinese": "她在赛跑中赢得了一枚金牌。"
   },
   {
     "index": 1724,
     "word": "mistake",
-    "meaning": "n. 〔行为、看法、言辞等上的〕错误 v. 弄错"
+    "meaning": "n. 〔行为、看法、言辞等上的〕错误 v. 弄错",
+    "example": "I made a mistake in the last question.",
+    "exampleChinese": "我在最后一道题上犯了一个错误。"
   },
   {
     "index": 1725,
     "word": "pour",
-    "meaning": "v. 灌， 倒"
+    "meaning": "v. 灌， 倒",
+    "example": "Please pour some milk into the cup.",
+    "exampleChinese": "请往杯子里倒一些牛奶。"
   },
   {
     "index": 1726,
     "word": "popcorn",
-    "meaning": "n. 爆米花"
+    "meaning": "n. 爆米花",
+    "example": "We shared a bag of popcorn at the movie.",
+    "exampleChinese": "我们看电影时分着吃了一袋爆米花。"
   },
   {
     "index": 1727,
     "word": "spot",
-    "meaning": "n. 地点， 处所"
+    "meaning": "n. 地点， 处所",
+    "example": "This spot under the tree is nice for a picnic.",
+    "exampleChinese": "树下这个地方很适合野餐。"
   },
   {
     "index": 1728,
     "word": "silver",
-    "meaning": "v. 镀银 n. 银"
+    "meaning": "v. 镀银 n. 银",
+    "example": "The ring is made of silver.",
+    "exampleChinese": "这枚戒指是银制的。"
   },
   {
     "index": 1729,
     "word": "aid",
-    "meaning": "v. 帮助 n. 帮助，救助"
+    "meaning": "v. 帮助 n. 帮助，救助",
+    "example": "The nurse came quickly to aid the old man.",
+    "exampleChinese": "护士很快赶来帮助那位老人。"
   },
   {
     "index": 1730,
     "word": "singer",
-    "meaning": "n. 歌手"
+    "meaning": "n. 歌手",
+    "example": "My sister wants to be a singer one day.",
+    "exampleChinese": "我妹妹希望有一天成为一名歌手。"
   },
   {
     "index": 1731,
     "word": "aim",
-    "meaning": "v. 瞄准， 对准 n. 目的，目标"
+    "meaning": "v. 瞄准， 对准 n. 目的，目标",
+    "example": "Aim at the basket before you throw the ball.",
+    "exampleChinese": "投球前先瞄准篮筐。"
   },
   {
     "index": 1732,
     "word": "confident",
-    "meaning": "adj. 确信的， 肯定的"
+    "meaning": "adj. 确信的， 肯定的",
+    "example": "She felt confident before the speech.",
+    "exampleChinese": "她在演讲前感到很自信。"
   },
   {
     "index": 1733,
     "word": "local",
-    "meaning": "adj. 地方性的，本地的 n. 当地人"
+    "meaning": "adj. 地方性的，本地的 n. 当地人",
+    "example": "We bought fresh fruit from the local market.",
+    "exampleChinese": "我们从当地市场买了新鲜水果。"
   },
   {
     "index": 1734,
     "word": "speak",
-    "meaning": "v. 说话， 讲话"
+    "meaning": "v. 说话， 讲话",
+    "example": "Please speak slowly so everyone can understand.",
+    "exampleChinese": "请说慢一点，这样每个人都能听懂。"
   },
   {
     "index": 1735,
     "word": "restroom",
-    "meaning": "n. 洗手间"
+    "meaning": "n. 洗手间",
+    "example": "Excuse me, where is the restroom?",
+    "exampleChinese": "请问，洗手间在哪里？"
   },
   {
     "index": 1736,
     "word": "polar",
-    "meaning": "adj. 地极的， 近地极的"
+    "meaning": "adj. 地极的， 近地极的",
+    "example": "Polar bears live in very cold places.",
+    "exampleChinese": "北极熊生活在非常寒冷的地方。"
   },
   {
     "index": 1737,
     "word": "shark",
-    "meaning": "n. 鲨鱼"
+    "meaning": "n. 鲨鱼",
+    "example": "We saw a shark in the sea show.",
+    "exampleChinese": "我们在海洋表演中看见了一条鲨鱼。"
   },
   {
     "index": 1738,
     "word": "more",
-    "meaning": "adv. 更，更多 adj. 更多的"
+    "meaning": "adv. 更，更多 adj. 更多的",
+    "example": "I need more time to finish the model.",
+    "exampleChinese": "我需要更多时间完成这个模型。"
   },
   {
     "index": 1739,
     "word": "shake",
-    "meaning": "v. 摇动， 摇"
+    "meaning": "v. 摇动， 摇",
+    "example": "Shake the bottle before you drink the juice.",
+    "exampleChinese": "喝果汁前先摇一摇瓶子。"
   },
   {
     "index": 1740,
     "word": "honor",
-    "meaning": "v. 尊敬 n. 尊敬，敬意"
+    "meaning": "v. 尊敬 n. 尊敬，敬意",
+    "example": "We honor our teachers on Teachers' Day.",
+    "exampleChinese": "我们在教师节向老师表达敬意。"
   },
   {
     "index": 1741,
     "word": "cage",
-    "meaning": "n. 笼子"
+    "meaning": "n. 笼子",
+    "example": "The bird flew out of the cage.",
+    "exampleChinese": "那只鸟从笼子里飞了出来。"
   },
   {
     "index": 1742,
     "word": "unhealthy",
-    "meaning": "adj. 不健康的"
+    "meaning": "adj. 不健康的",
+    "example": "Too much fast food is unhealthy for children.",
+    "exampleChinese": "过多的快餐对孩子不健康。"
   },
   {
     "index": 1743,
     "word": "insect",
-    "meaning": "n. 昆虫， 虫"
+    "meaning": "n. 昆虫， 虫",
+    "example": "This insect has bright green wings.",
+    "exampleChinese": "这只昆虫有鲜绿色的翅膀。"
   },
   {
     "index": 1744,
     "word": "net",
-    "meaning": "adj. 净的 n. 网"
+    "meaning": "adj. 净的 n. 网",
+    "example": "The fisherman pulled in the net slowly.",
+    "exampleChinese": "渔夫慢慢收起了网。"
   },
   {
     "index": 1745,
     "word": "border",
-    "meaning": "v. 给…加上边， 围 n. 边，边缘"
+    "meaning": "v. 给…加上边， 围 n. 边，边缘",
+    "example": "The farm is close to the border.",
+    "exampleChinese": "那个农场靠近边界。"
   },
   {
     "index": 1746,
     "word": "read",
-    "meaning": "v. 读， 阅读"
+    "meaning": "v. 读， 阅读",
+    "example": "I like to read before going to bed.",
+    "exampleChinese": "我喜欢在睡觉前阅读。"
   },
   {
     "index": 1747,
     "word": "shall",
-    "meaning": "modal verb. 〔某事〕必定"
+    "meaning": "modal verb. 〔某事〕必定",
+    "example": "Shall we meet at the school gate at eight?",
+    "exampleChinese": "我们八点在校门口见好吗？"
   },
   {
     "index": 1748,
     "word": "nearby",
-    "meaning": "adv. 在附近 adj. 附近的"
+    "meaning": "adv. 在附近 adj. 附近的",
+    "example": "There is a nearby shop that sells snacks.",
+    "exampleChinese": "附近有一家卖零食的商店。"
   },
   {
     "index": 1749,

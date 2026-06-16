@@ -165,17 +165,14 @@ export class ImagesService {
       throw new NotFoundException("Word not found.");
     }
 
-    const downloadedImage = await this.downloadRemoteImage(input);
-    const asset = await this.resolveOrCreateLocalAsset(
-      downloadedImage.content,
-      downloadedImage.contentType,
-      `bing${downloadedImage.fileExtension}`
-    );
+    const selectedImageUrl = this.resolveImportImageUrl(input);
+    const asset = await this.resolveOrCreateExternalAsset(selectedImageUrl);
+    const sourceDomain = this.extractHostname(input.sourcePageUrl || "") || this.extractHostname(selectedImageUrl);
 
     return this.database.transaction(async (client) => {
       await this.ensurePrivateImageRelation(client, wordId, user, asset.id, {
         sourceLabel: "Bing Search",
-        sourceCredit: downloadedImage.sourceDomain
+        sourceCredit: sourceDomain
       });
 
       const word = await this.wordsService.getWordByIdForUser(wordId, user.id, client);
@@ -508,6 +505,68 @@ export class ImagesService {
     }
   }
 
+  private async resolveOrCreateExternalAsset(publicUrl: string): Promise<PersistedImageAsset> {
+    const existingResult = await this.database.query<ImageAssetRow>(
+      `
+        SELECT
+          CAST(id AS CHAR) AS id,
+          storage_type,
+          storage_key,
+          public_url,
+          sha256_hash,
+          mime_type,
+          file_size_bytes
+        FROM image_assets
+        WHERE storage_type = 'external'
+          AND public_url = $1
+        LIMIT 1
+      `,
+      [publicUrl]
+    );
+
+    const existingRow = existingResult.rows[0];
+
+    if (existingRow) {
+      return {
+        id: Number(existingRow.id),
+        storageType: existingRow.storage_type,
+        storageKey: existingRow.storage_key,
+        publicUrl: existingRow.public_url,
+        sha256Hash: existingRow.sha256_hash,
+        mimeType: existingRow.mime_type,
+        fileSizeBytes:
+          existingRow.file_size_bytes === null || existingRow.file_size_bytes === undefined
+            ? null
+            : Number(existingRow.file_size_bytes)
+      };
+    }
+
+    const insertResult = await this.database.query(
+      `
+        INSERT INTO image_assets (
+          storage_type,
+          storage_key,
+          public_url,
+          sha256_hash,
+          mime_type,
+          file_size_bytes
+        )
+        VALUES ('external', NULL, $1, NULL, NULL, NULL)
+      `,
+      [publicUrl]
+    );
+
+    return {
+      id: Number(insertResult.insertId),
+      storageType: "external",
+      storageKey: null,
+      publicUrl,
+      sha256Hash: null,
+      mimeType: null,
+      fileSizeBytes: null
+    };
+  }
+
   private async findAssetBySha256(sha256Hash: string): Promise<PersistedImageAsset | null> {
     const result = await this.database.query<ImageAssetRow>(
       `
@@ -552,6 +611,16 @@ export class ImagesService {
     } catch (error) {
       return;
     }
+  }
+
+  private resolveImportImageUrl(input: ImportSearchedImageInput): string {
+    const candidates = this.buildRemoteImageCandidates(input);
+
+    if (candidates.length === 0) {
+      throw new BadRequestException("Image URL is invalid.");
+    }
+
+    return candidates[0].url;
   }
 
   private async collectBingSearchResults(query: string): Promise<BingSearchResult[]> {
