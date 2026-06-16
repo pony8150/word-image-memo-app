@@ -836,6 +836,11 @@ function bindEvents() {
   elements.learnMedia.addEventListener("contextmenu", (event) => {
     event.preventDefault();
   });
+  [elements.learnImage, elements.reviewImage, elements.imageVisual, elements.communityPostImage]
+    .filter(Boolean)
+    .forEach((imageElement) => {
+      imageElement.addEventListener("error", handleImageFallback);
+    });
   elements.learnMedia.addEventListener("click", () => {
     if (state.learnLongPressTriggered) {
       state.learnLongPressTriggered = false;
@@ -2004,7 +2009,7 @@ function renderWelcome() {
     .map(
       (word, index) => `
         <article class="deck-card ${index === state.learnIndex ? "active" : ""}">
-          <img src="${getWordImages(word)[0].url}" alt="${word.english}" />
+          <img src="${getWordImages(word)[0].url}" alt="${word.english}" referrerpolicy="no-referrer" />
           <div>
             <strong>${word.english}</strong>
             <small>${word.chinese}</small>
@@ -2060,7 +2065,7 @@ function renderCommunityFeed() {
       (post) => `
         <article class="community-card" data-community-post-id="${post.id}">
           <div class="community-card-media">
-            <img src="${escapeHtml(post.imageUrl)}" alt="${escapeHtml(post.title)}" />
+            <img src="${escapeHtml(post.imageUrl)}" alt="${escapeHtml(post.title)}" referrerpolicy="no-referrer" />
           </div>
           <div class="community-card-body">
             <div class="community-card-meta">
@@ -2094,8 +2099,7 @@ function renderCommunityPostDetail() {
   const post = state.communityPostDetail;
 
   if (!post) {
-    elements.communityPostImage.src = "";
-    elements.communityPostImage.alt = "";
+    setImageWithFallback(elements.communityPostImage, [], 0, "");
     elements.communityPostAvatar.textContent = "W";
     elements.communityPostAuthorName.textContent = "";
     elements.communityPostCreatedAt.textContent = "";
@@ -2130,8 +2134,7 @@ function renderCommunityPostDetail() {
     return;
   }
 
-  elements.communityPostImage.src = post.imageUrl;
-  elements.communityPostImage.alt = post.title;
+  setImageWithFallback(elements.communityPostImage, post.imageUrl ? [{ url: post.imageUrl }] : [], 0, post.title);
   elements.communityPostAvatar.textContent = post.author.avatarText;
   elements.communityPostAuthorName.textContent = post.author.displayName || post.author.email;
   elements.communityPostCreatedAt.textContent = formatCommunityDate(post.createdAt);
@@ -2205,8 +2208,12 @@ function renderLearn() {
 
     elements.learnProgress.textContent = state.authUser ? "暂无单词" : "请先登录";
     elements.learnListToggle.disabled = true;
-    elements.learnImage.src = placeholderImage.url;
-    elements.learnImage.alt = state.authUser ? "当前词书暂无单词" : "请先登录";
+    setImageWithFallback(
+      elements.learnImage,
+      [placeholderImage],
+      0,
+      state.authUser ? "当前词书暂无单词" : "请先登录"
+    );
     elements.learnMedia.classList.remove("is-switchable", "is-manage-open");
     elements.learnWord.textContent = state.authUser ? "当前词书暂无单词" : "请先登录";
     elements.learnTranslation.textContent = state.authUser
@@ -2227,7 +2234,6 @@ function renderLearn() {
 
   const word = words[state.learnIndex];
   const images = getWordImages(word);
-  const activeImage = images[Math.min(state.learnImageIndex, images.length - 1)];
   const hasExample = hasExampleText(word);
   const exampleCopy = hasExample
     ? {
@@ -2238,8 +2244,7 @@ function renderLearn() {
 
   elements.learnProgress.textContent = `${state.learnIndex + 1} / ${words.length}`;
   elements.learnListToggle.disabled = false;
-  elements.learnImage.src = activeImage.url;
-  elements.learnImage.alt = `${word.english} 的真实图片`;
+  setImageWithFallback(elements.learnImage, images, state.learnImageIndex, `${word.english} 的真实图片`);
   elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !state.learnDeleteMenuOpen);
   elements.learnMedia.classList.toggle("is-manage-open", state.learnDeleteMenuOpen);
   elements.learnWord.textContent = word.english;
@@ -2412,8 +2417,12 @@ function renderReview() {
     elements.reviewSuggestion.textContent = state.authUser
       ? "当前词书为空，暂时没有复习内容。"
       : "登录后才能进入复习模式。";
-    elements.reviewImage.src = placeholderImage.url;
-    elements.reviewImage.alt = state.authUser ? "当前没有可复习单词" : "请先登录";
+    setImageWithFallback(
+      elements.reviewImage,
+      [placeholderImage],
+      0,
+      state.authUser ? "当前没有可复习单词" : "请先登录"
+    );
     elements.reviewWord.textContent = state.authUser ? "当前没有可复习单词" : "请先登录";
     elements.reviewPromptText.textContent = state.authUser
       ? "换一本词书，或者检查后端 seed 数据。"
@@ -2435,8 +2444,7 @@ function renderReview() {
 
   if (state.reviewIndex >= total) {
     const lastWord = words[state.reviewOrder[total - 1]];
-    elements.reviewImage.src = getWordImages(lastWord)[0].url;
-    elements.reviewImage.alt = "复习完成";
+    setImageWithFallback(elements.reviewImage, getWordImages(lastWord), 0, "复习完成");
     elements.reviewWord.textContent = "这一轮复习完成";
     elements.reviewPromptText.textContent = "可以切到统计页查看薄弱词，或继续去玩一轮看图猜词。";
     elements.reviewTranslation.textContent = "今天这一组词已经复习完了。";
@@ -2450,10 +2458,7 @@ function renderReview() {
 
   const wordIndex = state.reviewOrder[state.reviewIndex];
   const word = words[wordIndex];
-  const reviewImage = getRoundImage(word, state.reviewIndex);
-
-  elements.reviewImage.src = reviewImage.url;
-  elements.reviewImage.alt = `${word.english} 的复习图片`;
+  setImageWithFallback(elements.reviewImage, getWordImages(word), state.reviewIndex, `${word.english} 的复习图片`);
   elements.reviewWord.textContent = word.english;
   elements.reviewPromptText.textContent = state.reviewRevealed
     ? "已经显示答案，看看自己刚才想得对不对。"
@@ -2478,8 +2483,12 @@ function renderImage() {
     });
 
     elements.imageProgress.textContent = state.authUser ? "当前词书暂无题目" : "请先登录";
-    elements.imageVisual.src = placeholderImage.url;
-    elements.imageVisual.alt = state.authUser ? "当前词书暂无题目" : "请先登录";
+    setImageWithFallback(
+      elements.imageVisual,
+      [placeholderImage],
+      0,
+      state.authUser ? "当前词书暂无题目" : "请先登录"
+    );
     elements.imagePromptText.textContent = state.authUser
       ? "当前词书没有足够的单词来生成题目。"
       : "登录后才能进入看图猜词。";
@@ -2508,11 +2517,8 @@ function renderImage() {
 
   const wordIndex = state.imageOrder[state.imageIndex];
   const word = words[wordIndex];
-  const promptImage = getRoundImage(word, state.imageIndex);
-
   elements.imageProgress.textContent = `看图猜词 ${state.imageIndex + 1} / ${total}`;
-  elements.imageVisual.src = promptImage.url;
-  elements.imageVisual.alt = `${word.english} 的猜词图片`;
+  setImageWithFallback(elements.imageVisual, getWordImages(word), state.imageIndex, `${word.english} 的猜词图片`);
   elements.imagePromptText.textContent = state.imageAnswered
     ? `答案：${word.english} · ${word.chinese}`
     : "先看图，不看中文，直接选你觉得最像的英文词。";
@@ -3023,13 +3029,77 @@ function getWordImages(word) {
   );
   const removedUrls = state.dataSource === "local" ? new Set(state.removedImagesByWord[word.id] || []) : new Set();
   const visibleImages = uniqueImages.filter((image) => !removedUrls.has(image.url));
+  const candidateImages = visibleImages.length > 0 ? visibleImages : uniqueImages.slice(0, 1);
+  const defaultBingImage = candidateImages.find(
+    (image) => image?.scope === "default" && image?.source === "Bing URL"
+  );
 
-  return visibleImages.length > 0 ? visibleImages : uniqueImages.slice(0, 1);
+  if (defaultBingImage) {
+    return [defaultBingImage];
+  }
+
+  const defaultImage = candidateImages.find((image) => image?.scope === "default");
+
+  if (defaultImage) {
+    return [defaultImage];
+  }
+
+  return candidateImages;
 }
 
 function getRoundImage(word, roundIndex) {
   const images = getWordImages(word);
   return images[roundIndex % images.length];
+}
+
+function setImageWithFallback(imageElement, imageCandidates, preferredIndex, altText) {
+  if (!imageElement) {
+    return;
+  }
+
+  const urls = (Array.isArray(imageCandidates) ? imageCandidates : [])
+    .map((image) => image?.url)
+    .filter(Boolean);
+  const safeUrls = urls.length > 0 ? urls : [buildEmptyImagePlaceholder({ id: "fallback-image" }).url];
+  const safeIndex = Math.min(Math.max(Number(preferredIndex) || 0, 0), safeUrls.length - 1);
+
+  imageElement.dataset.fallbackUrls = JSON.stringify(safeUrls);
+  imageElement.dataset.fallbackIndex = String(safeIndex);
+  imageElement.classList.remove("is-broken-image");
+  imageElement.alt = altText || "";
+  imageElement.src = safeUrls[safeIndex];
+}
+
+function handleImageFallback(event) {
+  const imageElement = event.currentTarget;
+  let urls = [];
+
+  try {
+    const parsedUrls = JSON.parse(imageElement.dataset.fallbackUrls || "[]");
+    urls = Array.isArray(parsedUrls) ? parsedUrls.filter(Boolean) : [];
+  } catch (error) {
+    urls = [];
+  }
+
+  let nextIndex = Number(imageElement.dataset.fallbackIndex || 0) + 1;
+
+  while (nextIndex < urls.length) {
+    const nextUrl = urls[nextIndex];
+    imageElement.dataset.fallbackIndex = String(nextIndex);
+
+    if (nextUrl && imageElement.src !== nextUrl) {
+      if (imageElement === elements.learnImage) {
+        state.learnImageIndex = nextIndex;
+      }
+
+      imageElement.src = nextUrl;
+      return;
+    }
+
+    nextIndex += 1;
+  }
+
+  imageElement.classList.add("is-broken-image");
 }
 
 function prepareImageQuestion() {
@@ -3220,7 +3290,7 @@ function renderLearnSearchResults() {
           ${state.learnSearchPending || state.learnSearchImportingId ? "disabled" : ""}
         >
           <div class="learn-search-thumb">
-            <img src="${thumbnailUrl}" alt="${title}" loading="lazy" decoding="async" />
+            <img src="${thumbnailUrl}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
           </div>
         </button>
       `;
