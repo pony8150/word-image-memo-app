@@ -677,9 +677,11 @@ function cacheElements() {
   elements.communityPostWordPanel = document.getElementById("community-post-word-panel");
   elements.communityPostWordMeta = document.getElementById("community-post-word-meta");
   elements.communityPostLike = document.getElementById("community-post-like");
+  elements.communityPostLikeIcon = document.getElementById("community-post-like-icon");
   elements.communityPostFavorite = document.getElementById("community-post-favorite");
   elements.communityPostFavoriteLabel = document.getElementById("community-post-favorite-label");
   elements.communityPostCommentTrigger = document.getElementById("community-post-comment-trigger");
+  elements.communityPostCommentIcon = document.getElementById("community-post-comment-icon");
   elements.communityPostLikeCount = document.getElementById("community-post-like-count");
   elements.communityPostFavoriteCount = document.getElementById("community-post-favorite-count");
   elements.communityPostCommentCount = document.getElementById("community-post-comment-count");
@@ -2226,6 +2228,46 @@ function normalizeCommunityFeed(posts) {
   return posts.map((post) => normalizeCommunityPost(post)).filter(Boolean);
 }
 
+function hasViewerCommentedOnPost(post) {
+  if (!post || !state.authUser || !Array.isArray(post.comments)) {
+    return false;
+  }
+
+  const viewerId = Number(state.authUser.id || 0);
+
+  return post.comments.some((comment) => Number(comment.author?.id || 0) === viewerId);
+}
+
+function buildCommunityCommentIconMarkup(isActive = false) {
+  return isActive
+    ? `
+        <svg viewBox="0 0 24 24" role="presentation" focusable="false" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M12 3C6.477 3 2 6.91 2 11.733c0 2.13.875 4.08 2.33 5.594V22l4.232-2.401c1.086.283 2.237.434 3.438.434 5.523 0 10-3.91 10-8.733S17.523 3 12 3Zm-4.25 6.2h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5Zm5 5.6h-5a.75.75 0 0 1 0-1.5h5a.75.75 0 0 1 0 1.5Z"
+          />
+        </svg>
+      `
+    : `
+        <svg viewBox="0 0 24 24" role="presentation" focusable="false" aria-hidden="true">
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.8"
+            d="M8 10h8M8 14h5m8-2.5c0 4.695-4.03 8.5-9 8.5-1.131 0-2.214-.197-3.209-.558L4 22v-4.2C2.764 16.246 2 13.95 2 11.5 2 6.805 6.03 3 11 3s10 3.805 10 8.5Z"
+          />
+        </svg>
+      `;
+}
+
+function setCommunityCommentIconState(isActive = false) {
+  if (elements.communityPostCommentIcon) {
+    elements.communityPostCommentIcon.innerHTML = buildCommunityCommentIconMarkup(isActive);
+  }
+}
+
 function getCommunityFeedModeMeta() {
   if (state.communityFeedMode === "ranking") {
     return {
@@ -2338,25 +2380,6 @@ function buildCommunityFeedEmptyState() {
     title: "社区还没有内容",
     copy: "从学习页长按图片，再点“发到社区”，就能发出第一条单词帖子。"
   };
-}
-
-function buildCommunityWordMetaMarkup(post) {
-  const items = [
-    post.word?.example
-      ? `<article class="community-word-meta-item"><span>例句</span><p>${escapeHtml(post.word.example)}</p></article>`
-      : "",
-    post.word?.exampleChinese
-      ? `<article class="community-word-meta-item"><span>例句翻译</span><p>${escapeHtml(post.word.exampleChinese)}</p></article>`
-      : "",
-    post.word?.imageReason
-      ? `<article class="community-word-meta-item"><span>记忆点</span><p>${escapeHtml(post.word.imageReason)}</p></article>`
-      : "",
-    post.word?.scene
-      ? `<article class="community-word-meta-item"><span>联想场景</span><p>${escapeHtml(post.word.scene)}</p></article>`
-      : ""
-  ].filter(Boolean);
-
-  return items.join("");
 }
 
 function renderAdmin() {
@@ -3341,9 +3364,13 @@ function renderCommunityFeed() {
               <p>${escapeHtml(post.body || "这条帖子还没有正文。")}</p>
             </div>
             <div class="community-card-stats" aria-label="帖子互动数据">
-              <span class="community-card-stat"><span aria-hidden="true">赞</span> ${formatCount(post.likeCount)}</span>
-              <span class="community-card-stat"><span aria-hidden="true">藏</span> ${formatCount(post.favoriteCount)}</span>
-              <span class="community-card-stat"><span aria-hidden="true">评</span> ${formatCount(post.commentCount)}</span>
+              <span
+                class="community-card-stat community-card-stat-like ${post.viewer?.liked ? "is-active" : ""}"
+                aria-label="${post.viewer?.liked ? "已点赞" : "点赞"} ${formatCount(post.likeCount)}"
+              >
+                <span class="community-card-stat-icon" aria-hidden="true">${post.viewer?.liked ? "♥" : "♡"}</span>
+                <span>${formatCount(post.likeCount)}</span>
+              </span>
             </div>
           </div>
         </article>
@@ -3371,15 +3398,22 @@ function renderCommunityPostDetail() {
     if (elements.communityPostWordPanel) {
       elements.communityPostWordPanel.hidden = true;
     }
-    elements.communityPostWordMeta.innerHTML = "";
+    if (elements.communityPostWordMeta) {
+      elements.communityPostWordMeta.innerHTML = "";
+    }
     elements.communityPostLikeCount.textContent = "0";
     elements.communityPostFavoriteCount.textContent = "0";
     elements.communityPostCommentCount.textContent = "0";
-    if (elements.communityPostFavoriteLabel) {
-      elements.communityPostFavoriteLabel.textContent = "收藏";
+    if (elements.communityPostLikeIcon) {
+      elements.communityPostLikeIcon.textContent = "♡";
     }
+    if (elements.communityPostFavoriteLabel) {
+      elements.communityPostFavoriteLabel.textContent = "☆";
+    }
+    setCommunityCommentIconState(false);
     elements.communityPostLike.classList.remove("is-active");
     elements.communityPostFavorite.classList.remove("is-active");
+    elements.communityPostCommentTrigger.classList.remove("is-active");
     elements.communityPostLike.disabled = true;
     elements.communityPostFavorite.disabled = true;
     elements.communityCommentSubmit.disabled = true;
@@ -3403,27 +3437,37 @@ function renderCommunityPostDetail() {
   elements.communityPostSubtitle.textContent = `${post.word.english} · ${post.word.chinese}`;
   elements.communityPostDescription.textContent = post.body || "这条帖子还没有写短评。";
   elements.communityPostDescription.classList.toggle("is-empty", !post.body);
-  const wordMetaMarkup = buildCommunityWordMetaMarkup(post);
   if (elements.communityPostWordPanel) {
-    elements.communityPostWordPanel.hidden = !wordMetaMarkup;
+    elements.communityPostWordPanel.hidden = true;
   }
-  elements.communityPostWordMeta.innerHTML = wordMetaMarkup;
+  if (elements.communityPostWordMeta) {
+    elements.communityPostWordMeta.innerHTML = "";
+  }
   elements.communityPostLikeCount.textContent = formatCount(post.likeCount);
   elements.communityPostFavoriteCount.textContent = formatCount(post.favoriteCount);
   elements.communityPostCommentCount.textContent = formatCount(post.commentCount);
-  elements.communityPostLike.classList.toggle("is-active", Boolean(post.viewer?.liked));
-  elements.communityPostFavorite.classList.toggle("is-active", Boolean(post.viewer?.favorited));
-  const isOwnPost = isOwnCommunityPost(post);
+  const isLiked = Boolean(post.viewer?.liked);
   const isFavorited = Boolean(post.viewer?.favorited);
-  if (elements.communityPostFavoriteLabel) {
-    elements.communityPostFavoriteLabel.textContent = isFavorited ? "已收藏" : "收藏";
+  const hasCommented = hasViewerCommentedOnPost(post);
+  elements.communityPostLike.classList.toggle("is-active", isLiked);
+  elements.communityPostFavorite.classList.toggle("is-active", isFavorited);
+  elements.communityPostCommentTrigger.classList.toggle("is-active", hasCommented);
+  if (elements.communityPostLikeIcon) {
+    elements.communityPostLikeIcon.textContent = isLiked ? "♥" : "♡";
   }
+  const isOwnPost = isOwnCommunityPost(post);
+  if (elements.communityPostFavoriteLabel) {
+    elements.communityPostFavoriteLabel.textContent = isFavorited ? "★" : "☆";
+  }
+  setCommunityCommentIconState(hasCommented);
   elements.communityPostLike.disabled = state.communityPostPending;
   elements.communityPostFavorite.disabled = state.communityPostPending || isOwnPost || isFavorited;
   elements.communityPostFavorite.setAttribute(
     "aria-label",
     isFavorited ? "已收藏到我的词图" : "收藏到我的词图"
   );
+  elements.communityPostLike.setAttribute("aria-label", isLiked ? "已点赞" : "点赞");
+  elements.communityPostCommentTrigger.setAttribute("aria-label", hasCommented ? "已评论" : "评论");
   elements.communityCommentSubmit.disabled = state.communityCommentPending;
   elements.communityCommentSubmit.textContent = state.communityCommentPending ? "发送中..." : "发表评论";
 

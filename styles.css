@@ -2012,6 +2012,15 @@ button {
   font-weight: 700;
 }
 
+.community-card-stat-like {
+  color: var(--primary-deep);
+}
+
+.community-card-stat-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .community-avatar {
   display: inline-grid;
   place-items: center;
@@ -2097,8 +2106,16 @@ button {
 }
 
 .community-post-subtitle {
+  color: var(--muted) !important;
+  font-weight: 600;
+  font-size: 0.96rem;
+}
+
+.community-post-description {
+  font-size: 1.22rem;
+  line-height: 1.9;
   color: var(--text) !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-post-description.is-empty {
@@ -2141,20 +2158,28 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 76px;
-  padding-inline: 16px;
+  gap: 10px;
+  min-width: 90px;
+  min-height: 48px;
+  padding-inline: 18px;
   border-radius: 999px;
 }
 
 .community-action-icon {
-  font-size: 1rem;
+  font-size: 1.2rem;
   line-height: 1;
+}
+
+.community-action-icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
 }
 
 .community-action-count {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  font-size: 1rem;
 }
 
 .community-action-btn[disabled] {
@@ -2213,6 +2238,19 @@ button {
   border-radius: 22px;
   background: rgba(248, 251, 254, 0.96);
   border: 1px solid rgba(46, 155, 207, 0.08);
+}
+
+.community-card-copy p {
+  color: var(--text) !important;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.community-comment-content {
+  color: var(--text) !important;
+  font-size: 1.08rem;
+  line-height: 1.85;
+  font-weight: 500;
 }
 
 .community-empty-inline {
