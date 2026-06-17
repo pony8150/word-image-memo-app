@@ -46,3 +46,32 @@ export interface CommunityPostDetail extends CommunityFeedPost {
   };
   comments: CommunityComment[];
 }
+
+export interface CommunityAdminSummary {
+  totalUsers: number;
+  adminUsers: number;
+  activeUsers7d: number;
+  activePosts: number;
+  deletedPosts: number;
+  activeComments: number;
+}
+
+export interface CommunityAdminPost {
+  id: number;
+  wordId: string;
+  title: string;
+  body: string | null;
+  imageUrl: string;
+  status: "active" | "deleted";
+  likeCount: number;
+  favoriteCount: number;
+  commentCount: number;
+  shareCount: number;
+  createdAt: string;
+  author: CommunityAuthor;
+}
+
+export interface CommunityAdminOverview {
+  summary: CommunityAdminSummary;
+  recentPosts: CommunityAdminPost[];
+}

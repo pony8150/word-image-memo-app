@@ -2,7 +2,7 @@
   {
     id: "apple",
     english: "apple",
-    chinese: "苹果",
+    chinese: "鑻规灉",
     image: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Maksym Kaharlytskyi",
@@ -16,17 +16,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "红苹果主体非常明确，颜色醒目，学生一眼就能把 apple 和真实水果连起来。",
-    level: "初中高频",
-    theme: "食物",
+    imageReason: "绾㈣嫻鏋滀富浣撻潪甯告槑纭紝棰滆壊閱掔洰锛屽鐢熶竴鐪煎氨鑳芥妸 apple 鍜岀湡瀹炴按鏋滆繛璧锋潵銆?,
+    level: "鍒濅腑楂橀",
+    theme: "椋熺墿",
     example: "I put an apple in my school bag for lunch.",
-    exampleChinese: "我把一个苹果放进书包里当午餐。",
-    scene: "午餐盒打开的瞬间，一颗新鲜红苹果最先跳进视线。"
+    exampleChinese: "鎴戞妸涓€涓嫻鏋滄斁杩涗功鍖呴噷褰撳崍椁愩€?,
+    scene: "鍗堥鐩掓墦寮€鐨勭灛闂达紝涓€棰楁柊椴滅孩鑻规灉鏈€鍏堣烦杩涜绾裤€?
   },
   {
     id: "bicycle",
     english: "bicycle",
-    chinese: "自行车",
+    chinese: "鑷杞?,
     image: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Murillo de Paula",
@@ -40,17 +40,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "真实街道上的自行车比图标更有生活感，两个车轮和骑行姿态能快速触发记忆。",
-    level: "初中高频",
-    theme: "日常出行",
+    imageReason: "鐪熷疄琛楅亾涓婄殑鑷杞︽瘮鍥炬爣鏇存湁鐢熸椿鎰燂紝涓や釜杞﹁疆鍜岄獞琛屽Э鎬佽兘蹇€熻Е鍙戣蹇嗐€?,
+    level: "鍒濅腑楂橀",
+    theme: "鏃ュ父鍑鸿",
     example: "He rides his bicycle to school on sunny days.",
-    exampleChinese: "天气晴朗的时候，他骑自行车去上学。",
-    scene: "放学路上骑车回家，车轮转起来的画面很容易和单词绑定。"
+    exampleChinese: "澶╂皵鏅存湕鐨勬椂鍊欙紝浠栭獞鑷杞﹀幓涓婂銆?,
+    scene: "鏀惧璺笂楠戣溅鍥炲锛岃溅杞浆璧锋潵鐨勭敾闈㈠緢瀹规槗鍜屽崟璇嶇粦瀹氥€?
   },
   {
     id: "library",
     english: "library",
-    chinese: "图书馆",
+    chinese: "鍥句功棣?,
     image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Robert Bye",
@@ -64,17 +64,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "书架、桌椅和安静光线一起出现时，library 不再是抽象名词，而是一个能进入的真实空间。",
-    level: "初中高频",
-    theme: "校园",
+    imageReason: "涔︽灦銆佹妞呭拰瀹夐潤鍏夌嚎涓€璧峰嚭鐜版椂锛宭ibrary 涓嶅啀鏄娊璞″悕璇嶏紝鑰屾槸涓€涓兘杩涘叆鐨勭湡瀹炵┖闂淬€?,
+    level: "鍒濅腑楂橀",
+    theme: "鏍″洯",
     example: "We borrow story books from the library after class.",
-    exampleChinese: "我们下课后从图书馆借故事书。",
-    scene: "午后阳光洒进图书馆，学生坐在书架旁安静看书。"
+    exampleChinese: "鎴戜滑涓嬭鍚庝粠鍥句功棣嗗€熸晠浜嬩功銆?,
+    scene: "鍗堝悗闃冲厜娲掕繘鍥句功棣嗭紝瀛︾敓鍧愬湪涔︽灦鏃佸畨闈欑湅涔︺€?
   },
   {
     id: "bridge",
     english: "bridge",
-    chinese: "桥",
+    chinese: "妗?,
     image: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Andreas Gucklhorn",
@@ -88,17 +88,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "桥横跨两端的结构很直观，雾气和纵深感让画面更有记忆点。",
-    level: "初中高频",
-    theme: "自然与建筑",
+    imageReason: "妗ユí璺ㄤ袱绔殑缁撴瀯寰堢洿瑙傦紝闆炬皵鍜岀旱娣辨劅璁╃敾闈㈡洿鏈夎蹇嗙偣銆?,
+    level: "鍒濅腑楂橀",
+    theme: "鑷劧涓庡缓绛?,
     example: "A small bridge crosses the river behind the village.",
-    exampleChinese: "村子后面有一座小桥横跨河流。",
-    scene: "薄雾里，一座长桥从一端延伸到另一端，像把两侧世界连起来。"
+    exampleChinese: "鏉戝瓙鍚庨潰鏈変竴搴у皬妗ユí璺ㄦ渤娴併€?,
+    scene: "钖勯浘閲岋紝涓€搴ч暱妗ヤ粠涓€绔欢浼稿埌鍙︿竴绔紝鍍忔妸涓や晶涓栫晫杩炶捣鏉ャ€?
   },
   {
     id: "forest",
     english: "forest",
-    chinese: "森林",
+    chinese: "妫灄",
     image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Geran de Klerk",
@@ -112,17 +112,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "树木密集、光线穿透树林的场景，比单棵树更能体现 forest 的整体感。",
-    level: "初中高频",
-    theme: "自然",
+    imageReason: "鏍戞湪瀵嗛泦銆佸厜绾跨┛閫忔爲鏋楃殑鍦烘櫙锛屾瘮鍗曟５鏍戞洿鑳戒綋鐜?forest 鐨勬暣浣撴劅銆?,
+    level: "鍒濅腑楂橀",
+    theme: "鑷劧",
     example: "The forest becomes quiet after sunset.",
-    exampleChinese: "日落以后，森林变得安静下来。",
-    scene: "阳光从高高的树间落下来，整片森林安静又深。"
+    exampleChinese: "鏃ヨ惤浠ュ悗锛屾．鏋楀彉寰楀畨闈欎笅鏉ャ€?,
+    scene: "闃冲厜浠庨珮楂樼殑鏍戦棿钀戒笅鏉ワ紝鏁寸墖妫灄瀹夐潤鍙堟繁銆?
   },
   {
     id: "courage",
     english: "courage",
-    chinese: "勇气",
+    chinese: "鍕囨皵",
     image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Dane Deaner",
@@ -136,17 +136,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "站在高处望向远方的人物场景，比抽象符号更能传达明明紧张但还是向前的 courage。",
-    level: "高中常用",
-    theme: "情绪与品质",
+    imageReason: "绔欏湪楂樺鏈涘悜杩滄柟鐨勪汉鐗╁満鏅紝姣旀娊璞＄鍙锋洿鑳戒紶杈炬槑鏄庣揣寮犱絾杩樻槸鍚戝墠鐨?courage銆?,
+    level: "楂樹腑甯哥敤",
+    theme: "鎯呯华涓庡搧璐?,
     example: "It takes courage to speak English in front of the class.",
-    exampleChinese: "在全班同学面前说英语需要勇气。",
-    scene: "一个人站在高处迎着风，虽然不轻松，但没有退后。"
+    exampleChinese: "鍦ㄥ叏鐝悓瀛﹂潰鍓嶈鑻辫闇€瑕佸媷姘斻€?,
+    scene: "涓€涓汉绔欏湪楂樺杩庣潃椋庯紝铏界劧涓嶈交鏉撅紝浣嗘病鏈夐€€鍚庛€?
   },
   {
     id: "whisper",
     english: "whisper",
-    chinese: "低声说",
+    chinese: "浣庡０璇?,
     image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Matheus Ferrero",
@@ -160,17 +160,17 @@
         source: "Wikimedia Commons"
       }
     ],
-    imageReason: "靠近耳边说话的真实动作是 whisper 最强的视觉线索，比任何图标都更像轻声说。",
-    level: "高中常用",
-    theme: "动作",
+    imageReason: "闈犺繎鑰宠竟璇磋瘽鐨勭湡瀹炲姩浣滄槸 whisper 鏈€寮虹殑瑙嗚绾跨储锛屾瘮浠讳綍鍥炬爣閮芥洿鍍忚交澹拌銆?,
+    level: "楂樹腑甯哥敤",
+    theme: "鍔ㄤ綔",
     example: "Please whisper in the reading room.",
-    exampleChinese: "在阅览室里请低声说话。",
-    scene: "安静环境里，两个人靠近耳边小声交流，几乎只有对方听得见。"
+    exampleChinese: "鍦ㄩ槄瑙堝閲岃浣庡０璇磋瘽銆?,
+    scene: "瀹夐潤鐜閲岋紝涓や釜浜洪潬杩戣€宠竟灏忓０浜ゆ祦锛屽嚑涔庡彧鏈夊鏂瑰惉寰楄銆?
   },
   {
     id: "puzzle",
     english: "puzzle",
-    chinese: "谜题；拼图",
+    chinese: "璋滈锛涙嫾鍥?,
     image: "https://images.unsplash.com/photo-1516110833967-0b5716ca1387?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Mel Poole",
@@ -184,17 +184,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "散开的拼图块和正在完成的图案，能直接让学生联想到 puzzle 的拼起来过程。",
-    level: "初中高频",
-    theme: "学习活动",
+    imageReason: "鏁ｅ紑鐨勬嫾鍥惧潡鍜屾鍦ㄥ畬鎴愮殑鍥炬锛岃兘鐩存帴璁╁鐢熻仈鎯冲埌 puzzle 鐨勬嫾璧锋潵杩囩▼銆?,
+    level: "鍒濅腑楂橀",
+    theme: "瀛︿範娲诲姩",
     example: "This puzzle helps us remember new shapes.",
-    exampleChinese: "这个拼图帮助我们记住新的图形。",
-    scene: "桌面上散着拼图块，找到正确位置后，图像慢慢完整起来。"
+    exampleChinese: "杩欎釜鎷煎浘甯姪鎴戜滑璁颁綇鏂扮殑鍥惧舰銆?,
+    scene: "妗岄潰涓婃暎鐫€鎷煎浘鍧楋紝鎵惧埌姝ｇ‘浣嶇疆鍚庯紝鍥惧儚鎱㈡參瀹屾暣璧锋潵銆?
   },
   {
     id: "journey",
     english: "journey",
-    chinese: "旅程",
+    chinese: "鏃呯▼",
     image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Luke Stackpoole",
@@ -208,17 +208,17 @@
         source: "Pexels"
       }
     ],
-    imageReason: "向远方延伸的道路特别适合表现 journey 的过程感，比交通工具特写更有出发记忆。",
-    level: "高中常用",
-    theme: "旅行",
+    imageReason: "鍚戣繙鏂瑰欢浼哥殑閬撹矾鐗瑰埆閫傚悎琛ㄧ幇 journey 鐨勮繃绋嬫劅锛屾瘮浜ら€氬伐鍏风壒鍐欐洿鏈夊嚭鍙戣蹇嗐€?,
+    level: "楂樹腑甯哥敤",
+    theme: "鏃呰",
     example: "Our train journey to Beijing started early in the morning.",
-    exampleChinese: "我们去北京的火车旅程一大早就开始了。",
-    scene: "一条路向远方伸展，清晨出发时最能感觉到旅程开始了。"
+    exampleChinese: "鎴戜滑鍘诲寳浜殑鐏溅鏃呯▼涓€澶ф棭灏卞紑濮嬩簡銆?,
+    scene: "涓€鏉¤矾鍚戣繙鏂逛几灞曪紝娓呮櫒鍑哄彂鏃舵渶鑳芥劅瑙夊埌鏃呯▼寮€濮嬩簡銆?
   },
   {
     id: "harvest",
     english: "harvest",
-    chinese: "收获；收割",
+    chinese: "鏀惰幏锛涙敹鍓?,
     image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80",
     imageSource: "Unsplash",
     imageCredit: "Jan Kopriva",
@@ -232,12 +232,12 @@
         source: "Pexels"
       }
     ],
-    imageReason: "金黄色田野和收成氛围能把 harvest 的季节感、成果感一起带出来。",
-    level: "高中常用",
-    theme: "季节与农业",
+    imageReason: "閲戦粍鑹茬敯閲庡拰鏀舵垚姘涘洿鑳芥妸 harvest 鐨勫鑺傛劅銆佹垚鏋滄劅涓€璧峰甫鍑烘潵銆?,
+    level: "楂樹腑甯哥敤",
+    theme: "瀛ｈ妭涓庡啘涓?,
     example: "Farmers celebrate the rice harvest in autumn.",
-    exampleChinese: "农民们在秋天庆祝稻谷丰收。",
-    scene: "秋天的田野一片金黄，成熟作物被收进篮子里。"
+    exampleChinese: "鍐滄皯浠湪绉嬪ぉ搴嗙绋昏胺涓版敹銆?,
+    scene: "绉嬪ぉ鐨勭敯閲庝竴鐗囬噾榛勶紝鎴愮啛浣滅墿琚敹杩涚瀛愰噷銆?
   }
 ];
 
@@ -262,9 +262,9 @@ const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 const API_BASE_URL = resolveApiBaseUrl();
 const API_ORIGIN = resolveApiOrigin(API_BASE_URL);
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
-const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
-const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
-const COMMUNITY_PUBLISH_DEFAULT_STATUS = "写一句短评、联想或记忆提示后再发布。";
+const LEARN_UPLOAD_DEFAULT_STATUS = "鏀寔 jpg銆乸ng銆亀ebp銆乬if锛屽崟寮犱笉瓒呰繃 10MB";
+const LEARN_SEARCH_EMPTY_STATUS = "璇疯緭鍏ヨ鎼滅储鐨勮嫳鏂囧崟璇?;
+const COMMUNITY_PUBLISH_DEFAULT_STATUS = "鍐欎竴鍙ョ煭璇勩€佽仈鎯虫垨璁板繂鎻愮ず鍚庡啀鍙戝竷銆?;
 const LEARN_LONG_PRESS_MS = 650;
 const SIDEBAR_COLLAPSE_MEDIA_QUERY = "(max-width: 1024px)";
 
@@ -793,8 +793,8 @@ function hasExampleText(word) {
 
 function getExampleFallbackCopy() {
   return {
-    example: "该单词暂未补充例句。",
-    exampleChinese: "后续补齐词库后，这里会显示对应的英文例句和中文翻译。"
+    example: "璇ュ崟璇嶆殏鏈ˉ鍏呬緥鍙ャ€?,
+    exampleChinese: "鍚庣画琛ラ綈璇嶅簱鍚庯紝杩欓噷浼氭樉绀哄搴旂殑鑻辨枃渚嬪彞鍜屼腑鏂囩炕璇戙€?
   };
 }
 
@@ -1496,24 +1496,24 @@ function bindEvents() {
 function renderDockbar() {
   const isAuthView = state.currentView === "auth" || !state.authUser;
   const dockbarTitles = {
-    learn: "学习卡片",
-    community: "社区",
-    "community-post": "帖子详情",
-    admin: "管理",
-    review: "复习模式",
-    image: "看图猜词",
-    stats: "学习统计",
-    welcome: "欢迎页",
-    auth: "登录 / 注册"
+    learn: "瀛︿範鍗＄墖",
+    community: "绀惧尯",
+    "community-post": "甯栧瓙璇︽儏",
+    admin: "绠＄悊",
+    review: "澶嶄範妯″紡",
+    image: "鐪嬪浘鐚滆瘝",
+    stats: "瀛︿範缁熻",
+    welcome: "娆㈣繋椤?,
+    auth: "鐧诲綍 / 娉ㄥ唽"
   };
 
   if (elements.dockbarTitle) {
-    elements.dockbarTitle.textContent = isAuthView ? "登录 / 注册" : dockbarTitles[state.currentView] || "学习卡片";
+    elements.dockbarTitle.textContent = isAuthView ? "鐧诲綍 / 娉ㄥ唽" : dockbarTitles[state.currentView] || "瀛︿範鍗＄墖";
   }
 
   if (elements.dockbarSubtitle) {
     elements.dockbarSubtitle.textContent = isAuthView
-      ? "管理你的账号、词书和图片"
+      ? "绠＄悊浣犵殑璐﹀彿銆佽瘝涔﹀拰鍥剧墖"
       : "Words and images";
   }
 
@@ -1573,7 +1573,7 @@ function syncSidebarVisibility() {
     const isExpanded = isCompact ? state.sidebarDrawerOpen : !state.sidebarCollapsed;
     elements.sidebarOpenButton.hidden = !isCompact;
     elements.sidebarOpenButton.setAttribute("aria-expanded", String(isExpanded));
-    elements.sidebarOpenButton.setAttribute("aria-label", isExpanded ? "收起目录" : "展开目录");
+    elements.sidebarOpenButton.setAttribute("aria-label", isExpanded ? "鏀惰捣鐩綍" : "灞曞紑鐩綍");
     elements.sidebarOpenButton.classList.toggle("is-active", isExpanded);
   }
 
@@ -1590,7 +1590,7 @@ function syncSidebarVisibility() {
   if (elements.sidebarDockToggle) {
     elements.sidebarDockToggle.hidden = isCompact;
     elements.sidebarDockToggle.classList.toggle("is-collapsed", isDesktopCollapsed);
-    elements.sidebarDockToggle.setAttribute("aria-label", isDesktopCollapsed ? "展开目录" : "收起目录");
+    elements.sidebarDockToggle.setAttribute("aria-label", isDesktopCollapsed ? "灞曞紑鐩綍" : "鏀惰捣鐩綍");
   }
 
   document.body.classList.toggle("sidebar-open", isDrawerOpen);
@@ -1624,7 +1624,7 @@ async function initializeAuthState() {
     return true;
   } catch (error) {
     clearAuthSessionState();
-    state.authStatus = "登录状态已失效，请重新登录。";
+    state.authStatus = "鐧诲綍鐘舵€佸凡澶辨晥锛岃閲嶆柊鐧诲綍銆?;
     state.authStatusTone = "error";
     return false;
   }
@@ -1685,11 +1685,11 @@ function renderAuth() {
   const isRegisterMode = state.authMode === "register";
   const shouldShowCode = isRegisterMode && !isUsernameChannel;
   const cooldownSeconds = getAuthCodeCooldownSeconds();
-  const accountDisplayName = isSignedIn ? getAuthUserDisplayName(state.authUser) : "未登录";
-  const accountTriggerMeta = isSignedIn ? "已登录" : "点击登录 / 注册";
+  const accountDisplayName = isSignedIn ? getAuthUserDisplayName(state.authUser) : "鏈櫥褰?;
+  const accountTriggerMeta = isSignedIn ? "宸茬櫥褰? : "鐐瑰嚮鐧诲綍 / 娉ㄥ唽";
   const accountMenuMeta = isSignedIn
     ? getAuthUserAccountMeta(state.authUser)
-    : "登录后再管理你的词书与图片。";
+    : "鐧诲綍鍚庡啀绠＄悊浣犵殑璇嶄功涓庡浘鐗?;
 
   elements.authUserNames.forEach((element) => {
     element.textContent = accountDisplayName;
@@ -2181,7 +2181,7 @@ function getAccountAvatarText(value) {
   const normalizedValue = String(value || "").trim();
 
   if (!normalizedValue) {
-    return "W";
+    return "鍥?;
   }
 
   return normalizedValue.slice(0, 2).toUpperCase();
@@ -2229,21 +2229,21 @@ function normalizeCommunityFeed(posts) {
 function getCommunityFeedModeMeta() {
   if (state.communityFeedMode === "ranking") {
     return {
-      title: "排行榜",
-      note: "当前先按点赞、收藏、评论热度排序，后续再接更细的推荐策略。"
+      title: "鎺掕姒?,
+      note: "褰撳墠鍏堟寜鐐硅禐銆佹敹钘忋€佽瘎璁虹殑鐑害鎺掑簭锛屽悗闈㈠啀鎺ユ洿缁嗙殑鎺ㄨ崘绛栫暐銆?
     };
   }
 
   if (state.communityFeedMode === "mine") {
     return {
-      title: "我的发布",
-      note: "这里只看你自己发到社区的图片和短评。"
+      title: "鎴戠殑鍙戝竷",
+      note: "杩欓噷鍙湅浣犺嚜宸卞彂鍒扮ぞ鍖虹殑鍥剧墖鍜岀煭璇勩€?
     };
   }
 
   return {
-    title: "大厅",
-    note: "当前先按发布时间浏览，后续这里会接推荐算法。"
+    title: "澶у巺",
+    note: "褰撳墠鍏堟寜鍙戝竷鏃堕棿娴忚锛屽悗缁繖閲屼細鎺ユ帹鑽愮畻娉曘€?
   };
 }
 
@@ -2315,48 +2315,276 @@ function syncCommunityFeedModeUi() {
   });
 
   if (elements.communityFeedNote) {
-    elements.communityFeedNote.textContent = `${modeMeta.title}：${modeMeta.note}`;
+    elements.communityFeedNote.textContent = `${modeMeta.title}锛?{modeMeta.note}`;
   }
 }
 
 function buildCommunityFeedEmptyState() {
   if (state.communityFeedMode === "mine") {
     return {
-      title: "你还没有发布内容",
-      copy: "从学习页长按图片，再点“发到社区”，就能把自己的词图和短评发出来。"
+      title: "浣犺繕娌℃湁鍙戝竷鍐呭",
+      copy: "浠庡涔犻〉闀挎寜鍥剧墖锛屽啀鐐光€滃彂鍒扮ぞ鍖衡€濓紝灏辫兘鎶婅嚜宸辩殑璇嶅浘鍜岀煭璇勫彂鍑烘潵銆?
     };
   }
 
   if (state.communityFeedMode === "ranking") {
     return {
-      title: "排行榜暂时空着",
-      copy: "等大家开始点赞、收藏和评论后，这里就会出现热度更高的帖子。"
+      title: "鎺掕姒滄殏鏃剁┖鐫€",
+      copy: "绛夊ぇ瀹跺紑濮嬬偣璧炪€佹敹钘忓拰璇勮鍚庯紝杩欓噷灏变細鍑虹幇鐑害鏇撮珮鐨勫笘瀛愩€?
     };
   }
 
   return {
-    title: "社区还没有内容",
-    copy: "从学习页长按图片，再点“发到社区”，就能发出第一条单词帖子。"
+    title: "绀惧尯杩樻病鏈夊唴瀹?,
+    copy: "浠庡涔犻〉闀挎寜鍥剧墖锛屽啀鐐光€滃彂鍒扮ぞ鍖衡€濓紝灏辫兘鍙戝嚭绗竴鏉″崟璇嶅笘瀛愩€?
   };
 }
 
 function buildCommunityWordMetaMarkup(post) {
   const items = [
     post.word?.example
-      ? `<article class="community-word-meta-item"><span>例句</span><p>${escapeHtml(post.word.example)}</p></article>`
+      ? `<article class="community-word-meta-item"><span>渚嬪彞</span><p>${escapeHtml(post.word.example)}</p></article>`
       : "",
     post.word?.exampleChinese
-      ? `<article class="community-word-meta-item"><span>例句翻译</span><p>${escapeHtml(post.word.exampleChinese)}</p></article>`
+      ? `<article class="community-word-meta-item"><span>渚嬪彞缈昏瘧</span><p>${escapeHtml(post.word.exampleChinese)}</p></article>`
       : "",
     post.word?.imageReason
-      ? `<article class="community-word-meta-item"><span>记忆点</span><p>${escapeHtml(post.word.imageReason)}</p></article>`
+      ? `<article class="community-word-meta-item"><span>璁板繂鐐?/span><p>${escapeHtml(post.word.imageReason)}</p></article>`
       : "",
     post.word?.scene
-      ? `<article class="community-word-meta-item"><span>联想场景</span><p>${escapeHtml(post.word.scene)}</p></article>`
+      ? `<article class="community-word-meta-item"><span>鑱旀兂鍦烘櫙</span><p>${escapeHtml(post.word.scene)}</p></article>`
       : ""
   ].filter(Boolean);
 
   return items.join("");
+}
+
+function renderAdmin() {
+  if (
+    !elements.adminStatus ||
+    !elements.adminTotalUsers ||
+    !elements.adminAdminUsers ||
+    !elements.adminActiveUsers7d ||
+    !elements.adminActivePosts ||
+    !elements.adminDeletedPosts ||
+    !elements.adminActiveComments ||
+    !elements.adminPostList
+  ) {
+    return;
+  }
+
+  const canAccessAdmin = Boolean(state.authUser) && isAdminUser(state.authUser);
+  const summary = state.adminOverview?.summary || {
+    totalUsers: 0,
+    adminUsers: 0,
+    activeUsers7d: 0,
+    activePosts: 0,
+    deletedPosts: 0,
+    activeComments: 0
+  };
+
+  elements.adminTotalUsers.textContent = String(summary.totalUsers || 0);
+  elements.adminAdminUsers.textContent = String(summary.adminUsers || 0);
+  elements.adminActiveUsers7d.textContent = String(summary.activeUsers7d || 0);
+  elements.adminActivePosts.textContent = String(summary.activePosts || 0);
+  elements.adminDeletedPosts.textContent = String(summary.deletedPosts || 0);
+  elements.adminActiveComments.textContent = String(summary.activeComments || 0);
+
+  if (elements.adminRefreshButton) {
+    elements.adminRefreshButton.disabled = !canAccessAdmin || state.adminOverviewPending;
+    elements.adminRefreshButton.textContent = state.adminOverviewPending ? "鍒锋柊涓?.." : "鍒锋柊鏁版嵁";
+  }
+
+  elements.adminStatus.classList.toggle("error", state.adminStatusTone === "error");
+  elements.adminStatus.classList.toggle("success", state.adminStatusTone === "success");
+
+  if (!state.authUser) {
+    elements.adminStatus.textContent = "璇峰厛鐧诲綍绠＄悊鍛樿处鍙枫€?;
+    elements.adminPostList.innerHTML = '<div class="admin-post-empty">鐧诲綍鍚庢墠鍙互鏌ョ湅绠＄悊椤点€?/div>';
+    return;
+  }
+
+  if (!canAccessAdmin) {
+    elements.adminStatus.textContent = "褰撳墠璐﹀彿娌℃湁绠＄悊鍛樻潈闄愩€?;
+    elements.adminPostList.innerHTML = '<div class="admin-post-empty">鍙湁绠＄悊鍛樿兘鏌ョ湅绀惧尯绠＄悊椤点€?/div>';
+    return;
+  }
+
+  elements.adminStatus.textContent = state.adminStatus || (state.adminOverviewPending ? "姝ｅ湪鍚屾绀惧尯绠＄悊鏁版嵁..." : "");
+
+  if (state.adminOverviewPending && !state.adminOverviewLoaded) {
+    elements.adminPostList.innerHTML = '<div class="admin-post-empty">姝ｅ湪鍔犺浇鏈€杩戠ぞ鍖哄笘瀛?..</div>';
+    return;
+  }
+
+  const recentPosts = Array.isArray(state.adminOverview?.recentPosts) ? state.adminOverview.recentPosts : [];
+
+  if (recentPosts.length === 0) {
+    elements.adminPostList.innerHTML = '<div class="admin-post-empty">褰撳墠杩樻病鏈夊彲绠＄悊鐨勭ぞ鍖哄笘瀛愩€?/div>';
+    return;
+  }
+
+  elements.adminPostList.innerHTML = recentPosts
+    .map((post) => {
+      const isDeleting = state.adminDeletePendingPostIds.has(post.id);
+      const isDeleted = post.status === "deleted";
+      const statusLabel = isDeleted ? "宸插垹闄? : "鍙";
+      const statusClass = isDeleted ? "unknown" : "know";
+
+      return `
+        <article class="admin-post-card">
+          <div class="admin-post-media">
+            <img src="${escapeHtml(post.imageUrl)}" alt="${escapeHtml(post.title)}" referrerpolicy="no-referrer" />
+          </div>
+          <div class="admin-post-body">
+            <div class="admin-post-head">
+              <div class="community-card-author">
+                <span class="community-avatar">${escapeHtml(post.author.avatarText)}</span>
+                <span>${escapeHtml(post.author.displayName || post.author.email)}</span>
+              </div>
+              <span class="status-pill ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="admin-post-copy">
+              <h3>${escapeHtml(post.title)}</h3>
+              <p>${escapeHtml(post.body || "杩欐潯甯栧瓙娌℃湁濉啓鐭瘎銆?)}</p>
+            </div>
+            <div class="admin-post-submeta">
+              <span>甯栧瓙 #${post.id}</span>
+              <span>鍗曡瘝 ${escapeHtml(post.wordId)}</span>
+              <span>${formatCommunityDate(post.createdAt)}</span>
+            </div>
+            <div class="admin-post-meta">
+              <div class="admin-post-stats">
+                <span>璧?${formatCount(post.likeCount)}</span>
+                <span>钘?${formatCount(post.favoriteCount)}</span>
+                <span>璇?${formatCount(post.commentCount)}</span>
+                <span>杞?${formatCount(post.shareCount)}</span>
+              </div>
+              <div class="admin-post-actions">
+                <button
+                  class="danger-btn"
+                  type="button"
+                  data-admin-delete-post-id="${post.id}"
+                  ${isDeleted || isDeleting ? "disabled" : ""}
+                >${isDeleting ? "鍒犻櫎涓?.." : isDeleted ? "宸插垹闄? : "鍒犻櫎甯栧瓙"}</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+async function ensureAdminOverviewLoaded(force = false) {
+  if (!state.authUser) {
+    resetAdminState();
+    renderAdmin();
+    return;
+  }
+
+  if (!isAdminUser(state.authUser)) {
+    state.adminStatus = "褰撳墠璐﹀彿娌℃湁绠＄悊鍛樻潈闄愩€?;
+    state.adminStatusTone = "error";
+    renderAdmin();
+    return;
+  }
+
+  if (state.adminOverviewPending || (state.adminOverviewLoaded && !force)) {
+    return;
+  }
+
+  state.adminOverviewPending = true;
+  state.adminStatus = "姝ｅ湪鍔犺浇绀惧尯绠＄悊鏁版嵁...";
+  state.adminStatusTone = "info";
+  renderAdmin();
+
+  try {
+    const payload = await fetchAdminOverviewApi();
+    state.adminOverview = normalizeAdminOverview(payload);
+    state.adminOverviewLoaded = true;
+    state.adminStatus = `宸插悓姝?${state.adminOverview.recentPosts.length} 鏉℃渶杩戝笘瀛愩€俙;
+    state.adminStatusTone = "success";
+  } catch (error) {
+    if (handlePossibleAuthError(error)) {
+      return;
+    }
+
+    state.adminStatus = getErrorMessage(error, "鍔犺浇绠＄悊鏁版嵁澶辫触");
+    state.adminStatusTone = "error";
+  } finally {
+    state.adminOverviewPending = false;
+    renderAdmin();
+  }
+}
+
+async function deleteAdminPost(postId) {
+  if (!postId || !isAdminUser(state.authUser)) {
+    return;
+  }
+
+  if (state.adminDeletePendingPostIds.has(postId)) {
+    return;
+  }
+
+  const confirmed = window.confirm(`纭鍒犻櫎绀惧尯甯栧瓙 #${postId} 鍚楋紵鍒犻櫎鍚庡畠浼氫粠绀惧尯閲岄殣钘忋€俙);
+
+  if (!confirmed) {
+    return;
+  }
+
+  state.adminDeletePendingPostIds.add(postId);
+  state.adminStatus = `姝ｅ湪鍒犻櫎甯栧瓙 #${postId}...`;
+  state.adminStatusTone = "info";
+  renderAdmin();
+
+  try {
+    await deleteAdminPostApi(postId);
+    state.communityFeed = state.communityFeed.filter((post) => post.id !== postId);
+    state.communityFeedLoaded = false;
+
+    if (state.communityPostId === postId) {
+      state.communityPostId = null;
+      state.communityPostDetail = null;
+      if (state.currentView === "community-post") {
+        switchView("community");
+      }
+    }
+
+    state.adminStatus = `甯栧瓙 #${postId} 宸插垹闄ゃ€俙;
+    state.adminStatusTone = "success";
+    await ensureAdminOverviewLoaded(true);
+  } catch (error) {
+    if (handlePossibleAuthError(error)) {
+      return;
+    }
+
+    state.adminStatus = getErrorMessage(error, "鍒犻櫎甯栧瓙澶辫触");
+    state.adminStatusTone = "error";
+  } finally {
+    state.adminDeletePendingPostIds.delete(postId);
+    renderAdmin();
+  }
+}
+
+function normalizeAdminOverview(payload) {
+  const summary = payload?.summary && typeof payload.summary === "object" ? payload.summary : {};
+  const recentPosts = Array.isArray(payload?.recentPosts) ? payload.recentPosts : [];
+
+  return {
+    summary: {
+      totalUsers: Number(summary.totalUsers || 0),
+      adminUsers: Number(summary.adminUsers || 0),
+      activeUsers7d: Number(summary.activeUsers7d || 0),
+      activePosts: Number(summary.activePosts || 0),
+      deletedPosts: Number(summary.deletedPosts || 0),
+      activeComments: Number(summary.activeComments || 0)
+    },
+    recentPosts: recentPosts.map((post) => ({
+      ...post,
+      imageUrl: resolveRuntimeUrl(post.imageUrl || "")
+    }))
+  };
 }
 
 function renderAdmin() {
@@ -2396,7 +2624,7 @@ function renderAdmin() {
 
   if (elements.adminRefreshButton) {
     elements.adminRefreshButton.disabled = !canAccessAdmin || isActiveAdminTabPending();
-    elements.adminRefreshButton.textContent = isActiveAdminTabPending() ? "刷新中..." : "刷新数据";
+    elements.adminRefreshButton.textContent = isActiveAdminTabPending() ? "鍒锋柊涓?.." : "鍒锋柊鏁版嵁";
   }
 
   syncAdminTabs();
@@ -2405,9 +2633,9 @@ function renderAdmin() {
   elements.adminStatus.classList.toggle("success", state.adminStatusTone === "success");
 
   if (!isSignedIn) {
-    elements.adminStatus.textContent = "请先登录管理员账号。";
+    elements.adminStatus.textContent = "璇峰厛鐧诲綍绠＄悊鍛樿处鍙枫€?;
   } else if (!canAccessAdmin) {
-    elements.adminStatus.textContent = "当前账号没有管理员权限。";
+    elements.adminStatus.textContent = "褰撳墠璐﹀彿娌℃湁绠＄悊鍛樻潈闄愩€?;
   } else {
     elements.adminStatus.textContent = state.adminStatus || activeTabStatus || "";
   }
@@ -2490,7 +2718,7 @@ async function ensureAdminOverviewLoaded(force = false) {
   }
 
   if (!isAdminUser(state.authUser)) {
-    state.adminStatus = "当前账号没有管理员权限。";
+    state.adminStatus = "褰撳墠璐﹀彿娌℃湁绠＄悊鍛樻潈闄愩€?;
     state.adminStatusTone = "error";
     renderAdmin();
     return;
@@ -2501,7 +2729,7 @@ async function ensureAdminOverviewLoaded(force = false) {
   }
 
   state.adminOverviewPending = true;
-  state.adminStatus = "正在加载管理概览...";
+  state.adminStatus = "姝ｅ湪鍔犺浇绠＄悊姒傝...";
   state.adminStatusTone = "info";
   renderAdmin();
 
@@ -2509,14 +2737,14 @@ async function ensureAdminOverviewLoaded(force = false) {
     const payload = await fetchAdminOverviewApi();
     state.adminOverview = normalizeAdminOverview(payload);
     state.adminOverviewLoaded = true;
-    state.adminStatus = "管理概览已更新。";
+    state.adminStatus = "绠＄悊姒傝宸叉洿鏂般€?;
     state.adminStatusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminStatus = getErrorMessage(error, "加载管理概览失败");
+    state.adminStatus = getErrorMessage(error, "鍔犺浇绠＄悊姒傝澶辫触");
     state.adminStatusTone = "error";
   } finally {
     state.adminOverviewPending = false;
@@ -2535,7 +2763,7 @@ async function ensureAdminUsersLoaded(force = false) {
   }
 
   state.adminUsers.pending = true;
-  state.adminUsers.status = "正在加载用户列表...";
+  state.adminUsers.status = "姝ｅ湪鍔犺浇鐢ㄦ埛鍒楄〃...";
   state.adminUsers.statusTone = "info";
   renderAdmin();
 
@@ -2547,14 +2775,14 @@ async function ensureAdminUsersLoaded(force = false) {
     });
     applyAdminUsersPayload(payload);
     state.adminUsers.loaded = true;
-    state.adminUsers.status = `用户列表已更新，共 ${state.adminUsers.total} 人。`;
+    state.adminUsers.status = `鐢ㄦ埛鍒楄〃宸叉洿鏂帮紝鍏?${state.adminUsers.total} 浜恒€俙;
     state.adminUsers.statusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminUsers.status = getErrorMessage(error, "加载用户列表失败");
+    state.adminUsers.status = getErrorMessage(error, "鍔犺浇鐢ㄦ埛鍒楄〃澶辫触");
     state.adminUsers.statusTone = "error";
   } finally {
     state.adminUsers.pending = false;
@@ -2573,7 +2801,7 @@ async function ensureAdminPostsLoaded(force = false) {
   }
 
   state.adminPosts.pending = true;
-  state.adminPosts.status = "正在加载帖子列表...";
+  state.adminPosts.status = "姝ｅ湪鍔犺浇甯栧瓙鍒楄〃...";
   state.adminPosts.statusTone = "info";
   renderAdmin();
 
@@ -2585,14 +2813,14 @@ async function ensureAdminPostsLoaded(force = false) {
     });
     applyAdminPostsPayload(payload);
     state.adminPosts.loaded = true;
-    state.adminPosts.status = `帖子列表已更新，共 ${state.adminPosts.total} 条。`;
+    state.adminPosts.status = `甯栧瓙鍒楄〃宸叉洿鏂帮紝鍏?${state.adminPosts.total} 鏉°€俙;
     state.adminPosts.statusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminPosts.status = getErrorMessage(error, "加载帖子列表失败");
+    state.adminPosts.status = getErrorMessage(error, "鍔犺浇甯栧瓙鍒楄〃澶辫触");
     state.adminPosts.statusTone = "error";
   } finally {
     state.adminPosts.pending = false;
@@ -2653,12 +2881,9 @@ function renderAdminUsers() {
         return `
           <tr>
             <td>
-              <div class="admin-user-primary">
-                <span class="admin-id-badge">#${user.id}</span>
-                <div class="admin-row-title">
-                  <strong>${escapeHtml(user.displayName)}</strong>
-                  <small>@${escapeHtml(user.username || "未设置用户名")}</small>
-                </div>
+              <div class="admin-row-title">
+                <strong>${escapeHtml(user.displayName)}</strong>
+                <small>@${escapeHtml(user.username || "未设置用户名")}</small>
               </div>
             </td>
             <td>
@@ -2778,13 +3003,11 @@ function renderAdminPosts() {
             </div>
             <div class="admin-post-body">
               <div class="admin-post-head">
-                <div class="admin-post-author">
-                  <div class="community-card-author">
-                    <span class="community-avatar">${escapeHtml(getAccountAvatarText(authorName))}</span>
-                    <span>${escapeHtml(authorName)}</span>
-                  </div>
-                  <span class="admin-id-badge">#${post.id}</span>
+                <div class="community-card-author">
+                  <span class="community-avatar">${escapeHtml(getAccountAvatarText(authorName))}</span>
+                  <span>${escapeHtml(authorName)}</span>
                 </div>
+                <span class="status-pill new">帖子 #${post.id}</span>
               </div>
               <div class="admin-post-copy">
                 <h3>${escapeHtml(post.title)}</h3>
@@ -2907,7 +3130,49 @@ function closeAdminUserEditor() {
 }
 
 async function submitAdminUserCreate() {
-  return;
+  if (!state.authUser || !isAdminUser(state.authUser) || state.adminUsers.createPending) {
+    return;
+  }
+
+  const username = String(elements.adminUserCreateUsername?.value || "").trim();
+  const displayName = String(elements.adminUserCreateDisplayName?.value || "").trim();
+  const password = String(elements.adminUserCreatePassword?.value || "");
+  const isAdmin = Boolean(elements.adminUserCreateIsAdmin?.checked);
+
+  state.adminUsers.createPending = true;
+  state.adminUsers.status = "姝ｅ湪鍒涘缓鐢ㄦ埛...";
+  state.adminUsers.statusTone = "info";
+  renderAdmin();
+
+  try {
+    const payload = await createAdminUserApi({
+      username,
+      displayName,
+      password,
+      isAdmin
+    });
+    state.adminUsers.page = 1;
+    state.adminUsers.loaded = false;
+    state.adminUsers.editingUser = normalizeAdminUserItem(payload?.user || null);
+
+    if (elements.adminUserCreateForm) {
+      elements.adminUserCreateForm.reset();
+    }
+
+    await Promise.all([ensureAdminUsersLoaded(true), ensureAdminOverviewLoaded(true)]);
+    state.adminUsers.status = `鐢ㄦ埛 ${state.adminUsers.editingUser?.displayName || displayName || username} 宸插垱寤恒€俙;
+    state.adminUsers.statusTone = "success";
+  } catch (error) {
+    if (handlePossibleAuthError(error)) {
+      return;
+    }
+
+    state.adminUsers.status = getErrorMessage(error, "鍒涘缓鐢ㄦ埛澶辫触");
+    state.adminUsers.statusTone = "error";
+  } finally {
+    state.adminUsers.createPending = false;
+    renderAdmin();
+  }
 }
 
 async function submitAdminUserEdit() {
@@ -2923,7 +3188,7 @@ async function submitAdminUserEdit() {
   const isAdmin = Boolean(elements.adminUserEditIsAdmin?.checked);
 
   state.adminUsers.editPending = true;
-  state.adminUsers.status = `Saving user #${editingUserId}...`;
+  state.adminUsers.status = `姝ｅ湪淇濆瓨鐢ㄦ埛 #${editingUserId}...`;
   state.adminUsers.statusTone = "info";
   renderAdmin();
 
@@ -2953,7 +3218,7 @@ async function submitAdminUserEdit() {
     }
 
     await Promise.all([ensureAdminUsersLoaded(true), ensureAdminOverviewLoaded(true)]);
-    state.adminUsers.status = `User #${editingUserId} updated.`;
+    state.adminUsers.status = `鐢ㄦ埛 #${editingUserId} 宸叉洿鏂般€俙;
     state.adminUsers.statusTone = "success";
     renderDockbar();
   } catch (error) {
@@ -2961,7 +3226,7 @@ async function submitAdminUserEdit() {
       return;
     }
 
-    state.adminUsers.status = getErrorMessage(error, "Failed to update user");
+    state.adminUsers.status = getErrorMessage(error, "鏇存柊鐢ㄦ埛澶辫触");
     state.adminUsers.statusTone = "error";
   } finally {
     state.adminUsers.editPending = false;
@@ -2982,7 +3247,7 @@ async function deleteAdminUser(userId) {
 
   const targetUser = state.adminUsers.items.find((item) => item.id === targetUserId);
   const confirmed = window.confirm(
-    `Confirm deleting user #${targetUserId}${targetUser ? ` (${targetUser.displayName})` : ""}? This will also remove their related posts, comments, and image data.`
+    `纭鍒犻櫎鐢ㄦ埛 #${targetUserId}${targetUser ? `锛?{targetUser.displayName}锛塦 : ""} 鍚楋紵杩欎細鍚屾椂鍒犻櫎璇ョ敤鎴峰叧鑱旂殑甯栧瓙銆佽瘎璁哄拰鍥剧墖鏁版嵁銆俙
   );
 
   if (!confirmed) {
@@ -2990,7 +3255,7 @@ async function deleteAdminUser(userId) {
   }
 
   state.adminUsers.deletePendingIds.add(targetUserId);
-  state.adminUsers.status = `Deleting user #${targetUserId}...`;
+  state.adminUsers.status = `姝ｅ湪鍒犻櫎鐢ㄦ埛 #${targetUserId}...`;
   state.adminUsers.statusTone = "info";
   renderAdmin();
 
@@ -3005,14 +3270,14 @@ async function deleteAdminUser(userId) {
     state.communityFeedLoaded = false;
     state.communityFeed = state.communityFeed.filter((post) => Number(post.userId || post.author?.id || 0) !== targetUserId);
     await Promise.all([ensureAdminUsersLoaded(true), ensureAdminOverviewLoaded(true)]);
-    state.adminUsers.status = `User #${targetUserId} deleted.`;
+    state.adminUsers.status = `鐢ㄦ埛 #${targetUserId} 宸插垹闄ゃ€俙;
     state.adminUsers.statusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminUsers.status = getErrorMessage(error, "Failed to delete user");
+    state.adminUsers.status = getErrorMessage(error, "鍒犻櫎鐢ㄦ埛澶辫触");
     state.adminUsers.statusTone = "error";
   } finally {
     state.adminUsers.deletePendingIds.delete(targetUserId);
@@ -3037,7 +3302,50 @@ function closeAdminPostEditor() {
 }
 
 async function submitAdminPostCreate() {
-  return;
+  if (!state.authUser || !isAdminUser(state.authUser) || state.adminPosts.createPending) {
+    return;
+  }
+
+  const userId = Number(elements.adminPostCreateUserId?.value || 0);
+  const wordId = String(elements.adminPostCreateWordId?.value || "").trim();
+  const title = String(elements.adminPostCreateTitle?.value || "").trim();
+  const body = String(elements.adminPostCreateBody?.value || "").trim();
+
+  state.adminPosts.createPending = true;
+  state.adminPosts.status = "姝ｅ湪鍒涘缓甯栧瓙...";
+  state.adminPosts.statusTone = "info";
+  renderAdmin();
+
+  try {
+    const payload = await createAdminPostApi({
+      userId,
+      wordId,
+      title,
+      body
+    });
+    state.adminPosts.page = 1;
+    state.adminPosts.loaded = false;
+    state.adminPosts.editingPost = normalizeAdminPostItem(payload?.post || null);
+
+    if (elements.adminPostCreateForm) {
+      elements.adminPostCreateForm.reset();
+    }
+
+    state.communityFeedLoaded = false;
+    await Promise.all([ensureAdminPostsLoaded(true), ensureAdminOverviewLoaded(true)]);
+    state.adminPosts.status = `甯栧瓙 #${state.adminPosts.editingPost?.id || ""} 宸插垱寤恒€俙;
+    state.adminPosts.statusTone = "success";
+  } catch (error) {
+    if (handlePossibleAuthError(error)) {
+      return;
+    }
+
+    state.adminPosts.status = getErrorMessage(error, "鍒涘缓甯栧瓙澶辫触");
+    state.adminPosts.statusTone = "error";
+  } finally {
+    state.adminPosts.createPending = false;
+    renderAdmin();
+  }
 }
 
 async function submitAdminPostEdit() {
@@ -3051,7 +3359,7 @@ async function submitAdminPostEdit() {
   const body = String(elements.adminPostEditBody?.value || "").trim();
 
   state.adminPosts.editPending = true;
-  state.adminPosts.status = `Saving post #${editingPostId}...`;
+  state.adminPosts.status = `姝ｅ湪淇濆瓨甯栧瓙 #${editingPostId}...`;
   state.adminPosts.statusTone = "info";
   renderAdmin();
 
@@ -3085,14 +3393,14 @@ async function submitAdminPostEdit() {
     }
 
     await Promise.all([ensureAdminPostsLoaded(true), ensureAdminOverviewLoaded(true)]);
-    state.adminPosts.status = `Post #${editingPostId} updated.`;
+    state.adminPosts.status = `甯栧瓙 #${editingPostId} 宸叉洿鏂般€俙;
     state.adminPosts.statusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminPosts.status = getErrorMessage(error, "Failed to update post");
+    state.adminPosts.status = getErrorMessage(error, "鏇存柊甯栧瓙澶辫触");
     state.adminPosts.statusTone = "error";
   } finally {
     state.adminPosts.editPending = false;
@@ -3112,7 +3420,7 @@ async function deleteAdminPost(postId) {
   }
 
   const confirmed = window.confirm(
-    `Confirm permanently deleting post #${targetPostId}? This removes it from the database instead of only marking it deleted.`
+    `纭褰诲簳鍒犻櫎甯栧瓙 #${targetPostId} 鍚楋紵杩欐浼氱洿鎺ヤ粠鏁版嵁搴撶Щ闄わ紝鑰屼笉鏄粎鏍囪涓哄凡鍒犻櫎銆俙
   );
 
   if (!confirmed) {
@@ -3120,7 +3428,7 @@ async function deleteAdminPost(postId) {
   }
 
   state.adminPosts.deletePendingIds.add(targetPostId);
-  state.adminPosts.status = `Deleting post #${targetPostId}...`;
+  state.adminPosts.status = `姝ｅ湪鍒犻櫎甯栧瓙 #${targetPostId}...`;
   state.adminPosts.statusTone = "info";
   renderAdmin();
 
@@ -3144,14 +3452,14 @@ async function deleteAdminPost(postId) {
     }
 
     await Promise.all([ensureAdminPostsLoaded(true), ensureAdminOverviewLoaded(true)]);
-    state.adminPosts.status = `Post #${targetPostId} deleted.`;
+    state.adminPosts.status = `甯栧瓙 #${targetPostId} 宸插垹闄ゃ€俙;
     state.adminPosts.statusTone = "success";
   } catch (error) {
     if (handlePossibleAuthError(error)) {
       return;
     }
 
-    state.adminPosts.status = getErrorMessage(error, "Failed to delete post");
+    state.adminPosts.status = getErrorMessage(error, "鍒犻櫎甯栧瓙澶辫触");
     state.adminPosts.statusTone = "error";
   } finally {
     state.adminPosts.deletePendingIds.delete(targetPostId);
@@ -3222,14 +3530,14 @@ function normalizeAdminPostItem(post) {
 
 function formatAdminAuthProvider(provider) {
   if (provider === "wechat") {
-    return "微信登录";
+    return "寰俊鐧诲綍";
   }
 
   if (provider === "username") {
-    return "用户名密码";
+    return "鐢ㄦ埛鍚嶅瘑鐮?;
   }
 
-  return "邮箱登录";
+  return "閭鐧诲綍";
 }
 
 function formatFullDate(value) {
@@ -3250,15 +3558,15 @@ function renderWelcome() {
   elements.heroWordCount.textContent = String(words.length);
 
   if (elements.welcomeAuthButton) {
-    elements.welcomeAuthButton.textContent = state.authUser ? "管理账号" : "登录 / 注册";
+    elements.welcomeAuthButton.textContent = state.authUser ? "绠＄悊璐﹀彿" : "鐧诲綍 / 娉ㄥ唽";
   }
 
   if (!hasDeckWords()) {
     elements.deckPreview.innerHTML = `
       <div class="deck-card active">
         <div>
-          <strong>${state.authUser ? "当前词书暂无内容" : "请先登录"}</strong>
-          <small>${state.authUser ? "可以切换词书，或检查词书数据。" : "登录后才能查看单词、图片和词书。"}</small>
+          <strong>${state.authUser ? "褰撳墠璇嶄功鏆傛棤鍐呭" : "璇峰厛鐧诲綍"}</strong>
+          <small>${state.authUser ? "鎹竴鏈瘝涔︼紝鎴栨鏌ヨ瘝涔︽暟鎹€? : "鐧诲綍鍚庢墠鑳芥煡鐪嬪崟璇嶃€佸浘鐗囧拰璇嶄功銆?}</small>
         </div>
       </div>
     `;
@@ -3291,8 +3599,8 @@ function renderCommunityFeed() {
   if (!state.authUser) {
     elements.communityFeed.innerHTML = `
       <article class="card community-empty-card">
-        <h3>请先登录</h3>
-        <p>登录后才能查看社区、发布图片和参与评论。</p>
+        <h3>璇峰厛鐧诲綍</h3>
+        <p>鐧诲綍鍚庢墠鑳芥煡鐪嬬ぞ鍖恒€佸彂甯冨浘鐗囧拰鍙備笌璇勮銆?/p>
       </article>
     `;
     return;
@@ -3301,8 +3609,8 @@ function renderCommunityFeed() {
   if (state.communityFeedPending && state.communityFeed.length === 0) {
     elements.communityFeed.innerHTML = `
       <article class="card community-empty-card">
-        <h3>社区加载中...</h3>
-        <p>正在同步最新帖子。</p>
+        <h3>绀惧尯鍔犺浇涓?/h3>
+        <p>姝ｅ湪鍚屾鏈€鏂板笘瀛愩€?/p>
       </article>
     `;
     return;
@@ -3338,12 +3646,12 @@ function renderCommunityFeed() {
             </div>
             <div class="community-card-copy">
               <h3>${escapeHtml(post.title)}</h3>
-              <p>${escapeHtml(post.body || "这条帖子还没有正文。")}</p>
+              <p>${escapeHtml(post.body || "杩欐潯甯栧瓙杩樻病鏈夊啓鐭瘎銆?)}</p>
             </div>
-            <div class="community-card-stats" aria-label="帖子互动数据">
-              <span class="community-card-stat"><span aria-hidden="true">赞</span> ${formatCount(post.likeCount)}</span>
-              <span class="community-card-stat"><span aria-hidden="true">藏</span> ${formatCount(post.favoriteCount)}</span>
-              <span class="community-card-stat"><span aria-hidden="true">评</span> ${formatCount(post.commentCount)}</span>
+            <div class="community-card-stats" aria-label="甯栧瓙浜掑姩鏁版嵁">
+              <span class="community-card-stat"><span aria-hidden="true">鉂?/span> ${formatCount(post.likeCount)}</span>
+              <span class="community-card-stat"><span aria-hidden="true">鈽?/span> ${formatCount(post.favoriteCount)}</span>
+              <span class="community-card-stat"><span aria-hidden="true">馃挰</span> ${formatCount(post.commentCount)}</span>
             </div>
           </div>
         </article>
@@ -3364,7 +3672,7 @@ function renderCommunityPostDetail() {
     elements.communityPostAvatar.textContent = "W";
     elements.communityPostAuthorName.textContent = "";
     elements.communityPostCreatedAt.textContent = "";
-    elements.communityPostTitle.textContent = state.communityPostPending ? "加载中..." : "";
+    elements.communityPostTitle.textContent = state.communityPostPending ? "鍔犺浇涓?.." : "";
     elements.communityPostSubtitle.textContent = "";
     elements.communityPostDescription.textContent = "";
     elements.communityPostDescription.classList.remove("is-empty");
@@ -3376,20 +3684,20 @@ function renderCommunityPostDetail() {
     elements.communityPostFavoriteCount.textContent = "0";
     elements.communityPostCommentCount.textContent = "0";
     if (elements.communityPostFavoriteLabel) {
-      elements.communityPostFavoriteLabel.textContent = "收藏";
+      elements.communityPostFavoriteLabel.textContent = "鈽?;
     }
     elements.communityPostLike.classList.remove("is-active");
     elements.communityPostFavorite.classList.remove("is-active");
     elements.communityPostLike.disabled = true;
     elements.communityPostFavorite.disabled = true;
     elements.communityCommentSubmit.disabled = true;
-    elements.communityCommentSubmit.textContent = "发表评论";
+    elements.communityCommentSubmit.textContent = "鍙戣〃璇勮";
     if (elements.communityCommentInput) {
       elements.communityCommentInput.value = "";
     }
     if (elements.communityCommentList) {
       elements.communityCommentList.innerHTML = state.communityPostPending
-        ? '<div class="community-empty-inline">正在加载帖子详情...</div>'
+        ? '<div class="community-empty-inline">姝ｅ湪鍔犺浇甯栧瓙璇︽儏...</div>'
         : "";
     }
     return;
@@ -3400,8 +3708,8 @@ function renderCommunityPostDetail() {
   elements.communityPostAuthorName.textContent = post.author.displayName || post.author.email;
   elements.communityPostCreatedAt.textContent = formatCommunityDate(post.createdAt);
   elements.communityPostTitle.textContent = post.title;
-  elements.communityPostSubtitle.textContent = `${post.word.english} · ${post.word.chinese}`;
-  elements.communityPostDescription.textContent = post.body || "这条帖子还没有写短评。";
+  elements.communityPostSubtitle.textContent = `${post.word.english} 路 ${post.word.chinese}`;
+  elements.communityPostDescription.textContent = post.body || "杩欐潯甯栧瓙杩樻病鏈夊啓鐭瘎銆?;
   elements.communityPostDescription.classList.toggle("is-empty", !post.body);
   const wordMetaMarkup = buildCommunityWordMetaMarkup(post);
   if (elements.communityPostWordPanel) {
@@ -3416,16 +3724,16 @@ function renderCommunityPostDetail() {
   const isOwnPost = isOwnCommunityPost(post);
   const isFavorited = Boolean(post.viewer?.favorited);
   if (elements.communityPostFavoriteLabel) {
-    elements.communityPostFavoriteLabel.textContent = isFavorited ? "已收藏" : "收藏";
+    elements.communityPostFavoriteLabel.textContent = isFavorited ? "鈽? : "鈽?;
   }
   elements.communityPostLike.disabled = state.communityPostPending;
   elements.communityPostFavorite.disabled = state.communityPostPending || isOwnPost || isFavorited;
   elements.communityPostFavorite.setAttribute(
     "aria-label",
-    isFavorited ? "已收藏到我的词图" : "收藏到我的词图"
+    isFavorited ? "宸叉敹钘忓埌鎴戠殑璇嶅浘" : "鏀惰棌鍒版垜鐨勮瘝鍥?
   );
   elements.communityCommentSubmit.disabled = state.communityCommentPending;
-  elements.communityCommentSubmit.textContent = state.communityCommentPending ? "发送中..." : "发表评论";
+  elements.communityCommentSubmit.textContent = state.communityCommentPending ? "鍙戦€佷腑..." : "鍙戣〃璇勮";
 
   elements.communityCommentList.innerHTML =
     Array.isArray(post.comments) && post.comments.length > 0
@@ -3447,14 +3755,14 @@ function renderCommunityPostDetail() {
                     type="button"
                     data-community-comment-id="${comment.id}"
                   >
-                    点赞 ${formatCount(comment.likeCount)}
+                    鐐硅禐 ${formatCount(comment.likeCount)}
                   </button>
                 </div>
               </article>
             `
           )
           .join("")
-      : '<div class="community-empty-inline">还没有评论，来做第一个回复的人。</div>';
+      : '<div class="community-empty-inline">杩樻病鏈夎瘎璁猴紝鏉ュ仛绗竴涓洖澶嶇殑浜恒€?/div>';
 }
 
 function renderLearn() {
@@ -3467,26 +3775,26 @@ function renderLearn() {
       english: state.authUser ? "No words" : "Sign in"
     });
 
-    elements.learnProgress.textContent = state.authUser ? "暂无单词" : "请先登录";
+    elements.learnProgress.textContent = state.authUser ? "鏆傛棤鍗曡瘝" : "璇峰厛鐧诲綍";
     elements.learnListToggle.disabled = true;
     setImageWithFallback(
       elements.learnImage,
       [placeholderImage],
       0,
-      state.authUser ? "当前词书暂无单词" : "请先登录"
+      state.authUser ? "褰撳墠璇嶄功鏆傛棤鍗曡瘝" : "璇峰厛鐧诲綍"
     );
     elements.learnMedia.classList.remove("is-switchable", "is-manage-open");
-    elements.learnWord.textContent = state.authUser ? "当前词书暂无单词" : "请先登录";
+    elements.learnWord.textContent = state.authUser ? "褰撳墠璇嶄功鏆傛棤鍗曡瘝" : "璇峰厛鐧诲綍";
     elements.learnTranslation.textContent = state.authUser
-      ? "这个词书暂时没有可学习的单词。"
-      : "登录后才能查看单词卡片和个人图片。";
+      ? "杩欎釜璇嶄功鏆傛椂娌℃湁鍙涔犵殑鍗曡瘝銆?
+      : "鐧诲綍鍚庢墠鑳芥煡鐪嬪崟璇嶅崱鐗囧拰涓汉鍥剧墖銆?;
     elements.learnExample.textContent = state.authUser
-      ? "可以切换到别的词书，或者检查后端 seed 数据。"
-      : "登录成功后，系统才会加载你的词书和图片。";
+      ? "鍙互鍒囨崲鍒板埆鐨勮瘝涔︼紝鎴栬€呮鏌ュ悗绔?seed 鏁版嵁銆?
+      : "閭鐧诲綍鎴愬姛鍚庯紝绯荤粺鎵嶄細鍔犺浇浣犵殑璇嶄功鍜屽浘鐗囥€?;
     elements.learnExampleTranslation.textContent = "";
     elements.learnPrev.disabled = true;
     elements.learnNext.disabled = true;
-    elements.learnNext.textContent = state.authUser ? "暂无内容" : "请先登录";
+    elements.learnNext.textContent = state.authUser ? "鏆傛棤鍐呭" : "璇峰厛鐧诲綍";
     renderWordList();
     syncLearnListVisibility();
     renderWelcome();
@@ -3506,7 +3814,7 @@ function renderLearn() {
 
   elements.learnProgress.textContent = `${state.learnIndex + 1} / ${words.length}`;
   elements.learnListToggle.disabled = false;
-  setImageWithFallback(elements.learnImage, images, state.learnImageIndex, `${word.english} 词图`);
+  setImageWithFallback(elements.learnImage, images, state.learnImageIndex, `${word.english} 鐨勭湡瀹炲浘鐗嘸);
   elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !state.learnDeleteMenuOpen);
   elements.learnMedia.classList.toggle("is-manage-open", state.learnDeleteMenuOpen);
   elements.learnWord.textContent = word.english;
@@ -3518,12 +3826,12 @@ function renderLearn() {
   elements.learnExampleAudio.disabled = !hasExample;
   elements.learnExampleAudio.setAttribute(
     "aria-label",
-    hasExample ? "朗读例句" : "当前单词暂无例句可朗读"
+    hasExample ? "鏈楄渚嬪彞" : "褰撳墠鍗曡瘝鏆傛棤渚嬪彞鍙湕璇?
   );
 
   elements.learnPrev.disabled = state.learnIndex === 0;
   elements.learnNext.disabled = false;
-  elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "回到第一张" : "下一张";
+  elements.learnNext.textContent = state.learnIndex === words.length - 1 ? "鍥炲埌绗竴寮? : "涓嬩竴寮?;
 
   renderWordList();
   syncLearnListVisibility();
@@ -3537,7 +3845,7 @@ function syncBookSelector() {
   }
 
   if (!Array.isArray(state.books) || state.books.length === 0) {
-    elements.bookSelect.innerHTML = "<option value=\"\">当前词书</option>";
+    elements.bookSelect.innerHTML = '<option value="">褰撳墠璇嶄功</option>';
     elements.bookSelect.disabled = true;
     return;
   }
@@ -3572,7 +3880,7 @@ function syncLearnListVisibility() {
   elements.learnDrawer.setAttribute("aria-hidden", String(!isOpen));
   elements.learnListToggle.setAttribute("aria-expanded", String(isOpen));
   if (elements.learnListToggleLabel) {
-    elements.learnListToggleLabel.textContent = isOpen ? "收起单词列表" : "单词列表";
+    elements.learnListToggleLabel.textContent = isOpen ? "鏀惰捣鍗曡瘝鍒楄〃" : "鍗曡瘝鍒楄〃";
   }
   document.body.classList.toggle("drawer-open", isOpen);
 }
@@ -3608,7 +3916,7 @@ function renderWordList() {
     });
 
   if (filteredWords.length === 0) {
-    elements.wordList.innerHTML = '<div class="word-list-empty">没有匹配的单词</div>';
+    elements.wordList.innerHTML = '<div class="word-list-empty">娌℃湁鍖归厤鐨勫崟璇?/div>';
     return;
   }
 
@@ -3620,7 +3928,7 @@ function renderWordList() {
             <strong>${String(index + 1).padStart(2, "0")} ${escapeHtml(item.english)}</strong>
             <small>${escapeHtml(item.chinese)}</small>
           </span>
-          <small>${escapeHtml(state.reviewRatingsByWord[index] ? ratingLabel(state.reviewRatingsByWord[index]) : "未复习")}</small>
+          <small>${escapeHtml(state.reviewRatingsByWord[index] ? ratingLabel(state.reviewRatingsByWord[index]) : "鏈涔?)}</small>
         </button>
       `
     )
@@ -3661,7 +3969,7 @@ function setLearnDeleteMenu(isOpen) {
   elements.learnMedia.classList.toggle("is-manage-open", isOpen);
   elements.learnMedia.classList.toggle("is-switchable", images.length > 1 && !isOpen);
   elements.learnImageDelete.disabled = !canDelete;
-  elements.learnImageDelete.textContent = "删除";
+  elements.learnImageDelete.textContent = "鍒犻櫎";
 }
 
 function renderReview() {
@@ -3677,21 +3985,21 @@ function renderReview() {
     elements.reviewCounts.know.textContent = "0";
     elements.reviewCounts.fuzzy.textContent = "0";
     elements.reviewCounts.unknown.textContent = "0";
-    elements.reviewProgress.textContent = "暂无复习内容";
+    elements.reviewProgress.textContent = "鏆傛棤澶嶄範鍐呭";
     elements.reviewSuggestion.textContent = state.authUser
-      ? "当前词书为空，暂时没有复习内容。"
-      : "登录后才能进入复习模式。";
+      ? "褰撳墠璇嶄功涓虹┖锛屾殏鏃舵病鏈夊涔犲唴瀹广€?
+      : "鐧诲綍鍚庢墠鑳借繘鍏ュ涔犳ā寮忋€?;
     setImageWithFallback(
       elements.reviewImage,
       [placeholderImage],
       0,
-      state.authUser ? "当前没有可复习单词" : "请先登录"
+      state.authUser ? "褰撳墠娌℃湁鍙涔犲崟璇? : "璇峰厛鐧诲綍"
     );
-    elements.reviewWord.textContent = state.authUser ? "当前没有可复习单词" : "请先登录";
+    elements.reviewWord.textContent = state.authUser ? "褰撳墠娌℃湁鍙涔犲崟璇? : "璇峰厛鐧诲綍";
     elements.reviewPromptText.textContent = state.authUser
-      ? "换一本词书，或者检查后端 seed 数据。"
-      : "登录成功后会自动加载你的词书。";
-    elements.reviewTranslation.textContent = state.authUser ? "暂无可复习词卡" : "未登录无法查看词卡";
+      ? "鎹竴鏈瘝涔︼紝鎴栬€呮鏌ュ悗绔?seed 鏁版嵁銆?
+      : "鐧诲綍鎴愬姛鍚庝細鑷姩鍔犺浇浣犵殑璇嶄功銆?;
+    elements.reviewTranslation.textContent = state.authUser ? "鏆傛棤鍙涔犺瘝鍗? : "鏈櫥褰曟棤娉曟煡鐪嬭瘝鍗?;
     elements.reviewAnswer.classList.add("revealed");
     elements.reviewReveal.disabled = true;
     elements.rateButtons.forEach((button) => {
@@ -3703,15 +4011,15 @@ function renderReview() {
   elements.reviewCounts.know.textContent = String(counts.know);
   elements.reviewCounts.fuzzy.textContent = String(counts.fuzzy);
   elements.reviewCounts.unknown.textContent = String(counts.unknown);
-  elements.reviewProgress.textContent = `复习进度 ${Math.min(state.reviewIndex + 1, total)} / ${total}`;
+  elements.reviewProgress.textContent = `澶嶄範杩涘害 ${Math.min(state.reviewIndex + 1, total)} / ${total}`;
   elements.reviewSuggestion.textContent = buildReviewSuggestion(counts);
 
   if (state.reviewIndex >= total) {
     const lastWord = words[state.reviewOrder[total - 1]];
-    setImageWithFallback(elements.reviewImage, getWordImages(lastWord), 0, "复习完成");
-    elements.reviewWord.textContent = "这一轮复习完成";
-    elements.reviewPromptText.textContent = "可以切到统计页查看薄弱词，或继续去玩一轮看图猜词。";
-    elements.reviewTranslation.textContent = "今天这一组词已经复习完了。";
+    setImageWithFallback(elements.reviewImage, getWordImages(lastWord), 0, "澶嶄範瀹屾垚");
+    elements.reviewWord.textContent = "杩欎竴杞涔犲畬鎴?;
+    elements.reviewPromptText.textContent = "鍙互鍒囧埌缁熻椤垫煡鐪嬭杽寮辫瘝锛屾垨缁х画鍘荤帺涓€杞湅鍥剧寽璇嶃€?;
+    elements.reviewTranslation.textContent = "浠婂ぉ杩欎竴缁勮瘝宸茬粡澶嶄範瀹屼簡銆?;
     elements.reviewAnswer.classList.add("revealed");
     elements.reviewReveal.disabled = true;
     elements.rateButtons.forEach((button) => {
@@ -3722,11 +4030,11 @@ function renderReview() {
 
   const wordIndex = state.reviewOrder[state.reviewIndex];
   const word = words[wordIndex];
-  setImageWithFallback(elements.reviewImage, getWordImages(word), state.reviewIndex, `${word.english} 复习图`);
+  setImageWithFallback(elements.reviewImage, getWordImages(word), state.reviewIndex, `${word.english} 鐨勫涔犲浘鐗嘸);
   elements.reviewWord.textContent = word.english;
   elements.reviewPromptText.textContent = state.reviewRevealed
-    ? "已经显示答案，看看自己刚才想得对不对。"
-    : "先看图，试着自己想起这个词对应的中文意思。";
+    ? "宸茬粡鏄剧ず绛旀锛岀湅鐪嬭嚜宸卞垰鎵嶆兂寰楀涓嶅銆?
+    : "鍏堢湅鍥撅紝璇曠潃鑷繁鎯宠捣杩欎釜璇嶅搴旂殑涓枃鎰忔€濄€?;
   elements.reviewTranslation.textContent = word.chinese;
   elements.reviewAnswer.classList.toggle("revealed", state.reviewRevealed);
   elements.reviewReveal.disabled = state.reviewRevealed;
@@ -3746,19 +4054,19 @@ function renderImage() {
       english: state.authUser ? "No image quiz" : "Sign in"
     });
 
-    elements.imageProgress.textContent = state.authUser ? "当前词书暂无题目" : "请先登录";
+    elements.imageProgress.textContent = state.authUser ? "褰撳墠璇嶄功鏆傛棤棰樼洰" : "璇峰厛鐧诲綍";
     setImageWithFallback(
       elements.imageVisual,
       [placeholderImage],
       0,
-      state.authUser ? "当前词书暂无题目" : "请先登录"
+      state.authUser ? "褰撳墠璇嶄功鏆傛棤棰樼洰" : "璇峰厛鐧诲綍"
     );
     elements.imagePromptText.textContent = state.authUser
-      ? "当前词书没有足够的单词来生成题目。"
-      : "登录后才能进入看图猜词。";
+      ? "褰撳墠璇嶄功娌℃湁瓒冲鐨勫崟璇嶆潵鐢熸垚棰樼洰銆?
+      : "鐧诲綍鍚庢墠鑳借繘鍏ョ湅鍥剧寽璇嶃€?;
     elements.imageReason.textContent = state.authUser
-      ? "切换词书，或者检查后端词书数据。"
-      : "登录成功后会自动加载你的词书题目。";
+      ? "鍒囨崲璇嶄功锛屾垨鑰呮鏌ュ悗绔瘝涔︽暟鎹€?
+      : "鐧诲綍鎴愬姛鍚庝細鑷姩鍔犺浇浣犵殑璇嶄功棰樼洰銆?;
     elements.imageOptions.innerHTML = "";
     elements.imageResult.innerHTML = "";
     elements.imageNext.disabled = true;
@@ -3767,13 +4075,13 @@ function renderImage() {
   }
 
   if (state.imageIndex >= total) {
-    elements.imageProgress.textContent = `完成 ${total} / ${total}`;
-    elements.imagePromptText.textContent = "这一轮看图猜词结束了，可以重新开始再来一轮。";
-    elements.imageReason.textContent = "完成后继续回看学习卡片，图片记忆会更牢。";
+    elements.imageProgress.textContent = `瀹屾垚 ${total} / ${total}`;
+    elements.imagePromptText.textContent = "杩欎竴杞湅鍥剧寽璇嶇粨鏉熶簡锛屽彲浠ラ噸鏂板紑濮嬪啀鏉ヤ竴杞€?;
+    elements.imageReason.textContent = "瀹屾垚鍚庣户缁洖鐪嬪涔犲崱鐗囷紝鍥剧墖璁板繂浼氭洿鐗€?;
     elements.imageOptions.innerHTML = "";
     elements.imageResult.innerHTML = `
-      <strong>最终成绩：${state.imageScore} / ${state.imageAttempts}</strong>
-      <p>命中率 ${accuracy}%。建议把猜错的词再回到学习页看一遍。</p>
+      <strong>鏈€缁堟垚缁╋細${state.imageScore} / ${state.imageAttempts}</strong>
+      <p>鍛戒腑鐜?${accuracy}%銆傚缓璁妸鐚滈敊鐨勮瘝鍐嶅洖鍒板涔犻〉鐪嬩竴閬嶃€?/p>
     `;
     elements.imageNext.disabled = true;
     return;
@@ -3781,14 +4089,14 @@ function renderImage() {
 
   const wordIndex = state.imageOrder[state.imageIndex];
   const word = words[wordIndex];
-  elements.imageProgress.textContent = `看图猜词 ${state.imageIndex + 1} / ${total}`;
-  setImageWithFallback(elements.imageVisual, getWordImages(word), state.imageIndex, `${word.english} 看图题`);
+  elements.imageProgress.textContent = `鐪嬪浘鐚滆瘝 ${state.imageIndex + 1} / ${total}`;
+  setImageWithFallback(elements.imageVisual, getWordImages(word), state.imageIndex, `${word.english} 鐨勭寽璇嶅浘鐗嘸);
   elements.imagePromptText.textContent = state.imageAnswered
-    ? `答案：${word.english} · ${word.chinese}`
-    : "先看图，不看中文，直接选你觉得最像的英文词。";
+    ? `绛旀锛?{word.english} 路 ${word.chinese}`
+    : "鍏堢湅鍥撅紝涓嶇湅涓枃锛岀洿鎺ラ€変綘瑙夊緱鏈€鍍忕殑鑻辨枃璇嶃€?;
   elements.imageReason.textContent = state.imageAnswered
     ? word.imageReason
-    : "先观察图片里的主体、动作和环境，再做选择。";
+    : "鍏堣瀵熷浘鐗囬噷鐨勪富浣撱€佸姩浣滃拰鐜锛屽啀鍋氶€夋嫨銆?;
 
   elements.imageOptions.innerHTML = state.imageChoices
     .map((choiceIndex) => {
@@ -3814,12 +4122,12 @@ function renderImage() {
 
   elements.imageResult.innerHTML = state.imageAnswered
     ? `
-        <strong>${state.imageLastCorrect ? "答对了" : "这次没猜中"}</strong>
-        <p>${state.imageLastCorrect ? "继续下一题。" : "回到学习页再看一遍图片和例句。"}</p>
+        <strong>${state.imageLastCorrect ? "绛斿浜? : "杩欐娌＄寽涓?}</strong>
+        <p>${state.imageLastCorrect ? "缁х画涓嬩竴棰樸€? : "鍥炲埌瀛︿範椤靛啀鐪嬩竴閬嶅浘鐗囧拰渚嬪彞銆?}</p>
       `
     : `
-        <strong>当前正确 ${state.imageScore} / ${state.imageAttempts}</strong>
-        <p>先靠画面判断，不要先想中文。</p>
+        <strong>褰撳墠姝ｇ‘ ${state.imageScore} / ${state.imageAttempts}</strong>
+        <p>鍏堥潬鐢婚潰鍒ゆ柇锛屼笉瑕佸厛鎯充腑鏂囥€?/p>
       `;
 
   elements.imageNext.disabled = !state.imageAnswered;
@@ -3842,18 +4150,18 @@ function renderStats() {
     elements.stats.wordStatusList.innerHTML = `
       <div class="summary-item">
         <div>
-          <p><strong>${state.authUser ? "当前没有可统计内容" : "请先登录"}</strong></p>
+          <p><strong>${state.authUser ? "褰撳墠娌℃湁鍙粺璁″唴瀹? : "璇峰厛鐧诲綍"}</strong></p>
         </div>
-        <span class="status-pill new">${state.authUser ? "空词书" : "未登录"}</span>
+        <span class="status-pill new">${state.authUser ? "绌鸿瘝涔? : "鏈櫥褰?}</span>
       </div>
     `;
     return;
   }
 
   elements.stats.reviewBars.innerHTML = [
-    { key: "know", label: "认识", className: "good" },
-    { key: "fuzzy", label: "模糊", className: "mid" },
-    { key: "unknown", label: "不认识", className: "bad" }
+    { key: "know", label: "璁よ瘑", className: "good" },
+    { key: "fuzzy", label: "妯＄硦", className: "mid" },
+    { key: "unknown", label: "涓嶈璇?, className: "bad" }
   ]
     .map(({ key, label, className }) => {
       const value = counts[key];
@@ -3862,7 +4170,7 @@ function renderStats() {
         <div class="bar-item">
           <div class="bar-head">
             <span>${label}</span>
-            <span>${value} 词</span>
+            <span>${value} 璇?/span>
           </div>
           <div class="bar-track">
             <div class="bar-fill ${className}" style="width: ${percentage}%"></div>
@@ -3876,7 +4184,7 @@ function renderStats() {
     .map((word, index) => `
       <div class="summary-item">
         <div>
-          <p><strong>${word.english}</strong> · ${word.chinese}</p>
+          <p><strong>${word.english}</strong> 路 ${word.chinese}</p>
         </div>
         <span class="status-pill ${state.reviewRatingsByWord[index] || "new"}">${ratingLabel(state.reviewRatingsByWord[index] || "new")}</span>
       </div>
@@ -3924,7 +4232,7 @@ async function ensureCommunityFeedLoaded(force = false) {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "加载社区失败"));
+    window.alert(getErrorMessage(error, "鍔犺浇绀惧尯澶辫触"));
   } finally {
     state.communityFeedPending = false;
     renderCommunityFeed();
@@ -3932,7 +4240,7 @@ async function ensureCommunityFeedLoaded(force = false) {
 }
 
 async function openCommunityPostDetail(postId) {
-  if (!postId || !requireSignedInForAction("请先登录后再进入社区。")) {
+  if (!postId || !requireSignedInForAction("璇峰厛鐧诲綍鍚庡啀杩涘叆绀惧尯銆?)) {
     return;
   }
 
@@ -3948,7 +4256,7 @@ async function openCommunityPostDetail(postId) {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "加载帖子详情失败"));
+    window.alert(getErrorMessage(error, "鍔犺浇甯栧瓙璇︽儏澶辫触"));
     state.communityPostId = null;
     state.communityPostDetail = null;
     switchView("community");
@@ -3959,7 +4267,7 @@ async function openCommunityPostDetail(postId) {
 }
 
 function openCommunityPublishModal() {
-  if (!requireSignedInForAction("请先登录后再发布到社区。")) {
+  if (!requireSignedInForAction("璇峰厛鐧诲綍鍚庡啀鍙戝埌绀惧尯銆?)) {
     return;
   }
 
@@ -3971,7 +4279,7 @@ function openCommunityPublishModal() {
   const currentImage = getWordImages(currentWord)[Math.min(state.learnImageIndex, getWordImages(currentWord).length - 1)];
 
   if (!currentImage || typeof currentImage.id !== "number") {
-    window.alert("这张图片暂时不能发布到社区，请先使用当前词卡里的真实图片记录。");
+    window.alert("杩欏紶鍥剧墖杩樹笉鑳藉彂甯冨埌绀惧尯锛岃鍏堜娇鐢ㄥ綋鍓嶈瘝鍗￠噷鐨勭湡瀹炲浘鐗囪褰曘€?);
     return;
   }
 
@@ -3988,7 +4296,7 @@ function openCommunityPublishModal() {
   state.communityPublishPending = false;
   state.communityPublishWordId = currentWord.id;
   state.communityPublishImageId = currentImage.id;
-  state.communityPublishWordLabel = `${currentWord.english} · ${currentWord.chinese}`;
+  state.communityPublishWordLabel = `${currentWord.english} 路 ${currentWord.chinese}`;
   state.communityPublishDraft = "";
   state.communityPublishStatus = COMMUNITY_PUBLISH_DEFAULT_STATUS;
   state.communityPublishStatusTone = "info";
@@ -4027,13 +4335,13 @@ function syncCommunityPublishModal() {
     return;
   }
 
-  const submitLabel = state.communityPublishPending ? "发布中..." : "发布到社区";
+  const submitLabel = state.communityPublishPending ? "鍙戝竷涓?.." : "鍙戝竷鍒扮ぞ鍖?;
 
   elements.communityPublishModal.hidden = !state.communityPublishOpen;
   elements.communityPublishModal.setAttribute("aria-hidden", String(!state.communityPublishOpen));
   elements.communityPublishCopy.textContent = state.communityPublishWordLabel
-    ? `当前单词：${state.communityPublishWordLabel}，给这张图配一句短评、联想或记忆提示。`
-    : "给这张图配一句短评、联想或记忆提示。";
+    ? `缁?${state.communityPublishWordLabel} 杩欏紶鍥鹃厤涓€鍙ョ煭璇勩€佽仈鎯虫垨璁板繂鎻愮ず銆俙
+    : "缁欒繖寮犲浘閰嶄竴鍙ョ煭璇勩€佽仈鎯虫垨璁板繂鎻愮ず銆?;
   elements.communityPublishInput.value = state.communityPublishDraft;
   elements.communityPublishInput.disabled = state.communityPublishPending;
   elements.communityPublishStatus.textContent = state.communityPublishStatus;
@@ -4055,14 +4363,14 @@ async function submitCommunityPublish() {
   }
 
   if (!state.communityPublishWordId || typeof state.communityPublishImageId !== "number") {
-    state.communityPublishStatus = "当前图片状态已变化，请重新长按后发布。";
+    state.communityPublishStatus = "褰撳墠鍥剧墖鐘舵€佸凡鍙樺寲锛岃閲嶆柊闀挎寜鍚庡彂甯冦€?;
     state.communityPublishStatusTone = "error";
     syncCommunityPublishModal();
     return;
   }
 
   if (!body) {
-    state.communityPublishStatus = "先写一句评论、短语联想或记忆提示。";
+    state.communityPublishStatus = "鍏堝啓涓€鍙ヨ瘎浠枫€佺煭璇仈鎯虫垨璁板繂鎻愮ず銆?;
     state.communityPublishStatusTone = "error";
     syncCommunityPublishModal();
     if (elements.communityPublishInput) {
@@ -4072,11 +4380,11 @@ async function submitCommunityPublish() {
   }
 
   state.communityPublishPending = true;
-  state.communityPublishStatus = "正在发布到社区...";
+  state.communityPublishStatus = "姝ｅ湪鍙戝竷鍒扮ぞ鍖?..";
   state.communityPublishStatusTone = "info";
   if (elements.learnImagePublish) {
     elements.learnImagePublish.disabled = true;
-    elements.learnImagePublish.textContent = "发布中...";
+    elements.learnImagePublish.textContent = "鍙戝竷涓?..";
   }
   syncCommunityPublishModal();
 
@@ -4096,14 +4404,14 @@ async function submitCommunityPublish() {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    state.communityPublishStatus = getErrorMessage(error, "发布到社区失败");
+    state.communityPublishStatus = getErrorMessage(error, "鍙戝竷鍒扮ぞ鍖哄け璐?);
     state.communityPublishStatusTone = "error";
     syncCommunityPublishModal();
   } finally {
     state.communityPublishPending = false;
     if (elements.learnImagePublish) {
       elements.learnImagePublish.disabled = false;
-      elements.learnImagePublish.textContent = "发到社区";
+      elements.learnImagePublish.textContent = "鍙戝埌绀惧尯";
     }
     syncCommunityPublishModal();
   }
@@ -4125,7 +4433,7 @@ async function toggleCommunityPostLike() {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "点赞失败"));
+    window.alert(getErrorMessage(error, "鐐硅禐澶辫触"));
   } finally {
     state.communityPostPending = false;
     renderCommunityPostDetail();
@@ -4142,12 +4450,12 @@ async function favoriteCommunityPost() {
   }
 
   if (state.communityPostDetail.viewer?.favorited) {
-    window.alert("这张图已经收藏到你的词图里了。");
+    window.alert("杩欏紶鍥惧凡缁忔敹钘忓埌浣犵殑璇嶅浘閲屼簡銆?);
     return;
   }
 
-  const wordLabel = state.communityPostDetail.word?.english || state.communityPostDetail.title || "这个单词";
-  const shouldContinue = window.confirm(`确认收藏这张和“${wordLabel}”相关的词图吗？`);
+  const wordLabel = state.communityPostDetail.word?.english || state.communityPostDetail.title || "杩欎釜鍗曡瘝";
+  const shouldContinue = window.confirm(`鏀惰棌鍚庯紝杩欏紶鍥句細鍔犲叆浣犺嚜宸辩殑銆?{wordLabel}銆嶅浘鐗囧簱銆傜‘瀹氱户缁悧锛焋);
 
   if (!shouldContinue) {
     return;
@@ -4167,7 +4475,7 @@ async function favoriteCommunityPost() {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "收藏失败"));
+    window.alert(getErrorMessage(error, "鏀惰棌澶辫触"));
   } finally {
     state.communityPostPending = false;
     renderCommunityPostDetail();
@@ -4197,7 +4505,7 @@ async function submitCommunityComment() {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "评论失败"));
+    window.alert(getErrorMessage(error, "璇勮澶辫触"));
   } finally {
     state.communityCommentPending = false;
     renderCommunityPostDetail();
@@ -4220,7 +4528,7 @@ async function toggleCommunityCommentLike(commentId) {
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
-    window.alert(getErrorMessage(error, "评论点赞失败"));
+    window.alert(getErrorMessage(error, "璇勮鐐硅禐澶辫触"));
   }
 }
 
@@ -4245,22 +4553,22 @@ function syncCommunityFeedPost(postDetail) {
 
 function buildReviewSuggestion(counts) {
   if (state.reviewAnswers.length === 0) {
-    return "先完成一轮复习，系统会根据你的打分给出建议。";
+    return "鍏堝畬鎴愪竴杞涔狅紝绯荤粺浼氭牴鎹綘鐨勬墦鍒嗙粰鍑哄缓璁€?;
   }
 
   if (counts.unknown >= 3) {
-    return "不认识的词偏多，建议先回到学习卡片再看一遍图片和例句。";
+    return "涓嶈璇嗙殑璇嶅亸澶氾紝寤鸿鍏堝洖鍒板涔犲崱鐗囧啀鐪嬩竴閬嶅浘鐗囧拰渚嬪彞銆?;
   }
 
   if (counts.fuzzy >= 3) {
-    return "模糊的词比较多，适合立刻去做一轮看图猜词加深联想。";
+    return "妯＄硦鐨勮瘝姣旇緝澶氾紝閫傚悎绔嬪埢鍘诲仛涓€杞湅鍥剧寽璇嶅姞娣辫仈鎯炽€?;
   }
 
   if (counts.know >= 5) {
-    return "整体状态不错，可以继续靠图片回忆，把速度再提起来。";
+    return "鏁翠綋鐘舵€佷笉閿欙紝鍙互缁х画闈犲浘鐗囧洖蹇嗭紝鎶婇€熷害鍐嶆彁璧锋潵銆?;
   }
 
-  return "继续完成这一轮复习，重点观察哪些词总会停在模糊。";
+  return "缁х画瀹屾垚杩欎竴杞涔狅紝閲嶇偣瑙傚療鍝簺璇嶆€讳細鍋滃湪妯＄硦銆?;
 }
 
 function getReviewCounts() {
@@ -4617,7 +4925,7 @@ async function importSelectedSearchImage(resultId) {
 
   const currentWord = words[state.learnIndex];
   state.learnSearchImportingId = result.id;
-  state.learnSearchStatus = "导入中...";
+  state.learnSearchStatus = "瀵煎叆涓?..";
   syncLearnSearchModal();
 
   try {
@@ -4708,7 +5016,7 @@ function handleLearnUploadDragEnter(event) {
   }
 
   state.learnUploadDragging = true;
-  state.learnUploadStatus = "松开即可上传";
+  state.learnUploadStatus = "鏉惧紑鍗冲彲涓婁紶";
   syncLearnUploadModal();
 }
 
@@ -4724,7 +5032,7 @@ function handleLearnUploadDragOver(event) {
   }
 
   state.learnUploadDragging = true;
-  state.learnUploadStatus = "松开即可上传";
+  state.learnUploadStatus = "鏉惧紑鍗冲彲涓婁紶";
   syncLearnUploadModal();
 }
 
@@ -4764,14 +5072,14 @@ async function handleLearnUploadFiles(fileList) {
   }
 
   if (!file.type.startsWith("image/")) {
-    state.learnUploadStatus = "只能上传图片文件";
+    state.learnUploadStatus = "鍙兘涓婁紶鍥剧墖鏂囦欢";
     resetLearnUploadInput();
     syncLearnUploadModal();
     return;
   }
 
   if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-    state.learnUploadStatus = "图片太大了，请控制在 10MB 以内";
+    state.learnUploadStatus = "鍥剧墖澶ぇ浜嗭紝璇锋帶鍒跺湪 10MB 浠ュ唴";
     resetLearnUploadInput();
     syncLearnUploadModal();
     return;
@@ -4780,7 +5088,7 @@ async function handleLearnUploadFiles(fileList) {
   const currentWord = words[state.learnIndex];
   state.learnUploadPending = true;
   state.learnUploadDragging = false;
-  state.learnUploadStatus = "上传中...";
+  state.learnUploadStatus = "涓婁紶涓?..";
   syncLearnUploadModal();
 
   try {
@@ -4818,7 +5126,7 @@ function getLearnUploadErrorMessage(error) {
     return error.message;
   }
 
-  return "上传失败，请确认后端已经启动";
+  return "涓婁紶澶辫触锛岃纭鍚庣宸茬粡鍚姩";
 }
 
 async function deleteCurrentLearnImage() {
@@ -4845,7 +5153,7 @@ async function deleteCurrentLearnImage() {
 
   if (typeof activeImage.id === "number") {
     elements.learnImageDelete.disabled = true;
-    elements.learnImageDelete.textContent = "删除中...";
+    elements.learnImageDelete.textContent = "鍒犻櫎涓?..";
 
     try {
       const payload = await deleteWordImageApi(activeImage.id);
@@ -4853,7 +5161,7 @@ async function deleteCurrentLearnImage() {
       state.learnImageIndex = Math.min(activeIndex, getWordImages(words[state.learnIndex]).length - 1);
     } catch (error) {
       console.error(error);
-      window.alert("删除失败，请确认后端已启动，并且数据库已经初始化。");
+      window.alert("鍒犻櫎澶辫触锛岃纭鍚庣宸插惎鍔紝骞朵笖鏁版嵁搴撳凡鍒濆鍖栥€?);
     } finally {
       setLearnDeleteMenu(false);
       renderLearn();
@@ -4893,10 +5201,10 @@ function speakEnglish(text) {
 
 function ratingLabel(rating) {
   const labels = {
-    know: "认识",
-    fuzzy: "模糊",
-    unknown: "不认识",
-    new: "未复习"
+    know: "璁よ瘑",
+    fuzzy: "妯＄硦",
+    unknown: "涓嶈璇?,
+    new: "鏈涔?
   };
 
   return labels[rating];
@@ -5192,7 +5500,7 @@ function getAuthUserAccountMeta(user) {
   }
 
   if (user.authProvider === "username" || user.username) {
-    return `用户名账号：${user.username || user.displayName || ""}`;
+    return `鍚嶅瓧璐﹀彿锛?{user.username || user.displayName || ""}`;
   }
 
   return user.email || "";
@@ -5350,7 +5658,7 @@ async function fetchCommunityFeedApi() {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "加载社区失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇绀惧尯澶辫触"));
   }
 
   return response.json();
@@ -5364,7 +5672,36 @@ async function fetchCommunityPostDetailApi(postId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "加载帖子详情失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇甯栧瓙璇︽儏澶辫触"));
+  }
+
+  return response.json();
+}
+
+async function fetchAdminOverviewApi() {
+  const response = await fetch(`${API_BASE_URL}/community/admin/overview`, {
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇绠＄悊椤靛け璐?));
+  }
+
+  return response.json();
+}
+
+async function deleteAdminPostApi(postId) {
+  const response = await fetch(`${API_BASE_URL}/community/admin/posts/${postId}/delete`, {
+    method: "POST",
+    headers: buildApiHeaders({
+      Accept: "application/json"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiErrorMessage(response, "鍒犻櫎甯栧瓙澶辫触"));
   }
 
   return response.json();
@@ -5378,7 +5715,7 @@ async function fetchAdminOverviewApi() {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "加载管理概览失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇绠＄悊姒傝澶辫触"));
   }
 
   return response.json();
@@ -5401,7 +5738,7 @@ async function fetchAdminUsersApi({ q = "", page = 1, pageSize = 10 } = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "加载用户列表失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇鐢ㄦ埛鍒楄〃澶辫触"));
   }
 
   return response.json();
@@ -5418,7 +5755,7 @@ async function createAdminUserApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "创建用户失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍒涘缓鐢ㄦ埛澶辫触"));
   }
 
   return response.json();
@@ -5435,7 +5772,7 @@ async function updateAdminUserApi(userId, payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "更新用户失败"));
+    throw new Error(await extractApiErrorMessage(response, "鏇存柊鐢ㄦ埛澶辫触"));
   }
 
   return response.json();
@@ -5450,7 +5787,7 @@ async function deleteAdminUserApi(userId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "删除用户失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍒犻櫎鐢ㄦ埛澶辫触"));
   }
 
   return response.json();
@@ -5473,7 +5810,7 @@ async function fetchAdminPostsApi({ q = "", page = 1, pageSize = 8 } = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "加载帖子列表失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍔犺浇甯栧瓙鍒楄〃澶辫触"));
   }
 
   return response.json();
@@ -5490,7 +5827,7 @@ async function createAdminPostApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "创建帖子失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍒涘缓甯栧瓙澶辫触"));
   }
 
   return response.json();
@@ -5507,7 +5844,7 @@ async function updateAdminPostApi(postId, payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "更新帖子失败"));
+    throw new Error(await extractApiErrorMessage(response, "鏇存柊甯栧瓙澶辫触"));
   }
 
   return response.json();
@@ -5522,7 +5859,7 @@ async function deleteAdminPostApi(postId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "删除帖子失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍒犻櫎甯栧瓙澶辫触"));
   }
 
   return response.json();
@@ -5539,7 +5876,7 @@ async function publishCommunityPostApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "发布到社区失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍙戝竷鍒扮ぞ鍖哄け璐?));
   }
 
   return response.json();
@@ -5556,7 +5893,7 @@ async function createCommunityCommentApi(postId, payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "评论失败"));
+    throw new Error(await extractApiErrorMessage(response, "璇勮澶辫触"));
   }
 
   return response.json();
@@ -5571,7 +5908,7 @@ async function toggleCommunityPostLikeApi(postId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "点赞失败"));
+    throw new Error(await extractApiErrorMessage(response, "鐐硅禐澶辫触"));
   }
 
   return response.json();
@@ -5586,7 +5923,7 @@ async function favoriteCommunityPostApi(postId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "收藏失败"));
+    throw new Error(await extractApiErrorMessage(response, "鏀惰棌澶辫触"));
   }
 
   return response.json();
@@ -5601,7 +5938,7 @@ async function toggleCommunityCommentLikeApi(commentId) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "评论点赞失败"));
+    throw new Error(await extractApiErrorMessage(response, "璇勮鐐硅禐澶辫触"));
   }
 
   return response.json();
@@ -5633,7 +5970,7 @@ async function searchBingImagesApi(query) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "图片搜索失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍥剧墖鎼滅储澶辫触"));
   }
 
   return response.json();
@@ -5655,7 +5992,7 @@ async function importBingSearchImageApi(wordId, result) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "图片导入失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍥剧墖瀵煎叆澶辫触"));
   }
 
   return response.json();
@@ -5672,7 +6009,7 @@ async function uploadWordImageApi(wordId, file) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "图片上传失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍥剧墖涓婁紶澶辫触"));
   }
 
   return response.json();
@@ -5689,7 +6026,7 @@ async function loginWithEmailApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "登录失败"));
+    throw new Error(await extractApiErrorMessage(response, "鐧诲綍澶辫触"));
   }
 
   return response.json();
@@ -5706,7 +6043,7 @@ async function sendRegisterCodeApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "发送验证码失败"));
+    throw new Error(await extractApiErrorMessage(response, "鍙戦€侀獙璇佺爜澶辫触"));
   }
 
   return response.json();
@@ -5723,7 +6060,7 @@ async function registerWithEmailApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "注册失败"));
+    throw new Error(await extractApiErrorMessage(response, "娉ㄥ唽澶辫触"));
   }
 
   return response.json();
@@ -5740,7 +6077,7 @@ async function loginWithUsernameApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "登录失败"));
+    throw new Error(await extractApiErrorMessage(response, "鐧诲綍澶辫触"));
   }
 
   return response.json();
@@ -5757,7 +6094,7 @@ async function registerWithUsernameApi(payload) {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "注册失败"));
+    throw new Error(await extractApiErrorMessage(response, "娉ㄥ唽澶辫触"));
   }
 
   return response.json();
@@ -5771,7 +6108,7 @@ async function fetchCurrentUserApi() {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "获取登录状态失败"));
+    throw new Error(await extractApiErrorMessage(response, "鑾峰彇鐧诲綍鐘舵€佸け璐?));
   }
 
   return response.json();
@@ -5786,7 +6123,7 @@ async function logoutApi() {
   });
 
   if (!response.ok) {
-    throw new Error(await extractApiErrorMessage(response, "退出失败"));
+    throw new Error(await extractApiErrorMessage(response, "閫€鍑哄け璐?));
   }
 
   return response.json();

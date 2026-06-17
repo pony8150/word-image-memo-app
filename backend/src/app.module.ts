@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
+import { AdminModule } from "./admin/admin.module";
 import { AuthModule } from "./auth/auth.module";
 import { CommunityModule } from "./community/community.module";
 import { DatabaseModule } from "./database/database.module";
@@ -13,6 +14,7 @@ import { WordsModule } from "./words/words.module";
     DatabaseModule,
     StorageModule,
     WordsModule,
+    AdminModule,
     AuthModule,
     ImagesModule,
     CommunityModule

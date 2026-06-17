@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -39,6 +39,13 @@
             <span class="nav-pill-copy">
               <strong>社区</strong>
               <small>Word moments</small>
+            </span>
+          </button>
+          <button class="nav-pill" data-target="admin" hidden>
+            <span class="nav-pill-icon" aria-hidden="true"></span>
+            <span class="nav-pill-copy">
+              <strong>管理</strong>
+              <small>Admin tools</small>
             </span>
           </button>
           <button class="nav-pill" data-target="welcome" hidden>
@@ -512,6 +519,181 @@
             </section>
           </article>
         </section>
+
+        <section class="view" id="admin" hidden>
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Admin</p>
+              <h2>社区管理</h2>
+            </div>
+            <button class="secondary-btn" id="admin-refresh-button" type="button">刷新数据</button>
+          </div>
+
+          <p class="admin-status" id="admin-status" aria-live="polite"></p>
+
+          <div class="admin-tabs" role="tablist" aria-label="管理分区">
+            <button class="admin-tab active" id="admin-tab-overview" data-admin-tab="overview" type="button" aria-selected="true">概览</button>
+            <button class="admin-tab" id="admin-tab-users" data-admin-tab="users" type="button" aria-selected="false">用户管理</button>
+            <button class="admin-tab" id="admin-tab-posts" data-admin-tab="posts" type="button" aria-selected="false">帖子管理</button>
+          </div>
+
+          <section class="admin-panel" id="admin-overview-panel">
+            <div class="stats-grid admin-summary-grid">
+              <article class="card stat-card warm">
+                <p>总用户数</p>
+                <strong id="admin-total-users">0</strong>
+                <span>已注册账号</span>
+              </article>
+              <article class="card stat-card cool">
+                <p>管理员</p>
+                <strong id="admin-admin-users">0</strong>
+                <span>当前拥有管理权限</span>
+              </article>
+              <article class="card stat-card mint">
+                <p>近 7 天活跃</p>
+                <strong id="admin-active-users-7d">0</strong>
+                <span>最近登录过的用户</span>
+              </article>
+              <article class="card stat-card coral">
+                <p>社区帖子</p>
+                <strong id="admin-total-posts">0</strong>
+                <span>当前可见帖子总数</span>
+              </article>
+              <article class="card stat-card warm">
+                <p>社区评论</p>
+                <strong id="admin-total-comments">0</strong>
+                <span>当前有效评论总数</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-panel" id="admin-users-panel" hidden>
+            <section class="card admin-block">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Users</p>
+                  <h3>用户列表</h3>
+                </div>
+              </div>
+
+              <form class="admin-toolbar" id="admin-users-search-form">
+                <input class="admin-search-input" id="admin-users-search-input" type="search" placeholder="搜索用户名、显示名、邮箱" />
+                <button class="secondary-btn" type="submit">搜索</button>
+              </form>
+
+              <p class="admin-panel-status" id="admin-users-status" aria-live="polite"></p>
+
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>用户</th>
+                      <th>账号</th>
+                      <th>身份</th>
+                      <th>帖子数</th>
+                      <th>最近登录</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-table-body"></tbody>
+                </table>
+              </div>
+
+              <div class="admin-pager">
+                <button class="secondary-btn" id="admin-users-prev" type="button">上一页</button>
+                <span id="admin-users-page"></span>
+                <button class="secondary-btn" id="admin-users-next" type="button">下一页</button>
+              </div>
+            </section>
+          </section>
+
+          <section class="admin-panel" id="admin-posts-panel" hidden>
+            <section class="card admin-block">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Posts</p>
+                  <h3>帖子列表</h3>
+                </div>
+              </div>
+
+              <form class="admin-toolbar" id="admin-posts-search-form">
+                <input class="admin-search-input" id="admin-posts-search-input" type="search" placeholder="搜索标题、正文、单词、作者" />
+                <button class="secondary-btn" type="submit">搜索</button>
+              </form>
+
+              <p class="admin-panel-status" id="admin-posts-status" aria-live="polite"></p>
+              <div class="admin-post-list" id="admin-post-list"></div>
+
+              <div class="admin-pager">
+                <button class="secondary-btn" id="admin-posts-prev" type="button">上一页</button>
+                <span id="admin-posts-page"></span>
+                <button class="secondary-btn" id="admin-posts-next" type="button">下一页</button>
+              </div>
+            </section>
+          </section>
+        </section>
+
+        <div class="admin-edit-modal" id="admin-user-edit-section" aria-hidden="true" hidden>
+          <div class="admin-edit-card" role="dialog" aria-modal="true" aria-labelledby="admin-user-edit-heading">
+            <div class="admin-edit-head">
+              <div>
+                <p class="eyebrow">Edit User</p>
+                <h3 id="admin-user-edit-heading">编辑用户</h3>
+              </div>
+              <button class="secondary-btn" id="admin-user-edit-cancel" type="button">关闭</button>
+            </div>
+
+            <form class="admin-form-grid" id="admin-user-edit-form">
+              <input id="admin-user-edit-id" type="hidden" />
+              <label class="admin-field">
+                <span>用户名</span>
+                <input id="admin-user-edit-username" type="text" maxlength="20" required />
+              </label>
+              <label class="admin-field">
+                <span>显示名</span>
+                <input id="admin-user-edit-display-name" type="text" maxlength="32" required />
+              </label>
+              <label class="admin-field">
+                <span>重置密码</span>
+                <input id="admin-user-edit-password" type="password" minlength="6" placeholder="留空表示不修改" />
+              </label>
+              <label class="admin-field admin-checkbox-field">
+                <input id="admin-user-edit-is-admin" type="checkbox" />
+                <span>管理员权限</span>
+              </label>
+              <div class="admin-form-actions">
+                <button class="primary-btn" id="admin-user-edit-submit" type="submit">保存修改</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="admin-edit-modal" id="admin-post-edit-section" aria-hidden="true" hidden>
+          <div class="admin-edit-card" role="dialog" aria-modal="true" aria-labelledby="admin-post-edit-heading">
+            <div class="admin-edit-head">
+              <div>
+                <p class="eyebrow">Edit Post</p>
+                <h3 id="admin-post-edit-heading">编辑帖子</h3>
+              </div>
+              <button class="secondary-btn" id="admin-post-edit-cancel" type="button">关闭</button>
+            </div>
+
+            <form class="admin-form-grid" id="admin-post-edit-form">
+              <input id="admin-post-edit-id" type="hidden" />
+              <label class="admin-field admin-field-wide">
+                <span>标题</span>
+                <input id="admin-post-edit-title" type="text" maxlength="255" required />
+              </label>
+              <label class="admin-field admin-field-wide">
+                <span>正文</span>
+                <textarea id="admin-post-edit-body" rows="5"></textarea>
+              </label>
+              <div class="admin-form-actions">
+                <button class="primary-btn" id="admin-post-edit-submit" type="submit">保存修改</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
         <section class="view" id="review" hidden>
           <div class="section-header">

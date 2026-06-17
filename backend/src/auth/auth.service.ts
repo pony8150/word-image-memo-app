@@ -20,6 +20,7 @@ interface UserRow {
   display_name: string;
   password_hash: string | null;
   auth_provider: AuthProvider;
+  is_admin: number | string | boolean;
 }
 
 interface SessionUserRow extends UserRow {
@@ -39,6 +40,7 @@ export interface AuthenticatedUser {
   username: string | null;
   displayName: string;
   authProvider: AuthProvider;
+  isAdmin: boolean;
 }
 
 const REGISTER_CODE_COOLDOWN_SECONDS = 60;
@@ -213,7 +215,8 @@ export class AuthService {
           username: null,
           display_name: displayName,
           password_hash: passwordHash,
-          auth_provider: "email"
+          auth_provider: "email",
+          is_admin: 0
         },
         userAgent,
         forwardedFor
@@ -274,7 +277,8 @@ export class AuthService {
           username: normalizedUsername,
           display_name: normalizedUsername,
           password_hash: passwordHash,
-          auth_provider: "username"
+          auth_provider: "username",
+          is_admin: 0
         },
         userAgent,
         forwardedFor
@@ -360,6 +364,7 @@ export class AuthService {
           u.display_name,
           u.password_hash,
           u.auth_provider,
+          u.is_admin,
           s.expires_at
         FROM user_sessions s
         INNER JOIN users u
@@ -422,7 +427,7 @@ export class AuthService {
     const result = client
       ? await client.query<UserRow>(
           `
-            SELECT id, email, username, display_name, password_hash, auth_provider
+            SELECT id, email, username, display_name, password_hash, auth_provider, is_admin
             FROM users
             WHERE email = $1
             LIMIT 1
@@ -431,7 +436,7 @@ export class AuthService {
         )
       : await this.database.query<UserRow>(
           `
-            SELECT id, email, username, display_name, password_hash, auth_provider
+            SELECT id, email, username, display_name, password_hash, auth_provider, is_admin
             FROM users
             WHERE email = $1
             LIMIT 1
@@ -449,7 +454,7 @@ export class AuthService {
     const result = client
       ? await client.query<UserRow>(
           `
-            SELECT id, email, username, display_name, password_hash, auth_provider
+            SELECT id, email, username, display_name, password_hash, auth_provider, is_admin
             FROM users
             WHERE username = $1
             LIMIT 1
@@ -458,7 +463,7 @@ export class AuthService {
         )
       : await this.database.query<UserRow>(
           `
-            SELECT id, email, username, display_name, password_hash, auth_provider
+            SELECT id, email, username, display_name, password_hash, auth_provider, is_admin
             FROM users
             WHERE username = $1
             LIMIT 1
@@ -583,7 +588,8 @@ function toAuthenticatedUser(user: UserRow | SessionUserRow): AuthenticatedUser 
     email: publicEmail,
     username: user.username,
     displayName: user.display_name,
-    authProvider: user.auth_provider
+    authProvider: user.auth_provider,
+    isAdmin: Boolean(Number(user.is_admin || 0))
   };
 }
 

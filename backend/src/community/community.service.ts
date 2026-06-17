@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException
 } from "@nestjs/common";
@@ -10,6 +11,8 @@ import { StorageService } from "../storage/storage.service";
 import { WordsService } from "../words/words.service";
 import { LearningDeckWord } from "../words/words.types";
 import {
+  CommunityAdminOverview,
+  CommunityAdminPost,
   CommunityComment,
   CommunityFeedPost,
   CommunityPostDetail
@@ -80,6 +83,35 @@ interface FavoriteTargetRow {
   image_asset_id: number | string;
   source_label: string | null;
   source_credit: string | null;
+}
+
+interface AdminSummaryRow {
+  total_users: number | string;
+  admin_users: number | string;
+  active_users_7d: number | string;
+  active_posts: number | string;
+  deleted_posts: number | string;
+  active_comments: number | string;
+}
+
+interface AdminPostRow {
+  post_id: number | string;
+  word_id: string;
+  title: string;
+  body: string | null;
+  status: "active" | "deleted";
+  like_count: number | string;
+  favorite_count: number | string;
+  comment_count: number | string;
+  share_count: number | string;
+  created_at: Date | string;
+  user_id: number | string;
+  user_email: string;
+  user_display_name: string;
+  user_avatar_url: string | null;
+  image_storage_type: string;
+  image_storage_key: string | null;
+  image_public_url: string | null;
 }
 
 @Injectable()
@@ -218,6 +250,109 @@ export class CommunityService {
         comments
       }
     };
+  }
+
+  async getAdminOverview(user: AuthenticatedUser): Promise<CommunityAdminOverview> {
+    this.assertAdmin(user);
+
+    const summaryResult = await this.database.query<AdminSummaryRow>(
+      `
+        SELECT
+          (SELECT COUNT(*) FROM users) AS total_users,
+          (SELECT COUNT(*) FROM users WHERE is_admin = TRUE) AS admin_users,
+          (
+            SELECT COUNT(*)
+            FROM users
+            WHERE last_login_at IS NOT NULL
+              AND last_login_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+          ) AS active_users_7d,
+          (SELECT COUNT(*) FROM community_posts WHERE status = 'active') AS active_posts,
+          (SELECT COUNT(*) FROM community_posts WHERE status = 'deleted') AS deleted_posts,
+          (
+            SELECT COUNT(*)
+            FROM community_comments c
+            INNER JOIN community_posts p
+              ON p.id = c.post_id
+            WHERE c.status = 'active'
+              AND p.status = 'active'
+          ) AS active_comments
+      `
+    );
+
+    const recentPostsResult = await this.database.query<AdminPostRow>(
+      `
+        SELECT
+          p.id AS post_id,
+          p.word_id,
+          p.title,
+          p.body,
+          p.status,
+          p.like_count,
+          p.favorite_count,
+          p.comment_count,
+          p.share_count,
+          p.created_at,
+          u.id AS user_id,
+          u.email AS user_email,
+          u.display_name AS user_display_name,
+          u.avatar_url AS user_avatar_url,
+          ia.storage_type AS image_storage_type,
+          ia.storage_key AS image_storage_key,
+          ia.public_url AS image_public_url
+        FROM community_posts p
+        INNER JOIN users u
+          ON u.id = p.user_id
+        INNER JOIN word_images wi
+          ON wi.id = p.word_image_id
+        INNER JOIN image_assets ia
+          ON ia.id = wi.image_asset_id
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT 80
+      `
+    );
+
+    const summary = summaryResult.rows[0];
+
+    return {
+      summary: {
+        totalUsers: Number(summary?.total_users || 0),
+        adminUsers: Number(summary?.admin_users || 0),
+        activeUsers7d: Number(summary?.active_users_7d || 0),
+        activePosts: Number(summary?.active_posts || 0),
+        deletedPosts: Number(summary?.deleted_posts || 0),
+        activeComments: Number(summary?.active_comments || 0)
+      },
+      recentPosts: recentPostsResult.rows.map((row) => this.mapAdminPostRow(row))
+    };
+  }
+
+  async deletePostAsAdmin(postId: number, user: AuthenticatedUser): Promise<{ ok: true }> {
+    this.assertAdmin(user);
+
+    await this.database.transaction(async (client) => {
+      await this.ensureActivePost(client, postId);
+
+      await client.query(
+        `
+          UPDATE community_posts
+          SET status = 'deleted'
+          WHERE id = $1
+        `,
+        [postId]
+      );
+
+      await client.query(
+        `
+          UPDATE community_comments
+          SET status = 'deleted'
+          WHERE post_id = $1
+            AND status = 'active'
+        `,
+        [postId]
+      );
+    });
+
+    return { ok: true };
   }
 
   async publishPost(user: AuthenticatedUser, input: PublishPostInput): Promise<{ post: CommunityPostDetail }> {
@@ -740,6 +875,14 @@ export class CommunityService {
     return result.rows[0] || null;
   }
 
+  private assertAdmin(user: AuthenticatedUser): void {
+    if (user.isAdmin) {
+      return;
+    }
+
+    throw new ForbiddenException("Admin access is required.");
+  }
+
   private mapFeedRow(row: FeedRow): CommunityFeedPost {
     return {
       id: Number(row.post_id),
@@ -766,6 +909,33 @@ export class CommunityService {
       viewer: {
         liked: Boolean(Number(row.viewer_liked || 0)),
         favorited: Boolean(Number(row.viewer_favorited || 0))
+      }
+    };
+  }
+
+  private mapAdminPostRow(row: AdminPostRow): CommunityAdminPost {
+    return {
+      id: Number(row.post_id),
+      wordId: row.word_id,
+      title: row.title,
+      body: row.body,
+      imageUrl: this.storage.resolvePublicUrl({
+        storageType: row.image_storage_type,
+        storageKey: row.image_storage_key,
+        publicUrl: row.image_public_url
+      }),
+      status: row.status,
+      likeCount: Number(row.like_count || 0),
+      favoriteCount: Number(row.favorite_count || 0),
+      commentCount: Number(row.comment_count || 0),
+      shareCount: Number(row.share_count || 0),
+      createdAt: toIsoString(row.created_at),
+      author: {
+        id: Number(row.user_id),
+        displayName: row.user_display_name,
+        email: row.user_email,
+        avatarText: buildAvatarText(row.user_display_name || row.user_email),
+        avatarUrl: row.user_avatar_url
       }
     };
   }

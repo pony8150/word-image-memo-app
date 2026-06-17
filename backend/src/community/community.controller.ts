@@ -42,6 +42,21 @@ export class CommunityController {
     return this.communityService.getPostDetail(postId, user.id);
   }
 
+  @Get("admin/overview")
+  async getAdminOverview(@Headers("authorization") authorization?: string) {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+    return this.communityService.getAdminOverview(user);
+  }
+
+  @Post("admin/posts/:id/delete")
+  async deletePostAsAdmin(
+    @Param("id", ParseIntPipe) postId: number,
+    @Headers("authorization") authorization?: string
+  ) {
+    const user = await this.authService.requireUserFromAuthorization(authorization);
+    return this.communityService.deletePostAsAdmin(postId, user);
+  }
+
   @Post("posts")
   async publishPost(
     @Body() body: PublishPostBody,
