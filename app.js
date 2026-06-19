@@ -265,6 +265,8 @@ const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const LEARN_UPLOAD_DEFAULT_STATUS = "支持 jpg、png、webp、gif，单张不超过 10MB";
 const LEARN_SEARCH_EMPTY_STATUS = "请输入要搜索的英文单词";
 const COMMUNITY_PUBLISH_DEFAULT_STATUS = "写一句短评、联想或记忆提示后再发布。";
+const COMMUNITY_POST_BODY_MAX_LENGTH = 160;
+const COMMUNITY_COMMENT_MAX_LENGTH = 240;
 const LEARN_LONG_PRESS_MS = 650;
 const SIDEBAR_COLLAPSE_MEDIA_QUERY = "(max-width: 1024px)";
 
@@ -322,6 +324,7 @@ const state = {
   communityPostDetail: null,
   communityPostPending: false,
   communityCommentPending: false,
+  communityCommentLikePendingIds: new Set(),
   communityPublishPending: false,
   communityPublishOpen: false,
   communityPublishWordId: "",
@@ -3490,8 +3493,9 @@ function renderCommunityPostDetail() {
                     class="text-link community-comment-like ${comment.viewer?.liked ? "is-active" : ""}"
                     type="button"
                     data-community-comment-id="${comment.id}"
+                    ${state.communityCommentLikePendingIds.has(comment.id) ? "disabled" : ""}
                   >
-                    点赞 ${formatCount(comment.likeCount)}
+                    ${state.communityCommentLikePendingIds.has(comment.id) ? "处理中..." : `点赞 ${formatCount(comment.likeCount)}`}
                   </button>
                 </div>
               </article>
@@ -4229,6 +4233,11 @@ async function submitCommunityComment() {
     return;
   }
 
+  if (content.length > COMMUNITY_COMMENT_MAX_LENGTH) {
+    window.alert(`评论最多 ${COMMUNITY_COMMENT_MAX_LENGTH} 个字。`);
+    return;
+  }
+
   state.communityCommentPending = true;
   renderCommunityPostDetail();
 
@@ -4249,22 +4258,34 @@ async function submitCommunityComment() {
 }
 
 async function toggleCommunityCommentLike(commentId) {
-  if (!commentId || state.communityCommentPending || !state.communityPostDetail) {
+  const normalizedCommentId = Number(commentId || 0);
+
+  if (
+    !normalizedCommentId ||
+    state.communityCommentPending ||
+    !state.communityPostDetail ||
+    state.communityCommentLikePendingIds.has(normalizedCommentId)
+  ) {
     return;
   }
 
+  state.communityCommentLikePendingIds.add(normalizedCommentId);
+  renderCommunityPostDetail();
+
   try {
-    const payload = await toggleCommunityCommentLikeApi(commentId);
+    const payload = await toggleCommunityCommentLikeApi(normalizedCommentId);
     const nextComment = payload.comment;
 
     state.communityPostDetail.comments = state.communityPostDetail.comments.map((comment) =>
       comment.id === nextComment.id ? nextComment : comment
     );
-    renderCommunityPostDetail();
   } catch (error) {
     handlePossibleAuthError(error);
     console.error(error);
     window.alert(getErrorMessage(error, "评论点赞失败"));
+  } finally {
+    state.communityCommentLikePendingIds.delete(normalizedCommentId);
+    renderCommunityPostDetail();
   }
 }
 

@@ -18,6 +18,9 @@ import {
   CommunityPostDetail
 } from "./community.types";
 
+const COMMUNITY_POST_BODY_MAX_LENGTH = 160;
+const COMMUNITY_COMMENT_MAX_LENGTH = 240;
+
 interface FeedRow {
   post_id: number | string;
   word_id: string;
@@ -368,6 +371,10 @@ export class CommunityService {
       throw new BadRequestException("Please write a short note before publishing.");
     }
 
+    if (body.length > COMMUNITY_POST_BODY_MAX_LENGTH) {
+      throw new BadRequestException(`Post body cannot exceed ${COMMUNITY_POST_BODY_MAX_LENGTH} characters.`);
+    }
+
     const word = await this.wordsService.getWordByIdForUser(wordId, user.id);
 
     if (!word) {
@@ -419,6 +426,10 @@ export class CommunityService {
 
     if (!normalizedContent) {
       throw new BadRequestException("Comment cannot be empty.");
+    }
+
+    if (normalizedContent.length > COMMUNITY_COMMENT_MAX_LENGTH) {
+      throw new BadRequestException(`Comment cannot exceed ${COMMUNITY_COMMENT_MAX_LENGTH} characters.`);
     }
 
     await this.database.transaction(async (client) => {
@@ -821,6 +832,7 @@ export class CommunityService {
     );
 
     const nextSortOrder = Number(nextSortOrderResult.rows[0]?.next_sort_order || 1);
+    const normalizedSourceLabel = normalizeCollectedImageSourceLabel(input.sourceLabel);
 
     await client.query(
       `
@@ -841,7 +853,7 @@ export class CommunityService {
         input.wordId,
         input.imageAssetId,
         input.user.id,
-        input.sourceLabel,
+        normalizedSourceLabel,
         input.sourceCredit,
         nextSortOrder
       ]
@@ -968,6 +980,16 @@ function buildAvatarText(value: string): string {
   }
 
   return normalizedValue.slice(0, 2).toUpperCase();
+}
+
+function normalizeCollectedImageSourceLabel(value: string): string {
+  const normalizedValue = String(value || "").trim();
+
+  if (!normalizedValue || normalizedValue === "绀惧尯鏀惰棌") {
+    return "社区收藏";
+  }
+
+  return normalizedValue;
 }
 
 function toIsoString(value: Date | string): string {

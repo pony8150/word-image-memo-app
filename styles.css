@@ -2187,6 +2187,12 @@ button {
   cursor: not-allowed;
 }
 
+.community-comment-like[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
 .community-action-btn.is-active,
 .community-comment-like.is-active {
   color: var(--primary-deep);
