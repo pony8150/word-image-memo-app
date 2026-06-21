@@ -233,3 +233,68 @@ repo-root/
 - 为图片搜索与导入补测试或至少增加更明确的失败兜底
 - 给 `backend/uploads/` 建立更清晰的运行时与发布策略
 - 如果继续做产品化，优先补权限模型、对象存储和后台管理
+
+## 单台 ECS 部署
+
+适合先把公网版本跑起来的第一版：一台 Linux 云服务器同时跑 `Nginx + 前端静态文件 + NestJS + MySQL`。
+
+### 仓库里新增的部署文件
+
+- `backend/Dockerfile`：后端生产镜像
+- `backend/.dockerignore`：减少镜像构建上下文
+- `deploy/ecs/docker-compose.yml`：单机编排
+- `deploy/ecs/nginx.conf`：前端静态托管和 `/api` 反代
+- `deploy/ecs/backend.env.example`：后端生产环境变量模板
+- `deploy/ecs/deploy.env.example`：数据库密码模板
+
+### 部署前提
+
+- 一台 Linux ECS，建议 Ubuntu 22.04
+- 已安装 Docker 和 Docker Compose 插件
+- 安全组至少放行 `80`，如果要远程登录还需放行 `22`
+
+### 服务器操作
+
+```bash
+git clone <your-repo-url>
+cd word-image-memo-app
+cp deploy/ecs/backend.env.example deploy/ecs/backend.env
+cp deploy/ecs/deploy.env.example deploy/ecs/deploy.env
+```
+
+编辑 `deploy/ecs/backend.env`：
+
+- 把 `PUBLIC_BASE_URL` 改成你的公网域名，例如 `https://words.example.com`
+- 如果要启用邮箱注册验证码，填好 `SMTP_*`
+- 如果用到了 AI 功能，填好 `OPENAI_*`
+
+编辑 `deploy/ecs/deploy.env`：
+
+- 修改 `MYSQL_ROOT_PASSWORD`
+- 修改 `MYSQL_APP_PASSWORD`
+
+### 启动
+
+```bash
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
+```
+
+查看状态：
+
+```bash
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml ps
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f backend
+```
+
+### 访问方式
+
+- 首页：`http://你的服务器公网IP/`
+- API：`http://你的服务器公网IP/api/...`
+- 上传图片：`http://你的服务器公网IP/uploads/...`
+
+前端现在的默认行为是：
+
+- 本地开发时继续请求 `http://localhost:3000/api`
+- 公网部署时默认请求同域名下的 `/api`
+
+如果你后面想把 API 单独拆到别的域名，也可以继续通过全局变量 `TUGE_DANCI_API_BASE` 覆盖。

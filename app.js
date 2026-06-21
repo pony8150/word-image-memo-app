@@ -5316,6 +5316,10 @@ function resolveApiBaseUrl() {
     return explicitBaseUrl.replace(/\/$/, "");
   }
 
+  if (!LOCALHOST_HOSTNAMES.has(window.location.hostname || "")) {
+    return `${window.location.origin}/api`;
+  }
+
   const protocol = window.location.protocol === "https:" ? "https:" : "http:";
   const hostname = window.location.hostname || "localhost";
   return `${protocol}//${hostname}:3000/api`;
