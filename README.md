@@ -298,3 +298,127 @@ docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml
 - 公网部署时默认请求同域名下的 `/api`
 
 如果你后面想把 API 单独拆到别的域名，也可以继续通过全局变量 `TUGE_DANCI_API_BASE` 覆盖。
+
+### 镜像源说明
+
+国内 Linux 云服务器拉取 `docker.io` 上的官方镜像时，可能会出现超时。当前部署文件已经默认改为使用 `public.ecr.aws/docker/library/*`：
+
+- `public.ecr.aws/docker/library/node:20-alpine`
+- `public.ecr.aws/docker/library/mysql:8.4`
+- `public.ecr.aws/docker/library/nginx:1.27-alpine`
+
+如果后续想切回 Docker Hub，可以把这些镜像地址改回原始的 `node:20-alpine`、`mysql:8.4`、`nginx:1.27-alpine`。
+
+### 数据迁移
+
+只把代码部署到 ECS，并不会自动带上本地 MySQL 数据和 `backend/uploads/` 图片目录。
+
+如果需要把本地运行中的内容迁到云上，需要迁两部分：
+
+- MySQL 数据库
+- `backend/uploads/` 里的本地图片文件
+
+当前项目本地默认数据库连接：
+
+```env
+DATABASE_URL=mysql://root:8150@localhost:3307/word_image_memo
+```
+
+#### 1. 从本地导出数据库
+
+```powershell
+docker exec word-image-memo-mysql sh -c 'exec mysqldump -uroot -p8150 --single-transaction --set-gtid-purged=OFF --default-character-set=utf8mb4 --routines --triggers --add-drop-database --databases word_image_memo > /tmp/word_image_memo_dump.sql'
+docker cp word-image-memo-mysql:/tmp/word_image_memo_dump.sql C:\path\to\word_image_memo_dump.sql
+```
+
+说明：
+
+- 不要直接用 PowerShell `>` 重定向宿主机文件，否则可能损坏 SQL 文件
+- 先在容器里生成 dump，再通过 `docker cp` 拷出来更稳
+
+#### 2. 打包本地上传目录
+
+```powershell
+tar -czf uploads.tar.gz -C backend uploads
+```
+
+#### 3. 上传到云服务器
+
+```powershell
+scp -i C:\Users\YOUR_USER\.ssh\id_rsa word_image_memo_dump.sql root@YOUR_SERVER_IP:/root/
+scp -i C:\Users\YOUR_USER\.ssh\id_rsa uploads.tar.gz root@YOUR_SERVER_IP:/root/
+```
+
+#### 4. 导入云上数据库
+
+```bash
+cd /root/word-image-memo-app
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml stop backend nginx
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml exec -T mysql mysql -uroot -p8150 --binary-mode=1 < /root/word_image_memo_dump.sql
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml start backend nginx
+```
+
+#### 5. 恢复云上图片目录
+
+```bash
+mkdir -p /root/uploads-migration
+tar -xzf /root/uploads.tar.gz -C /root/uploads-migration
+docker cp /root/uploads-migration/uploads/. $(docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml ps -q backend):/app/uploads/
+```
+
+#### 6. 验证数据
+
+```bash
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml exec -T mysql mysql -uword_image_memo_app -p8150 -D word_image_memo -e "SELECT COUNT(*) AS users FROM users; SELECT COUNT(*) AS posts FROM community_posts; SELECT COUNT(*) AS comments FROM community_comments; SELECT COUNT(*) AS words FROM words; SELECT COUNT(*) AS books FROM books;"
+```
+
+### 常用运维命令
+
+```bash
+# 查看服务状态
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml ps
+
+# 查看后端日志
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f backend
+
+# 查看 Nginx 日志
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f nginx
+
+# 查看 MySQL 日志
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f mysql
+
+# 重启整套服务
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml restart
+
+# 仅重启后端
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml restart backend
+
+# 重新构建并后台启动
+docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
+```
+
+### 费用说明
+
+当前这套单机 ECS 部署，如果使用：
+
+- ECS 按量计费
+- 弹性公网 IP
+- 公网按实际流量计费
+
+那么费用一般分成两部分：
+
+- 固定配置费：实例开着就持续计费，即使没人访问
+- 公网流量费：有人访问并产生出方向流量时再额外计费
+
+这意味着：
+
+- 只要服务器处于运行状态，就会持续产生计算资源费用
+- 访问量很小的时候，主要成本通常还是 ECS 实例本身
+- 想省钱时，可以停机或直接释放实例；如果实例删除，绑定的公网 IP 也会一起释放
+
+### 当前已知发布约束
+
+- 仅用公网 IP 访问时，不需要域名也能正常使用
+- 如果后续绑定中国大陆域名并正式对外提供服务，通常需要备案
+- 生产环境不要继续使用示例密码，例如 `8150`
+- `backend/uploads/` 已经是运行时数据目录，后续不能当作源码目录随意覆盖
