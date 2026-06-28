@@ -1054,6 +1054,51 @@ button {
   color: var(--muted);
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  justify-items: start;
+}
+
+.settings-card {
+  width: min(100%, 640px);
+  padding: 28px 32px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+  justify-items: start;
+}
+
+.settings-select-wrap {
+  width: min(100%, 560px);
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.settings-select-wrap span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.settings-select-wrap .book-select {
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .panel-tag,
 .word-label,
 .progress-pill {
@@ -3635,6 +3680,19 @@ button {
   .book-select {
     min-width: 0;
     flex: 1 1 auto;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-card {
+    width: 100%;
+    padding: 24px 24px;
+  }
+
+  .settings-actions .secondary-btn {
+    width: 100%;
   }
 
   .list-toggle {

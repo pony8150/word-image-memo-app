@@ -234,9 +234,21 @@ repo-root/
 - 给 `backend/uploads/` 建立更清晰的运行时与发布策略
 - 如果继续做产品化，优先补权限模型、对象存储和后台管理
 
-## 单台 ECS 部署
+## 单台云服务器部署
 
 适合先把公网版本跑起来的第一版：一台 Linux 云服务器同时跑 `Nginx + 前端静态文件 + NestJS + MySQL`。
+
+当前已经验证可在阿里云 ECS 上跑通，验证环境为：
+
+- `Ubuntu 22.04 64位`
+- `2 vCPU / 2 GiB RAM`
+- `40 GiB ESSD`
+- `3 Mbps` 公网带宽
+
+说明：
+
+- `2G` 内存可以跑通当前 Docker 方案，但余量不大，更适合低流量测试和轻量自用
+- 如果后续访问量增加，或后端功能继续变重，建议升级到更大的内存规格
 
 ### 仓库里新增的部署文件
 
@@ -249,9 +261,15 @@ repo-root/
 
 ### 部署前提
 
-- 一台 Linux ECS，建议 Ubuntu 22.04
+- 一台 Linux 云服务器，建议 Ubuntu 22.04
 - 已安装 Docker 和 Docker Compose 插件
 - 安全组至少放行 `80`，如果要远程登录还需放行 `22`
+
+阿里云额外注意：
+
+- 安全组入方向至少需要放行 `22`、`80`
+- 如果后面要上 HTTPS，再额外放行 `443`
+- 如果只开了 `22` 没开 `80`，公网会出现页面打不开或 `502` 的情况
 
 ### 服务器操作
 
@@ -260,6 +278,12 @@ git clone <your-repo-url>
 cd word-image-memo-app
 cp deploy/ecs/backend.env.example deploy/ecs/backend.env
 cp deploy/ecs/deploy.env.example deploy/ecs/deploy.env
+```
+
+如果服务器拉取 GitHub SSH 仓库失败，可以先改用 HTTPS：
+
+```bash
+git clone --depth 1 --single-branch https://github.com/<your-name>/<your-repo>.git
 ```
 
 编辑 `deploy/ecs/backend.env`：
@@ -279,6 +303,12 @@ cp deploy/ecs/deploy.env.example deploy/ecs/deploy.env
 docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
 ```
 
+如果服务器上安装的是 Ubuntu 仓库自带的 `docker-compose`，则使用：
+
+```bash
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
+```
+
 查看状态：
 
 ```bash
@@ -286,11 +316,26 @@ docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml
 docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f backend
 ```
 
+如果你的机器是 `docker-compose` 命令，则等价命令如下：
+
+```bash
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml ps
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs -f backend
+```
+
 ### 访问方式
 
 - 首页：`http://你的服务器公网IP/`
 - API：`http://你的服务器公网IP/api/...`
 - 上传图片：`http://你的服务器公网IP/uploads/...`
+
+如果首页返回 `502`，优先检查：
+
+- 安全组是否放行了 `80`
+- `nginx` / `backend` / `mysql` 三个容器是否都还在运行
+- 公网访问 `http://你的服务器公网IP/api/auth/me` 是否返回 `401`
+
+`/api/auth/me` 在未登录时返回 `401` 是正常现象，说明后端是通的。
 
 前端现在的默认行为是：
 
@@ -308,6 +353,13 @@ docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml
 - `public.ecr.aws/docker/library/nginx:1.27-alpine`
 
 如果后续想切回 Docker Hub，可以把这些镜像地址改回原始的 `node:20-alpine`、`mysql:8.4`、`nginx:1.27-alpine`。
+
+阿里云上实际验证时，Docker 官方仓库 `download.docker.com` 也可能偶发连不上。此时可直接安装 Ubuntu 仓库自带的：
+
+- `docker.io`
+- `docker-compose`
+
+功能上已经足够运行当前项目。
 
 ### 数据迁移
 
@@ -397,6 +449,18 @@ docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml
 docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
 ```
 
+如果服务器上使用的是 `docker-compose`，把上面所有 `docker compose` 替换成 `docker-compose` 即可。
+
+阿里云当前已验证常用命令：
+
+```bash
+cd /root/word-image-memo-app
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml ps
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml logs --tail=100 backend
+docker-compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml up -d --build
+git pull
+```
+
 ### 费用说明
 
 当前这套单机 ECS 部署，如果使用：
@@ -422,3 +486,5 @@ docker compose --env-file deploy/ecs/deploy.env -f deploy/ecs/docker-compose.yml
 - 如果后续绑定中国大陆域名并正式对外提供服务，通常需要备案
 - 生产环境不要继续使用示例密码，例如 `8150`
 - `backend/uploads/` 已经是运行时数据目录，后续不能当作源码目录随意覆盖
+- 代码部署成功并不代表本地数据库会自动同步到云上，业务数据需要单独迁移
+- 当前阿里云 `2G` 内存机器可以跑 Docker 版，但可用内存余量不大，重建镜像或后续扩展时需要关注内存占用

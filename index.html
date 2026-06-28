@@ -96,6 +96,9 @@
               </div>
 
               <div class="account-menu-actions">
+                <button class="account-menu-item" type="button" role="menuitem" data-settings-open-button hidden>
+                  设置
+                </button>
                 <button class="account-menu-item" type="button" role="menuitem" data-auth-open-button>
                   登录 / 注册
                 </button>
@@ -159,6 +162,9 @@
                 </div>
 
                 <div class="account-menu-actions">
+                  <button class="account-menu-item" type="button" role="menuitem" data-settings-open-button hidden>
+                    设置
+                  </button>
                   <button class="account-menu-item" id="auth-open-button" type="button" role="menuitem" data-auth-open-button>
                     登录 / 注册
                   </button>
@@ -274,12 +280,6 @@
               <h2>单词学习卡片</h2>
             </div>
             <div class="section-tools">
-              <label class="book-select-wrap" for="book-select">
-                <span>词书</span>
-                <select class="book-select" id="book-select">
-                  <option value="">加载中</option>
-                </select>
-              </label>
               <button
                 class="secondary-btn list-toggle"
                 id="learn-list-toggle"
@@ -356,6 +356,57 @@
               </div>
               <div class="word-list" id="word-list"></div>
             </aside>
+          </div>
+        </section>
+
+        <section class="view" id="settings" hidden>
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Settings</p>
+              <h2>学习设置</h2>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <article class="card settings-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Book</p>
+                  <h3>词书选择</h3>
+                </div>
+              </div>
+
+              <div class="settings-field">
+                <label class="book-select-wrap settings-select-wrap" for="book-select">
+                  <span>当前词书</span>
+                  <select class="book-select" id="book-select">
+                    <option value="">加载中</option>
+                  </select>
+                </label>
+              </div>
+            </article>
+
+            <article class="card settings-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Audio</p>
+                  <h3>朗读声音</h3>
+                </div>
+              </div>
+
+              <div class="settings-field">
+                <label class="book-select-wrap settings-select-wrap" for="settings-audio-voice">
+                  <span>发音音色</span>
+                  <select class="book-select" id="settings-audio-voice">
+                    <option value="">自动选择（推荐）</option>
+                  </select>
+                </label>
+                <div class="settings-actions">
+                  <button class="secondary-btn" id="settings-audio-preview-word" type="button">试听单词</button>
+                  <button class="secondary-btn" id="settings-audio-preview-example" type="button">试听例句</button>
+                </div>
+              </div>
+            </article>
           </div>
         </section>
 

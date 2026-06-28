@@ -276,6 +276,7 @@ const state = {
   dataSource: "local",
   books: [],
   activeBookCode: "",
+  audioVoiceUri: "",
   currentView: "learn",
   restoredLearnWordId: "",
   adminTab: "overview",
@@ -408,6 +409,7 @@ function renderAllViews() {
   prepareImageQuestion();
   renderWelcome();
   renderLearn();
+  renderSettings();
   syncCommunityPublishModal();
   renderAdmin();
   renderCommunityFeed();
@@ -433,6 +435,10 @@ function hydratePersistedUiState() {
     state.restoredLearnWordId = persistedUiState.currentWordId;
   }
 
+  if (typeof persistedUiState.audioVoiceUri === "string") {
+    state.audioVoiceUri = persistedUiState.audioVoiceUri;
+  }
+
   if (persistedUiState.currentView) {
     state.currentView = persistedUiState.currentView;
   }
@@ -443,7 +449,7 @@ function hydratePersistedUiState() {
 }
 
 function getInitialSignedInView() {
-  const allowedViews = new Set(["learn", "community", "review", "image", "stats", "welcome", "admin"]);
+  const allowedViews = new Set(["learn", "community", "review", "image", "stats", "welcome", "admin", "settings"]);
 
   if (!allowedViews.has(state.currentView)) {
     return "learn";
@@ -588,6 +594,7 @@ function cacheElements() {
   elements.authUserMetas = [...document.querySelectorAll("[data-auth-user-meta]")];
   elements.authOpenButtons = [...document.querySelectorAll("[data-auth-open-button]")];
   elements.authLogoutButtons = [...document.querySelectorAll("[data-auth-logout-button]")];
+  elements.settingsOpenButtons = [...document.querySelectorAll("[data-settings-open-button]")];
   elements.accountMenuWrap = document.getElementById("account-menu-wrap");
   elements.accountTrigger = document.getElementById("account-trigger");
   elements.accountAvatar = document.getElementById("account-avatar");
@@ -625,6 +632,9 @@ function cacheElements() {
   elements.deckPreview = document.getElementById("deck-preview");
 
   elements.bookSelect = document.getElementById("book-select");
+  elements.settingsAudioVoice = document.getElementById("settings-audio-voice");
+  elements.settingsAudioPreviewWord = document.getElementById("settings-audio-preview-word");
+  elements.settingsAudioPreviewExample = document.getElementById("settings-audio-preview-example");
   elements.learnProgress = document.getElementById("learn-progress");
   elements.learnListToggle = document.getElementById("learn-list-toggle");
   elements.learnListToggleLabel = document.getElementById("learn-list-toggle-label");
@@ -819,6 +829,13 @@ function bindEvents() {
     });
   });
 
+  elements.settingsOpenButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setAccountMenuOpen(false);
+      switchView("settings");
+    });
+  });
+
   if (elements.authModeLogin) {
     elements.authModeLogin.addEventListener("click", () => {
       setAuthMode("login");
@@ -853,6 +870,10 @@ function bindEvents() {
 
   if (elements.bookSelect) {
     elements.bookSelect.addEventListener("change", handleBookChange);
+  }
+
+  if (elements.settingsAudioVoice) {
+    elements.settingsAudioVoice.addEventListener("change", handleAudioVoiceChange);
   }
 
   if (elements.sidebarOpenButton) {
@@ -893,6 +914,12 @@ function bindEvents() {
   });
 
   window.addEventListener("resize", handleSidebarViewportChange);
+
+  if ("speechSynthesis" in window && typeof window.speechSynthesis.addEventListener === "function") {
+    window.speechSynthesis.addEventListener("voiceschanged", () => {
+      renderSettings();
+    });
+  }
 
   document.addEventListener("click", (event) => {
     if (!state.accountMenuOpen || elements.accountMenuWraps.length === 0) {
@@ -969,6 +996,18 @@ function bindEvents() {
 
     speakEnglish(currentWord.example);
   });
+
+  if (elements.settingsAudioPreviewWord) {
+    elements.settingsAudioPreviewWord.addEventListener("click", () => {
+      speakEnglish(getSettingsPreviewWordText());
+    });
+  }
+
+  if (elements.settingsAudioPreviewExample) {
+    elements.settingsAudioPreviewExample.addEventListener("click", () => {
+      speakEnglish(getSettingsPreviewExampleText());
+    });
+  }
 
   elements.learnMedia.addEventListener("pointerdown", handleLearnMediaPointerDown);
   elements.learnMedia.addEventListener("pointerup", clearLearnMediaLongPress);
@@ -1505,6 +1544,7 @@ function renderDockbar() {
     community: "社区",
     "community-post": "帖子详情",
     admin: "管理",
+    settings: "设置",
     review: "复习模式",
     image: "看图猜词",
     stats: "学习统计",
@@ -1719,6 +1759,11 @@ function renderAuth() {
   elements.authOpenButtons.forEach((button) => {
     button.textContent = "\u767b\u5f55 / \u6ce8\u518c";
     button.hidden = isSignedIn;
+    button.disabled = state.authPending;
+  });
+
+  elements.settingsOpenButtons.forEach((button) => {
+    button.hidden = !isSignedIn;
     button.disabled = state.authPending;
   });
 
@@ -2077,7 +2122,7 @@ function resetAdminState() {
 }
 
 function switchView(viewId) {
-  const allowedViews = new Set(["auth", "learn", "community", "community-post", "review", "image", "stats", "welcome", "admin"]);
+  const allowedViews = new Set(["auth", "learn", "community", "community-post", "review", "image", "stats", "welcome", "admin", "settings"]);
   const requestedView = allowedViews.has(viewId) ? viewId : "learn";
   const requiresAuth = requestedView !== "auth";
   const nextView = !state.authUser && requiresAuth
@@ -2141,6 +2186,10 @@ function switchView(viewId) {
     refreshActiveAdminTab();
   }
 
+  if (nextView === "settings") {
+    renderSettings();
+  }
+
   if (nextView === "review") {
     renderReview();
   }
@@ -2158,6 +2207,38 @@ function switchView(viewId) {
   }
 
   persistUiState();
+}
+
+function renderSettings() {
+  syncBookSelector();
+
+  const isSpeechSupported = "speechSynthesis" in window;
+  const englishVoices = getAvailableEnglishVoices();
+
+  if (elements.settingsAudioVoice) {
+    const options = [
+      '<option value="">自动选择（推荐）</option>',
+      ...englishVoices.map((voice) => {
+        const isSelected = voice.voiceURI === state.audioVoiceUri;
+        return `<option value="${escapeHtml(voice.voiceURI || "")}" ${isSelected ? "selected" : ""}>${escapeHtml(formatVoiceOptionLabel(voice))}</option>`;
+      })
+    ];
+
+    elements.settingsAudioVoice.innerHTML = options.join("");
+    elements.settingsAudioVoice.value =
+      state.audioVoiceUri && englishVoices.some((voice) => voice.voiceURI === state.audioVoiceUri)
+        ? state.audioVoiceUri
+        : "";
+    elements.settingsAudioVoice.disabled = !isSpeechSupported || englishVoices.length === 0;
+  }
+
+  if (elements.settingsAudioPreviewWord) {
+    elements.settingsAudioPreviewWord.disabled = !isSpeechSupported;
+  }
+
+  if (elements.settingsAudioPreviewExample) {
+    elements.settingsAudioPreviewExample.disabled = !isSpeechSupported;
+  }
 }
 
 function getAuthCodeCooldownSeconds() {
@@ -3611,7 +3692,33 @@ async function handleBookChange(event) {
   persistUiState();
   await refreshDeckFromServer({ silent: true });
   renderAllViews();
-  switchView("learn");
+  switchView(state.currentView === "settings" ? "settings" : "learn");
+}
+
+function handleAudioVoiceChange(event) {
+  state.audioVoiceUri = event.target.value || "";
+  persistUiState();
+  renderSettings();
+}
+
+function getSettingsPreviewWordText() {
+  if (hasDeckWords()) {
+    return words[state.learnIndex].english;
+  }
+
+  return "journey";
+}
+
+function getSettingsPreviewExampleText() {
+  if (hasDeckWords()) {
+    const currentWord = words[state.learnIndex];
+
+    if (hasExampleText(currentWord)) {
+      return currentWord.example;
+    }
+  }
+
+  return "This picture helps me remember the word more clearly.";
 }
 
 function syncLearnListVisibility() {
@@ -3662,15 +3769,22 @@ function renderWordList() {
 
   elements.wordList.innerHTML = filteredWords
     .map(
-      ({ item, index }) => `
+      ({ item, index }) => {
+        const reviewRating = state.reviewRatingsByWord[index];
+        const reviewStatusMarkup = reviewRating
+          ? `<small>${escapeHtml(ratingLabel(reviewRating))}</small>`
+          : "";
+
+        return `
         <button class="word-chip ${index === state.learnIndex ? "active" : ""}" data-word-index="${index}">
           <span>
             <strong>${String(index + 1).padStart(2, "0")} ${escapeHtml(item.english)}</strong>
             <small>${escapeHtml(item.chinese)}</small>
           </span>
-          <small>${escapeHtml(state.reviewRatingsByWord[index] ? ratingLabel(state.reviewRatingsByWord[index]) : "未复习")}</small>
+          ${reviewStatusMarkup}
         </button>
-      `
+      `;
+      }
     )
     .join("");
 }
@@ -4950,10 +5064,125 @@ function speakEnglish(text) {
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.92;
-  utterance.pitch = 1;
+  const preferredVoice = getSelectedEnglishVoice();
+
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+    utterance.lang = preferredVoice.lang || "en-US";
+  } else {
+    utterance.lang = "en-US";
+  }
+
+  utterance.rate = 0.88;
+  utterance.pitch = 0.96;
   window.speechSynthesis.speak(utterance);
+}
+
+function getAvailableEnglishVoices() {
+  if (!("speechSynthesis" in window)) {
+    return [];
+  }
+
+  const voices = window.speechSynthesis.getVoices();
+
+  if (!Array.isArray(voices) || !voices.length) {
+    return [];
+  }
+
+  return voices.filter((voice) => /^en(-|$)/i.test(voice.lang || ""));
+}
+
+function getSelectedEnglishVoice(englishVoices = getAvailableEnglishVoices()) {
+  if (state.audioVoiceUri) {
+    const matchedVoice = englishVoices.find((voice) => voice.voiceURI === state.audioVoiceUri);
+
+    if (matchedVoice) {
+      return matchedVoice;
+    }
+  }
+
+  return getPreferredEnglishVoice(englishVoices);
+}
+
+function getPreferredEnglishVoice(englishVoices = getAvailableEnglishVoices()) {
+  if (!englishVoices.length) {
+    return null;
+  }
+
+  const preferredVoiceMatchers = [
+    /aria/i,
+    /jenny/i,
+    /google us english/i,
+    /samantha/i,
+    /daniel/i,
+    /serena/i,
+    /ava/i,
+    /zira/i,
+    /allison/i,
+    /ryan/i
+  ];
+
+  const scoredVoices = englishVoices
+    .map((voice) => ({
+      voice,
+      score: scoreEnglishVoice(voice, preferredVoiceMatchers)
+    }))
+    .sort((left, right) => right.score - left.score);
+
+  return scoredVoices[0]?.voice || null;
+}
+
+function formatVoiceOptionLabel(voice) {
+  const rawName = String(voice?.name || "系统语音").trim();
+  const compactName = rawName
+    .replace(/\s*-\s*English\s*\(United States\)/i, "")
+    .replace(/\s*-\s*English\s*\(United Kingdom\)/i, "")
+    .replace(/^Microsoft\s+/i, "");
+  const lang = String(voice?.lang || "en-US").toLowerCase();
+  const localeLabel =
+    lang === "en-us"
+      ? "美式"
+      : lang === "en-gb"
+        ? "英式"
+        : lang === "en-au"
+          ? "澳式"
+          : "英文";
+  const suffix = voice?.default ? " · 默认" : "";
+  return `${compactName} · ${localeLabel}${suffix}`;
+}
+
+function scoreEnglishVoice(voice, preferredVoiceMatchers) {
+  const voiceName = String(voice.name || "");
+  const voiceLang = String(voice.lang || "").toLowerCase();
+  let score = 0;
+
+  if (voice.localService) {
+    score += 40;
+  }
+
+  if (voice.default) {
+    score += 15;
+  }
+
+  if (voiceLang === "en-us") {
+    score += 30;
+  } else if (voiceLang.startsWith("en-")) {
+    score += 20;
+  } else if (voiceLang === "en") {
+    score += 10;
+  }
+
+  preferredVoiceMatchers.forEach((matcher, index) => {
+    if (matcher.test(voiceName)) {
+      score += 100 - index * 5;
+    }
+  });
+
+  if (/female|woman/i.test(voiceName)) {
+    score += 5;
+  }
+
+  return score;
 }
 
 function ratingLabel(rating) {
@@ -5085,7 +5314,7 @@ function normalizePersistedUiState(rawValue) {
     return null;
   }
 
-  const allowedViews = new Set(["auth", "learn", "community", "review", "image", "stats", "welcome", "admin"]);
+  const allowedViews = new Set(["auth", "learn", "community", "review", "image", "stats", "welcome", "admin", "settings"]);
   const allowedFeedModes = new Set(["hall", "ranking", "mine"]);
   const normalizedView =
     typeof rawValue.currentView === "string" && allowedViews.has(rawValue.currentView)
@@ -5095,6 +5324,7 @@ function normalizePersistedUiState(rawValue) {
   return {
     currentView: normalizedView,
     activeBookCode: typeof rawValue.activeBookCode === "string" ? rawValue.activeBookCode : "",
+    audioVoiceUri: typeof rawValue.audioVoiceUri === "string" ? rawValue.audioVoiceUri : "",
     currentWordId: typeof rawValue.currentWordId === "string" ? rawValue.currentWordId : "",
     communityFeedMode:
       typeof rawValue.communityFeedMode === "string" && allowedFeedModes.has(rawValue.communityFeedMode)
@@ -5126,6 +5356,7 @@ function persistUiState() {
   const persistedUiState = {
     currentView: getPersistedCurrentView(),
     activeBookCode: state.activeBookCode || "",
+    audioVoiceUri: state.audioVoiceUri || "",
     currentWordId: words[state.learnIndex]?.id || "",
     communityFeedMode: state.communityFeedMode || "hall"
   };
@@ -5148,7 +5379,7 @@ function getPersistedCurrentView() {
     return "community";
   }
 
-  const allowedViews = new Set(["auth", "learn", "community", "review", "image", "stats", "welcome", "admin"]);
+  const allowedViews = new Set(["auth", "learn", "community", "review", "image", "stats", "welcome", "admin", "settings"]);
   return allowedViews.has(state.currentView) ? state.currentView : "learn";
 }
 
