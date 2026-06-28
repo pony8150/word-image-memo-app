@@ -10,7 +10,9 @@ Thumbs.db
 /backend/.env
 /backend/dist/
 /backend/node_modules/
+/backend/logs/
 /backend/uploads/
+/assets/images/remote/
 
 # Python cache
 __pycache__/
